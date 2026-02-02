@@ -1,3 +1,23 @@
 spring:
   application:
     name: pag-control-back
+  profiles:
+    default: test
+    active: test
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+logging:
+  level:
+    root: INFO
+    com.pedrohenrique.comercium: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /
+  endpoint:
+    health:
+      show-details: always
