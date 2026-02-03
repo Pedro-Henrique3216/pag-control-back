@@ -23,7 +23,7 @@ public class User {
     private String email;
     @Column(nullable = false)
     private String password;
-    @Column(nullable = false, length = 13)
+    @Column(nullable = false, length = 15)
     private String phone;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -41,7 +41,7 @@ public class User {
             String phone,
             PersonType personType
     ) {
-        validateUser(name, fantasyName, email, password, phone);
+        validatePersonType(personType, fantasyName);
         this.name = name;
         this.fantasyName = fantasyName;
         this.email = email;
@@ -53,30 +53,17 @@ public class User {
     public User() {
     }
 
-    public void validateUser(
-            String name,
-            String fantasyName,
-            String username,
-            String password,
-            String phone
-    ){
-        if (name == null || name.isBlank() || name.length() > 150) {
-            throw new UserDomainException("Name must be between 1 and 150 characters.");
+    private void validatePersonType(PersonType personType, String fantasyName) {
+        if (personType == null) {
+            throw new UserDomainException("Person type cannot be null");
         }
-        if (fantasyName != null && fantasyName.length() > 150) {
-            throw new UserDomainException("Fantasy Name must be up to 150 characters.");
+
+        if (personType == PersonType.PF && fantasyName != null && !fantasyName.isBlank()) {
+            throw new UserDomainException("Fantasy name must be null or blank for individuals (PF)");
         }
-        if (username == null || username.isBlank() || username.length() > 100) {
-            throw new UserDomainException("Username must be between 1 and 100 characters.");
-        }
-        if (password == null || password.isBlank()) {
-            throw new UserDomainException("Password cannot be null or blank.");
-        }
-        if (password.length() < 8) {
-            throw new UserDomainException("Password must be at least 8 characters long.");
-        }
-        if (phone == null || phone.isBlank() || phone.length() > 13) {
-            throw new UserDomainException("Phone must be between 1 and 13 characters.");
+
+        if (personType == PersonType.PJ && (fantasyName == null || fantasyName.isBlank()))
+            throw new UserDomainException("Fantasy name cannot be null or blank for companies (PJ)"); {
         }
     }
 
