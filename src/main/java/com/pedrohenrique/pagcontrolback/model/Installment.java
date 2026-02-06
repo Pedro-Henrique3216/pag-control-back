@@ -1,5 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentDueDateRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidInstallmentAmountException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -32,12 +34,21 @@ public class Installment {
     public Installment() {
     }
 
-    public Installment(BigDecimal amount, LocalDate dueDate, String barcode, Expense expense) {
+    public Installment(BigDecimal amount, LocalDate dueDate, String barcode) {
+        validateInstallment(amount, dueDate);
         this.amount = amount;
         this.dueDate = dueDate;
         this.barcode = barcode;
         this.status = InstallmentStatus.UNPAID;
-        this.expense = expense;
+    }
+
+    private void validateInstallment(BigDecimal amount, LocalDate dueDate){
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidInstallmentAmountException("Installment amount must be greater than zero.");
+        }
+        if (dueDate == null) {
+            throw new InstallmentDueDateRequiredException("Installment due date is required");
+        }
     }
 
     public UUID getInstallmentId() {
@@ -66,6 +77,10 @@ public class Installment {
 
     public Expense getExpense() {
         return expense;
+    }
+
+    public void setExpense(Expense expense) {
+        this.expense = expense;
     }
 
     @Override

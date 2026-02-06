@@ -29,9 +29,8 @@ public class Supplier {
 
     public Supplier() {}
 
-    public Supplier(String name, String cnpj) {
+    public Supplier(String name) {
         this.name = name;
-        this.cnpj = cnpj;
     }
 
     public UUID getId() {
@@ -52,6 +51,10 @@ public class Supplier {
 
     public Set<User> getUsers() {
         return users;
+    }
+
+    public void setCnpj(String cnpj) {
+        this.cnpj = cnpj;
     }
 
     @Override

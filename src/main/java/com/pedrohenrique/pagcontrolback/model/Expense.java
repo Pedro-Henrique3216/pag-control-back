@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -17,11 +18,14 @@ public class Expense {
     private UUID id;
     @Column(length = 100)
     private String invoiceNumber;
+    private PaymentType paymentType;
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
     @Column(nullable = false)
     private LocalDate createdAt;
+    @Column(nullable = false)
+    private LocalDate expenseDate;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -30,11 +34,45 @@ public class Expense {
 
     public Expense() {}
 
-    public Expense(String invoiceNumber, Supplier supplier, User user) {
+    public Expense(String invoiceNumber, PaymentType paymentType, LocalDate expenseDate) {
+        validateExpanseDate(expenseDate);
         this.invoiceNumber = invoiceNumber;
-        this.supplier = supplier;
         this.createdAt = LocalDate.now();
-        this.user = user;
+        this.paymentType = paymentType;
+        this.expenseDate = expenseDate;
+    }
+
+    private void validateExpanseDate(LocalDate expenseDate) {
+        if (expenseDate == null) {
+            throw new ExpenseDateRequiredException("Expense date is required.");
+        }
+
+        if (expenseDate.isAfter(LocalDate.now())) {
+            throw new ExpenseDateInTheFutureException("Expense date cannot be in the future.");
+        }
+    }
+
+    private void validateInstallments(PaymentType paymentType, Installment installment) {
+
+        if (installment == null) {
+            throw new InstallmentRequiredException("Installment cannot be null.");
+        }
+
+        if (paymentType == PaymentType.DEBIT || paymentType == PaymentType.CASH || paymentType == PaymentType.PIX) {
+            if (!this.installments.isEmpty()) {
+                throw new MultipleInstallmentsNotAllowedForPaymentTypeException("Payment type " + paymentType + " allows only one installment");
+            }
+
+            if (!installment.getDueDate().equals(this.expenseDate)) {
+                throw new InvalidInstallmentDueDateForPaymentTypeException("For payment type "+ paymentType +
+                        ", the installment due date must be the same as the expense date");
+            }
+
+        }
+        if (installment.getDueDate().isBefore(this.expenseDate)) {
+            throw new InstallmentDueDateBeforeExpenseDateException("Installment due date cannot be before the expense date.");
+        }
+
     }
 
     public UUID getId() {
@@ -53,12 +91,34 @@ public class Expense {
         return createdAt;
     }
 
+    public LocalDate getExpenseDate() {
+        return expenseDate;
+    }
+
     public User getUser() {
         return user;
     }
 
+    public PaymentType getPaymentType() {
+        return paymentType;
+    }
+
     public List<Installment> getInstallments() {
         return installments;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setSupplier(Supplier supplier) {
+        this.supplier = supplier;
+    }
+
+    public void addInstallment(Installment installment) {
+        validateInstallments(paymentType, installment);
+        installments.add(installment);
+        installment.setExpense(this);
     }
 
     @Override
@@ -72,4 +132,5 @@ public class Expense {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
 }
