@@ -16,13 +16,15 @@ public class Installment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "installment_id")
     private UUID installmentId;
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
-    @Column(nullable = false)
+    @Column(nullable = false, name = "due_date")
     private LocalDate dueDate;
     @Column(length = 60)
     private String barcode;
+    @Column(name = "payment_date")
     private LocalDateTime paymentDate;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

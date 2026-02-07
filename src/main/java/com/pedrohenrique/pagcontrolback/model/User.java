@@ -17,7 +17,7 @@ public class User {
     private UUID id;
     @Column(nullable = false, length = 150)
     private String name;
-    @Column(length = 150)
+    @Column(length = 150, name = "fantasy_name")
     private String fantasyName;
     @Column(unique = true, nullable = false, length = 100)
     private String email;
@@ -26,7 +26,7 @@ public class User {
     @Column(nullable = false, length = 15)
     private String phone;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "person_type")
     private PersonType personType;
     @OneToMany(mappedBy = "user")
     private Set<Expense> expenses = new HashSet<>();

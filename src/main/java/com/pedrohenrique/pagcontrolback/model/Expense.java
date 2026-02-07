@@ -16,15 +16,16 @@ public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(length = 100)
+    @Column(length = 100, name = "invoice_number")
     private String invoiceNumber;
+    @Column(name = "payment_type", nullable = false)
     private PaymentType paymentType;
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
-    @Column(nullable = false)
+    @Column(nullable = false, name = "created_at")
     private LocalDate createdAt;
-    @Column(nullable = false)
+    @Column(nullable = false, name = "expense_date")
     private LocalDate expenseDate;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
