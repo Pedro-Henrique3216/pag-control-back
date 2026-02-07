@@ -383,5 +383,47 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         assertEquals(LocalDate.now(), expenseSaved.getInstallments().get(0).getDueDate());
     }
 
+    @Test
+    void shouldThrowExceptionWhenBarcodeInstallmentDueInDaysIsNotZero(){
+        var userId = UUID.randomUUID();
+
+        var user = new User(
+                "John Doe",
+                null,
+                "teste@gmail.com",
+                "password123",
+                "12345678900",
+                PersonType.PF
+        );
+
+        var supplierId = UUID.randomUUID();
+
+        var supplier = new Supplier(
+                "Supplier Inc."
+        );
+
+        var expense = new Expense(
+                "INV123",
+                PaymentType.CASH,
+                LocalDate.now()
+        );
+
+        var amount = new BigDecimal("300.00");
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(supplierRepository.findById(supplierId))
+                .thenReturn(Optional.of(supplier));
+
+        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
+        installmentBarcodesWithDueInDays.put(1, "123456789123");
+
+        assertThrows(InvalidInstallmentDueInDaysException.class, () ->
+                useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount)
+        );
+
+    }
+
 
 }
