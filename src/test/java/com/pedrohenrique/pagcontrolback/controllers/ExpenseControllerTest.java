@@ -60,9 +60,10 @@ class ExpenseControllerTest {
                 )
         );
 
-        supplier = supplierRepository.save(
-                new Supplier("Supplier Inc.")
-        );
+        Supplier s = new Supplier("Supplier Inc.");
+        s.setUser(user);
+
+        supplier = supplierRepository.save(s);
 
     }
 
