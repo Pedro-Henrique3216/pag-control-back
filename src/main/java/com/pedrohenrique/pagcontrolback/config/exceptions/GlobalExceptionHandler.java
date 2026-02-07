@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +31,12 @@ public class GlobalExceptionHandler {
             UserDomainException.class,
             ExpenseRequiredException.class,
             PaymentTypeRequiredException.class,
-            InvalidExpenseAmountException.class
+            InvalidExpenseAmountException.class,
+            InvalidSupplierCnpjException.class,
+            SupplierNameRequiredException.class,
+            SupplierRequiredException.class,
+            UserIdRequiredException.class,
+            UserRequiredException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -57,5 +63,40 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.NOT_FOUND.value(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler({
+            SupplierAlreadyExistsWithCnpjException.class
+    })
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<HandleExceptionInternalDto> handleConflictException(RuntimeException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.CONFLICT.value(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<HandleExceptionInternalDto> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+
+        String paramName = ex.getName();
+        String requiredType = ex.getRequiredType() != null
+                ? ex.getRequiredType().getSimpleName()
+                : "unknown";
+
+        String message = "Invalid value for parameter '" + paramName +
+                "'. Expected type: " + requiredType;
+
+        HandleExceptionInternalDto error = new HandleExceptionInternalDto(
+                List.of(message),
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<HandleExceptionInternalDto> handleGenericException(Exception ex){
+        return ResponseEntity.internalServerError().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now()));
     }
 }

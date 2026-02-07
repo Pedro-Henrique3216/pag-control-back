@@ -1,5 +1,9 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidSupplierCnpjException;
+import com.pedrohenrique.pagcontrolback.exceptions.SupplierNameRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
+import com.pedrohenrique.pagcontrolback.utils.ValidateCnpj;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -15,22 +19,30 @@ public class Supplier {
     private UUID id;
     @Column(nullable = false, length = 100)
     private String name;
-    @Column(length = 15, unique = true)
     private String cnpj;
     @OneToMany(mappedBy = "supplier")
     private Set<Expense> expanses = new HashSet<>();
-    @ManyToMany
-    @JoinTable(
-            name = "supplier_user",
-            joinColumns = @JoinColumn(name = "supplier_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> users = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public Supplier() {}
 
     public Supplier(String name) {
+        validateName(name);
         this.name = name;
+    }
+
+    public Supplier(String name, String cnpj) {
+        validateName(name);
+        this.name = name;
+        setCnpj(cnpj);
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new SupplierNameRequiredException("Supplier name cannot be null or empty.");
+        }
     }
 
     public UUID getId() {
@@ -49,11 +61,29 @@ public class Supplier {
         return expanses;
     }
 
-    public Set<User> getUsers() {
-        return users;
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        if (user == null) {
+            throw new UserRequiredException("Supplier must have an user.");
+        }
+        this.user = user;
     }
 
     public void setCnpj(String cnpj) {
+        if (cnpj == null || cnpj.isBlank()) {
+            return;
+        }
+
+        cnpj = cnpj.replaceAll("\\D", "");
+
+        if (!ValidateCnpj.isValidCnpj(cnpj)) {
+            throw new InvalidSupplierCnpjException("Invalid CNPJ format.");
+        }
+
+
         this.cnpj = cnpj;
     }
 

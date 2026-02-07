@@ -30,7 +30,7 @@ public class User {
     private PersonType personType;
     @OneToMany(mappedBy = "user")
     private Set<Expense> expenses = new HashSet<>();
-    @ManyToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
     private Set<Supplier> suppliers = new HashSet<>();
 
     public User(
