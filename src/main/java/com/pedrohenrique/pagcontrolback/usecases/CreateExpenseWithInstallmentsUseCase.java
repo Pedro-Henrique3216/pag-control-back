@@ -86,6 +86,12 @@ public class CreateExpenseWithInstallmentsUseCase {
                 );
             }
 
+            if (barcodeByDueInDays != null && barcodeByDueInDays.keySet().stream().anyMatch(days -> days != 0)) {
+                throw new InvalidInstallmentDueInDaysException(
+                        "For payment type " + expense.getPaymentType() + ", installment due in days must be 0."
+                );
+            }
+
             String barcode = null;
 
             if (barcodeByDueInDays != null && !barcodeByDueInDays.isEmpty()) {
