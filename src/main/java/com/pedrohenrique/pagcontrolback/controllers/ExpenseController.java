@@ -58,10 +58,10 @@ public class ExpenseController {
             @DateTimeFormat(pattern = "yyyy-MM")
             YearMonth month,
 
-            @RequestParam(required = false)
+            @RequestParam(required = false, name = "supplier_id")
             UUID supplierId,
 
-            @RequestParam(required = false)
+            @RequestParam(required = false, name = "invoice_number")
             String invoiceNumber
     ) {
 
