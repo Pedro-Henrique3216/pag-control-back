@@ -65,7 +65,6 @@ public class ExpenseController {
             String invoiceNumber
     ) {
 
-        System.out.println("teste");
         ListExpensesQuery query = new ListExpensesQuery(
                 month,
                 supplierId,
