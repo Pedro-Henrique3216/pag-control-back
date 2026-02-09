@@ -36,7 +36,8 @@ public class GlobalExceptionHandler {
             SupplierNameRequiredException.class,
             SupplierRequiredException.class,
             UserIdRequiredException.class,
-            UserRequiredException.class
+            UserRequiredException.class,
+            FutureMonthNotAllowedException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){

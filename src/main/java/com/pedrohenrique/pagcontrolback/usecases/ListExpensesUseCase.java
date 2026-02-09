@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
+import com.pedrohenrique.pagcontrolback.exceptions.FutureMonthNotAllowedException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
@@ -12,6 +13,7 @@ import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +42,10 @@ public class ListExpensesUseCase {
         if (query.supplierId() != null &&
                 !supplierRepository.existsById(query.supplierId())) {
             throw new SupplierNotFoundException("Supplier not found.");
+        }
+
+        if (query.month() != null && query.month().isAfter(YearMonth.now())) {
+            throw new FutureMonthNotAllowedException("Month cannot be in the future.");
         }
 
         return expenseRepository.search(query, userId);
