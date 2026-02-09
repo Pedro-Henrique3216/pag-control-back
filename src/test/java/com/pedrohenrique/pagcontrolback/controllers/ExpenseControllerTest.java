@@ -282,7 +282,7 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> invoices = response.jsonPath().getList("invoiceNumber");
+        List<String> invoices = response.jsonPath().getList("invoice_number");
 
         assertEquals(2, invoices.size());
         assertTrue(invoices.contains("INV-1"));
@@ -307,7 +307,7 @@ class ExpenseControllerTest {
                         .response();
 
         List<String> invoices =
-                response.jsonPath().getList("invoiceNumber");
+                response.jsonPath().getList("invoice_number");
 
         assertEquals(1, invoices.size());
         assertEquals("INV-100", invoices.get(0));
@@ -358,7 +358,7 @@ class ExpenseControllerTest {
                         .response();
 
         List<String> invoices =
-                response.jsonPath().getList("invoiceNumber");
+                response.jsonPath().getList("invoice_number");
 
         assertEquals(1, invoices.size());
         assertEquals("INV-FEB", invoices.get(0));
