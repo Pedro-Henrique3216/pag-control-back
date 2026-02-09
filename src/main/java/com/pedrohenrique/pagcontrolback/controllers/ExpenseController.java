@@ -81,8 +81,4 @@ public class ExpenseController {
                 .toList());
     }
 
-    @GetMapping("/ok")
-    public ResponseEntity<String> ok() {
-        return ResponseEntity.ok("OK");
-    }
 }
