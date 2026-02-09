@@ -1,12 +1,10 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
-import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.exceptions.FutureMonthNotAllowedException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
-import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepositoryCustom;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
