@@ -3,15 +3,16 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,18 +35,19 @@ class ExpenseControllerTest {
     private SupplierRepository supplierRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private ExpenseRepository expenseRepository;
 
     private User user;
     private Supplier supplier;
 
     @BeforeEach
     void setUp() {
+
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
         RestAssured.basePath = "/api/expenses";
 
-
+        expenseRepository.deleteAll();
         supplierRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -64,27 +66,26 @@ class ExpenseControllerTest {
         s.setUser(user);
 
         supplier = supplierRepository.save(s);
-
     }
 
     @Test
-    void whenCreateExpenseWithInstallments_thenReturn201(){
+    void whenCreateExpenseWithInstallments_thenReturn201() {
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
                 supplier.getId(),
                 LocalDate.of(2026, 2, 2),
-                new HashMap<>(){
-                    {
-                        put(30, "1234567890123456");
-                        put(60, "9876543210987654");
-                    }
-                },
+                new HashMap<>() {{
+                    put(30, "1234567890123456");
+                    put(60, "9876543210987654");
+                }},
                 BigDecimal.valueOf(400.00)
         );
+
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -93,7 +94,8 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        ExpenseResponseDto expenseResponseDto = response.body().as(ExpenseResponseDto.class);
+        ExpenseResponseDto expenseResponseDto =
+                response.body().as(ExpenseResponseDto.class);
 
         assertNotNull(response);
         assertEquals(200, expenseResponseDto.installments().get(0).amount().intValue());
@@ -104,7 +106,8 @@ class ExpenseControllerTest {
     }
 
     @Test
-    void whenRequestBodyIsInvalid_thenReturn400(){
+    void whenRequestBodyIsInvalid_thenReturn400() {
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 null,
@@ -113,9 +116,10 @@ class ExpenseControllerTest {
                 null,
                 null
         );
+
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -124,37 +128,33 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        assertNotNull(response);
-
         List<String> errors = response.path("errors");
 
         assertNotNull(errors);
-
         assertTrue(errors.contains("Payment type is required"));
-
         assertTrue(errors.contains("Total amount is required"));
     }
 
     @Test
-    void whenUserNotFound_thenReturn404(){
+    void whenUserNotFound_thenReturn404() {
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
                 supplier.getId(),
                 LocalDate.of(2026, 2, 2),
-                new HashMap<>(){
-                    {
-                        put(30, "1234567890123456");
-                        put(60, "9876543210987654");
-                    }
-                },
+                new HashMap<>() {{
+                    put(30, "1234567890123456");
+                    put(60, "9876543210987654");
+                }},
                 BigDecimal.valueOf(400.00)
         );
 
-        var randomUserId = UUID.randomUUID();
+        UUID randomUserId = UUID.randomUUID();
+
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", randomUserId)
@@ -163,33 +163,32 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        assertNotNull(response);
         List<String> errors = response.path("errors");
+
         assertNotNull(errors);
         assertTrue(errors.contains("User not found with id: " + randomUserId));
     }
 
     @Test
-    void whenSupplierNotFound_thenReturn404(){
-        var randomSupplierId = UUID.randomUUID();
+    void whenSupplierNotFound_thenReturn404() {
+
+        UUID randomSupplierId = UUID.randomUUID();
 
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
                 randomSupplierId,
                 LocalDate.of(2026, 2, 2),
-                new HashMap<>(){
-                    {
-                        put(30, "1234567890123456");
-                        put(60, "9876543210987654");
-                    }
-                },
+                new HashMap<>() {{
+                    put(30, "1234567890123456");
+                    put(60, "9876543210987654");
+                }},
                 BigDecimal.valueOf(400.00)
         );
 
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -198,14 +197,15 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        assertNotNull(response);
         List<String> errors = response.path("errors");
+
         assertNotNull(errors);
         assertTrue(errors.contains("Supplier not found with id: " + randomSupplierId));
     }
 
     @Test
-    void whenInstallmentsAreMissing_thenReturn400(){
+    void whenInstallmentsAreMissing_thenReturn400() {
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
@@ -214,9 +214,10 @@ class ExpenseControllerTest {
                 null,
                 BigDecimal.valueOf(400.00)
         );
+
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -225,29 +226,31 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        assertNotNull(response);
         List<String> errors = response.path("errors");
+
         assertNotNull(errors);
-        assertTrue(errors.contains("Installment intervals must be provided for CREDIT or BILL payment types."));
+        assertTrue(errors.contains(
+                "Installment intervals must be provided for CREDIT or BILL payment types."
+        ));
     }
 
     @Test
-    void whenInstallmentDueInDaysIsInvalid_thenReturn400(){
+    void whenInstallmentDueInDaysIsInvalid_thenReturn400() {
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
                 supplier.getId(),
                 LocalDate.of(2026, 2, 2),
-                new HashMap<>(){
-                    {
-                        put(-1, "1234567890123456");
-                    }
-                },
+                new HashMap<>() {{
+                    put(-1, "1234567890123456");
+                }},
                 BigDecimal.valueOf(400.00)
         );
+
         var response = RestAssured
                 .given()
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -256,10 +259,160 @@ class ExpenseControllerTest {
                 .extract()
                 .response();
 
-        assertNotNull(response);
         List<String> errors = response.path("errors");
+
         assertNotNull(errors);
         assertTrue(errors.contains("Installment due in days must be greater than zero."));
     }
 
+    @Test
+    void whenGetExpensesWithoutFilters_thenReturnAllUserExpenses() {
+
+        createExpense("INV-1");
+        createExpense("INV-2");
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+        List<String> invoices = response.jsonPath().getList("invoiceNumber");
+
+        assertEquals(2, invoices.size());
+        assertTrue(invoices.contains("INV-1"));
+        assertTrue(invoices.contains("INV-2"));
+    }
+
+    @Test
+    void whenGetExpensesByInvoiceNumber_thenReturnOnlyMatchingExpense() {
+
+        createExpense("INV-100");
+        createExpense("INV-200");
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .queryParam("invoiceNumber", "INV-100")
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+        List<String> invoices =
+                response.jsonPath().getList("invoiceNumber");
+
+        assertEquals(1, invoices.size());
+        assertEquals("INV-100", invoices.get(0));
+    }
+
+    @Test
+    void whenGetExpensesBySupplier_thenReturnOnlySupplierExpenses() {
+
+        Supplier otherSupplier = new Supplier("Other supplier");
+        otherSupplier.setUser(user);
+        otherSupplier = supplierRepository.save(otherSupplier);
+
+        createExpense("INV-1", supplier);
+        createExpense("INV-2", otherSupplier);
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .queryParam("supplierId", supplier.getId())
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+        List<String> invoices =
+                response.jsonPath().getList("invoiceNumber");
+
+        assertEquals(1, invoices.size());
+    }
+
+    @Test
+    void whenGetExpensesByMonth_thenReturnOnlyExpensesInThatMonth() {
+
+        createExpense("INV-JAN", LocalDate.of(2026, 1, 10));
+        createExpense("INV-FEB", LocalDate.of(2026, 2, 9));
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .queryParam("month", "2026-02")
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+        List<String> invoices =
+                response.jsonPath().getList("invoiceNumber");
+
+        assertEquals(1, invoices.size());
+        assertEquals("INV-FEB", invoices.get(0));
+    }
+
+    @Test
+    void whenGetExpensesForUserWithoutExpenses_thenReturnEmptyList() {
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+        List<?> list = response.jsonPath().getList("$");
+
+        assertTrue(list.isEmpty());
+    }
+
+
+    private void createExpense(String invoiceNumber) {
+        createExpense(invoiceNumber, supplier, LocalDate.of(2026, 2, 2));
+    }
+
+    private void createExpense(String invoiceNumber, LocalDate date) {
+        createExpense(invoiceNumber, supplier, date);
+    }
+
+    private void createExpense(String invoiceNumber, Supplier supplier) {
+        createExpense(invoiceNumber, supplier, LocalDate.of(2026, 2, 2));
+    }
+
+    private void createExpense(String invoiceNumber,
+                               Supplier supplier,
+                               LocalDate date) {
+
+        ExpenseRequestDto dto = new ExpenseRequestDto(
+                invoiceNumber,
+                PaymentType.CASH,
+                supplier.getId(),
+                date,
+                null,
+                BigDecimal.valueOf(100)
+        );
+
+        RestAssured.given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when()
+                .post("{userId}", user.getId())
+                .then()
+                .statusCode(201);
+    }
 }
