@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
+import com.pedrohenrique.pagcontrolback.exceptions.FutureMonthNotAllowedException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -172,6 +174,28 @@ class ListExpensesUseCaseTest {
         listExpensesUseCase.execute(query, userId);
 
         verify(expenseRepository).search(query, userId);
+    }
+
+    @Test
+    void shouldThrowException_whenMonthIsInFuture() {
+
+        UUID userId = UUID.randomUUID();
+
+        var query = new ListExpensesQuery(
+                YearMonth.now().plusMonths(1),
+                null,
+                null
+        );
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        assertThrows(
+                FutureMonthNotAllowedException.class,
+                () -> listExpensesUseCase.execute(query, userId)
+        );
+
+        verify(expenseRepository, never())
+                .search(any(), any());
     }
 
 }

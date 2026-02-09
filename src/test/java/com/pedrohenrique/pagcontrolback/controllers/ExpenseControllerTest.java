@@ -16,6 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -297,7 +298,7 @@ class ExpenseControllerTest {
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
-                        .queryParam("invoiceNumber", "INV-100")
+                        .queryParam("invoice_number", "INV-100")
                         .when()
                         .get("/{userId}", user.getId())
                         .then()
@@ -325,7 +326,7 @@ class ExpenseControllerTest {
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
-                        .queryParam("supplierId", supplier.getId())
+                        .queryParam("supplier_id", supplier.getId())
                         .when()
                         .get("/{userId}", user.getId())
                         .then()
@@ -379,6 +380,28 @@ class ExpenseControllerTest {
         List<?> list = response.jsonPath().getList("$");
 
         assertTrue(list.isEmpty());
+    }
+
+    @Test
+    void whenGetExpensesWithFutureMonth_thenReturn400() {
+
+        YearMonth future = YearMonth.now().plusMonths(1);
+
+        var response =
+                RestAssured.given()
+                        .accept(ContentType.JSON)
+                        .queryParam("month", future.toString())
+                        .when()
+                        .get("/{userId}", user.getId())
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+        List<String> errors = response.path("errors");
+
+        assertNotNull(errors);
+        assertTrue(errors.contains("Month cannot be in the future."));
     }
 
 
