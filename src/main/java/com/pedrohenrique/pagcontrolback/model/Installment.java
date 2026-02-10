@@ -83,6 +83,17 @@ public class Installment {
 
     public void setExpense(Expense expense) {
         this.expense = expense;
+        if(expense.getPaymentType() == PaymentType.CASH || expense.getPaymentType() == PaymentType.DEBIT) {
+            markAsPaid();
+        }
+    }
+
+    public void markAsPaid() {
+        if(this.status == InstallmentStatus.PAID) {
+            return;
+        }
+        this.paymentDate = LocalDateTime.now();
+        this.status = InstallmentStatus.PAID;
     }
 
     @Override
