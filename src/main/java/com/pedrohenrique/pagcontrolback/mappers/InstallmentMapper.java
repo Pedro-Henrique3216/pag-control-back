@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.mappers;
 
-import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 
