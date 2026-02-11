@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
+import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
@@ -37,6 +38,9 @@ class ExpenseControllerTest {
 
     @Autowired
     private ExpenseRepository expenseRepository;
+
+    @Autowired
+    private TestDataFactory testDataFactory;
 
     private User user;
     private Supplier supplier;
@@ -269,8 +273,8 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesWithoutFilters_thenReturnAllUserExpenses() {
 
-        createExpense("INV-1");
-        createExpense("INV-2");
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-2", port);
 
         var response =
                 RestAssured.given()
@@ -292,8 +296,8 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByInvoiceNumber_thenReturnOnlyMatchingExpense() {
 
-        createExpense("INV-100");
-        createExpense("INV-200");
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-100", port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-200", port);
 
         var response =
                 RestAssured.given()
@@ -320,8 +324,8 @@ class ExpenseControllerTest {
         otherSupplier.setUser(user);
         otherSupplier = supplierRepository.save(otherSupplier);
 
-        createExpense("INV-1", supplier);
-        createExpense("INV-2", otherSupplier);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port);
+        testDataFactory.createExpense(user.getId(), otherSupplier.getId(), "INV-2", port);
 
         var response =
                 RestAssured.given()
@@ -343,8 +347,8 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByMonth_thenReturnOnlyExpensesInThatMonth() {
 
-        createExpense("INV-JAN", LocalDate.of(2026, 1, 10));
-        createExpense("INV-FEB", LocalDate.of(2026, 2, 9));
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-JAN", LocalDate.of(2026, 1, 10), port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-FEB", LocalDate.of(2026, 2, 9), port);
 
         var response =
                 RestAssured.given()
@@ -402,40 +406,5 @@ class ExpenseControllerTest {
 
         assertNotNull(errors);
         assertTrue(errors.contains("Month cannot be in the future."));
-    }
-
-
-    private void createExpense(String invoiceNumber) {
-        createExpense(invoiceNumber, supplier, LocalDate.of(2026, 2, 2));
-    }
-
-    private void createExpense(String invoiceNumber, LocalDate date) {
-        createExpense(invoiceNumber, supplier, date);
-    }
-
-    private void createExpense(String invoiceNumber, Supplier supplier) {
-        createExpense(invoiceNumber, supplier, LocalDate.of(2026, 2, 2));
-    }
-
-    private void createExpense(String invoiceNumber,
-                               Supplier supplier,
-                               LocalDate date) {
-
-        ExpenseRequestDto dto = new ExpenseRequestDto(
-                invoiceNumber,
-                PaymentType.CASH,
-                supplier.getId(),
-                date,
-                null,
-                BigDecimal.valueOf(100)
-        );
-
-        RestAssured.given()
-                .contentType(ContentType.JSON)
-                .body(dto)
-                .when()
-                .post("{userId}", user.getId())
-                .then()
-                .statusCode(201);
     }
 }
