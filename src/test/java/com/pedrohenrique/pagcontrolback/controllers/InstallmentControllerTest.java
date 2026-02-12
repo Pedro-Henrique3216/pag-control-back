@@ -1,10 +1,9 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
-import com.pedrohenrique.pagcontrolback.model.PersonType;
-import com.pedrohenrique.pagcontrolback.model.Supplier;
-import com.pedrohenrique.pagcontrolback.model.User;
+import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
+import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
@@ -17,6 +16,9 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class InstallmentControllerTest {
@@ -32,6 +34,9 @@ class InstallmentControllerTest {
 
     @Autowired
     private ExpenseRepository expenseRepository;
+
+    @Autowired
+    private InstallmentRepository installmentRepository;
 
     @Autowired
     private TestDataFactory factory;
@@ -201,16 +206,91 @@ class InstallmentControllerTest {
                 .statusCode(404);
     }
 
+    @Test
+    void shouldPayInstallmentWhenDataIsValid(){
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
+
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
+
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
 
 
+        RestAssured
+                .given()
+                .when()
+                .get("/{userId}/{installmentId}/pay", user.getId(), installment.getInstallmentId())
+                .then()
+                .statusCode(200);
 
+        Installment updated =
+                installmentRepository.findById(installment.getInstallmentId())
+                        .orElseThrow();
 
+        assertEquals(InstallmentStatus.PAID, updated.getStatus());
+    }
 
+    @Test
+    void shouldPayInstallmentReturn404WhenUserNotFound(){
+        RestAssured
+                .given()
+                .when()
+                .get("/{userId}/{installmentId}/pay", UUID.randomUUID(), UUID.randomUUID())
+                .then()
+                .statusCode(404);
+    }
 
+    @Test
+    void shouldPayInstallmentReturn404WhenInstallmentNotFound(){
+        RestAssured
+                .given()
+                .when()
+                .get("/{userId}/{installmentId}/pay", user.getId(), UUID.randomUUID())
+                .then()
+                .statusCode(404);
+    }
 
+    @Test
+    void shouldPayInstallmentReturn403WhenInstallmentDoesNotBelongToUser(){
+        User otherUser = userRepository.save(
+                new User(
+                        "Jane Doe",
+                        null,
+                        "teste2@gmail.com",
+                        "password123",
+                        "12345678900",
+                        PersonType.PF
+                )
+        );
 
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
 
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
 
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
 
+        RestAssured
+                .given()
+                .when()
+                .get("/{userId}/{installmentId}/pay", otherUser.getId(), installment.getInstallmentId())
+                .then()
+                .statusCode(403);
+
+    }
 
 }
