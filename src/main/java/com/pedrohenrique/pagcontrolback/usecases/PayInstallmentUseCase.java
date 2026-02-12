@@ -36,7 +36,6 @@ public class PayInstallmentUseCase {
         Installment installment = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new InstallmentNotFoundException("Installment not found"));
 
-        System.out.println("Teste");
         if (!installment.getExpense().getUser().getId().equals(user.getId())) {
             throw new InstallmentAccessDeniedException("Installment does not belong to the user");
         }
