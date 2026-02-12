@@ -60,6 +60,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserNotFoundException.class,
             SupplierNotFoundException.class,
+            InstallmentNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
@@ -67,7 +68,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            SupplierAlreadyExistsWithCnpjException.class
+            SupplierAlreadyExistsWithCnpjException.class,
+            InstallmentAlreadyPaidException.class,
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<HandleExceptionInternalDto> handleConflictException(RuntimeException ex){
@@ -93,6 +95,12 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(InstallmentAccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(InstallmentAccessDeniedException ex){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(Exception.class)

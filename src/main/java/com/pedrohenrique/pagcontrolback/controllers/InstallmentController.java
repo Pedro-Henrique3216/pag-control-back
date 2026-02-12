@@ -6,6 +6,7 @@ import com.pedrohenrique.pagcontrolback.mappers.InstallmentMapper;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.usecases.ListInstallmentsUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.PayInstallmentUseCase;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,11 @@ import java.util.UUID;
 public class InstallmentController {
 
     private final ListInstallmentsUseCase listInstallmentsUseCase;
+    private final PayInstallmentUseCase payInstallmentUseCase;
 
-    public InstallmentController(ListInstallmentsUseCase listInstallmentsUseCase) {
+    public InstallmentController(ListInstallmentsUseCase listInstallmentsUseCase, PayInstallmentUseCase payInstallmentUseCase) {
         this.listInstallmentsUseCase = listInstallmentsUseCase;
+        this.payInstallmentUseCase = payInstallmentUseCase;
     }
 
     @GetMapping("/{userId}")
@@ -51,5 +54,14 @@ public class InstallmentController {
                 .map(InstallmentMapper::fromDomain)
                 .toList();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{userId}/{installmentId}/pay")
+    public ResponseEntity<Void> payInstallment(
+            @PathVariable UUID userId,
+            @PathVariable UUID installmentId
+    ) {
+        payInstallmentUseCase.execute(userId, installmentId);
+        return ResponseEntity.ok().build();
     }
 }
