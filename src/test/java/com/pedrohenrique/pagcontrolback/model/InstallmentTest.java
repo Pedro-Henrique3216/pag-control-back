@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -159,7 +158,7 @@ class InstallmentTest {
     }
 
     @Test
-    void shouldThrowInstallmentAlreadyPaidExceptionWhenInstallmentIsAlreadyPaid() throws InterruptedException {
+    void shouldThrowInstallmentAlreadyPaidExceptionWhenInstallmentIsAlreadyPaid() {
 
         Installment installment = new Installment(
                 new BigDecimal("100.00"),
