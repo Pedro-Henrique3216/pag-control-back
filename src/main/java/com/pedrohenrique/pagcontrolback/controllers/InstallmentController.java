@@ -8,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.usecases.ListInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.PayInstallmentUseCase;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,7 @@ public class InstallmentController {
     }
 
     @GetMapping("/{userId}")
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<InstallmentResponseDto>> getExpenses(
             @PathVariable
             UUID userId,
@@ -57,6 +59,7 @@ public class InstallmentController {
     }
 
     @GetMapping("/{userId}/{installmentId}/pay")
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Void> payInstallment(
             @PathVariable UUID userId,
             @PathVariable UUID installmentId
