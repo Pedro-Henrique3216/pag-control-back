@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAlreadyPaidException;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentDueDateRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.InvalidInstallmentAmountException;
 import jakarta.persistence.*;
@@ -90,7 +91,7 @@ public class Installment {
 
     public void markAsPaid() {
         if(this.status == InstallmentStatus.PAID) {
-            return;
+            throw new InstallmentAlreadyPaidException("Installment is already marked as paid.");
         }
         this.paymentDate = LocalDateTime.now();
         this.status = InstallmentStatus.PAID;
