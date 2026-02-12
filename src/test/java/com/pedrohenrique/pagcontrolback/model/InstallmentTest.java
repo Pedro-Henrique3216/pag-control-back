@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAlreadyPaidException;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentDueDateRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.InvalidInstallmentAmountException;
 import org.junit.jupiter.api.Test;
@@ -158,7 +159,7 @@ class InstallmentTest {
     }
 
     @Test
-    void shouldNotChangePaymentDateWhenInstallmentIsAlreadyPaid() throws InterruptedException {
+    void shouldThrowInstallmentAlreadyPaidExceptionWhenInstallmentIsAlreadyPaid() throws InterruptedException {
 
         Installment installment = new Installment(
                 new BigDecimal("100.00"),
@@ -167,14 +168,11 @@ class InstallmentTest {
         );
 
         installment.markAsPaid();
-        LocalDateTime firstPaymentDate = installment.getPaymentDate();
 
-        Thread.sleep(10);
-
-        installment.markAsPaid();
-        LocalDateTime secondPaymentDate = installment.getPaymentDate();
-
-        assertEquals(firstPaymentDate, secondPaymentDate);
+        assertThrows(
+                InstallmentAlreadyPaidException.class,
+                installment::markAsPaid
+        );
     }
 
 
