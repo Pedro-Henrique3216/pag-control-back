@@ -1,9 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
-import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
-import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
@@ -28,6 +25,10 @@ public class PayInstallmentUseCase {
 
         if(userId == null){
             throw new UserRequiredException("User ID is required");
+        }
+
+        if(installmentId == null){
+            throw new InstallmentRequiredException("Installment ID is required");
         }
 
         User user = userRepository.findById(userId)
