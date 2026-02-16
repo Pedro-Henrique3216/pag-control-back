@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
@@ -291,6 +292,172 @@ class InstallmentControllerTest {
                 .then()
                 .statusCode(403);
 
+    }
+
+    @Test
+    void shouldUpdateInstallmentWhenRequestIsValid(){
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
+
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
+
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        InstallmentUpdateDto dto = new InstallmentUpdateDto(
+                BigDecimal.valueOf(500),
+                LocalDate.now().plusDays(10),
+                "12345678901234567890"
+        );
+
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .put("/{userId}/{installmentId}", user.getId(), installment.getInstallmentId())
+                .then()
+                .statusCode(200);
+
+        Installment updated =
+                installmentRepository.findById(installment.getInstallmentId())
+                        .orElseThrow();
+
+        assertEquals(500, updated.getAmount().doubleValue());
+        assertEquals(LocalDate.now().plusDays(10), updated.getDueDate());
+        assertEquals("12345678901234567890", updated.getBarcode());
+    }
+
+    @Test
+    void shouldReturn400WhenRequestBodyIsInvalid(){
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
+
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
+
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        InstallmentUpdateDto dto = new InstallmentUpdateDto(
+                BigDecimal.valueOf(-500),
+                LocalDate.now().plusDays(10),
+                "12345678901234567890"
+        );
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .put("/{userId}/{installmentId}", user.getId(), installment.getInstallmentId())
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void shouldReturn404WhenUserDoesNotExist(){
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
+
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
+
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        InstallmentUpdateDto dto = new InstallmentUpdateDto(
+                BigDecimal.valueOf(500),
+                LocalDate.now().plusDays(10),
+                "12345678901234567890"
+        );
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .put("/{userId}/{installmentId}", UUID.randomUUID(), installment.getInstallmentId())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldReturn404WhenInstallmentDoesNotExist(){
+        InstallmentUpdateDto dto = new InstallmentUpdateDto(
+                BigDecimal.valueOf(500),
+                LocalDate.now().plusDays(10),
+                "12345678901234567890"
+        );
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .put("/{userId}/{installmentId}", user.getId(), UUID.randomUUID())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldReturn403WhenInstallmentDoesNotBelongToUser(){
+        User otherUser = userRepository.save(
+                new User(
+                        "Jane Doe",
+                        null,
+                        "testefs@gmail.com",
+                        "password123",
+                        "12345678900",
+                        PersonType.PF
+                )
+        );
+
+        factory.createExpense(user.getId(), supplier.getId(), "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port);
+
+        Expense expense = expenseRepository.findAll()
+                .stream()
+                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
+                .findFirst()
+                .orElseThrow();
+
+        Installment installment = installmentRepository.findAll()
+                .stream()
+                .filter(i -> i.getExpense().getId().equals(expense.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        InstallmentUpdateDto dto = new InstallmentUpdateDto(
+                BigDecimal.valueOf(500),
+                LocalDate.now().plusDays(10),
+                "12345678901234567890"
+        );
+
+        RestAssured
+                .given()
+                .contentType("application/json")
+                .body(dto)
+                .when()
+                .put("/{userId}/{installmentId}", otherUser.getId(), installment.getInstallmentId())
+                .then()
+                .statusCode(403);
     }
 
 }
