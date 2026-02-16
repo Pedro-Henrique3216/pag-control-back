@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListInstallmentQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.InstallmentMapper;
@@ -7,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.usecases.ListInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.PayInstallmentUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.UpdateInstallmentUseCase;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +24,16 @@ public class InstallmentController {
 
     private final ListInstallmentsUseCase listInstallmentsUseCase;
     private final PayInstallmentUseCase payInstallmentUseCase;
+    private final UpdateInstallmentUseCase updateInstallmentUseCase;
 
-    public InstallmentController(ListInstallmentsUseCase listInstallmentsUseCase, PayInstallmentUseCase payInstallmentUseCase) {
+    public InstallmentController(
+            ListInstallmentsUseCase listInstallmentsUseCase,
+            PayInstallmentUseCase payInstallmentUseCase,
+            UpdateInstallmentUseCase updateInstallmentUseCase
+    ) {
         this.listInstallmentsUseCase = listInstallmentsUseCase;
         this.payInstallmentUseCase = payInstallmentUseCase;
+        this.updateInstallmentUseCase = updateInstallmentUseCase;
     }
 
     @GetMapping("/{userId}")
@@ -65,6 +73,18 @@ public class InstallmentController {
             @PathVariable UUID installmentId
     ) {
         payInstallmentUseCase.execute(userId, installmentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{userId}/{installmentId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<Void> updateInstallment(
+            @PathVariable UUID userId,
+            @PathVariable UUID installmentId,
+            @RequestBody InstallmentUpdateDto dto
+    ) {
+        Installment installment = InstallmentMapper.toDomain(dto);
+        updateInstallmentUseCase.execute(userId, installmentId, installment);
         return ResponseEntity.ok().build();
     }
 }

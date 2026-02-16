@@ -46,11 +46,15 @@ public class Installment {
     }
 
     private void validateInstallment(BigDecimal amount, LocalDate dueDate){
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidInstallmentAmountException("Installment amount must be greater than zero.");
-        }
+        validateAmount(amount);
         if (dueDate == null) {
             throw new InstallmentDueDateRequiredException("Installment due date is required");
+        }
+    }
+
+    private void validateAmount(BigDecimal amount){
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidInstallmentAmountException("Installment amount must be greater than zero.");
         }
     }
 
@@ -95,6 +99,24 @@ public class Installment {
         }
         this.paymentDate = LocalDateTime.now();
         this.status = InstallmentStatus.PAID;
+    }
+
+    public void updateInstallment(BigDecimal amount, LocalDate dueDate, String barcode) {
+        if(this.status == InstallmentStatus.PAID) {
+            throw new InstallmentAlreadyPaidException("Cannot update a paid installment.");
+        }
+        if(amount != null) {
+            validateAmount(amount);
+            this.amount = amount;
+        }
+
+        if(dueDate != null) {
+            this.dueDate = dueDate;
+        }
+
+        if(barcode != null) {
+            this.barcode = barcode;
+        }
     }
 
     @Override
