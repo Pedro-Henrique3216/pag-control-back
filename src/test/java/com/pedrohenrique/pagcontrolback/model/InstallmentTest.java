@@ -174,5 +174,111 @@ class InstallmentTest {
         );
     }
 
+    @Test
+    void shouldThrowInstallmentAlreadyPaidExceptionWhenUpdatingPaidInstallment(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        installment.markAsPaid();
+
+        assertThrows(
+                InstallmentAlreadyPaidException.class,
+                () -> installment.updateInstallment(new BigDecimal("150.00"), LocalDate.now().plusDays(10), "456")
+        );
+    }
+
+    @Test
+    void shouldUpdateAmountWhenAmountIsProvided(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        installment.updateInstallment(new BigDecimal("150.00"), null, null);
+
+        assertEquals(new BigDecimal("150.00"), installment.getAmount());
+    }
+
+    @Test
+    void shouldUpdateDueDateWhenDueDateIsProvided(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        LocalDate newDueDate = LocalDate.now().plusDays(10);
+        installment.updateInstallment(null, newDueDate, null);
+
+        assertEquals(newDueDate, installment.getDueDate());
+    }
+
+    @Test
+    void shouldUpdateBarcodeWhenBarcodeIsProvided(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        String newBarcode = "456";
+        installment.updateInstallment(null, null, newBarcode);
+
+        assertEquals(newBarcode, installment.getBarcode());
+    }
+
+    @Test
+    void shouldUpdateAllFieldsWhenAllParametersAreProvided(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        LocalDate newDueDate = LocalDate.now().plusDays(10);
+        String newBarcode = "456";
+        installment.updateInstallment(new BigDecimal("150.00"), newDueDate, newBarcode);
+
+        assertEquals(new BigDecimal("150.00"), installment.getAmount());
+        assertEquals(newDueDate, installment.getDueDate());
+        assertEquals(newBarcode, installment.getBarcode());
+    }
+
+    @Test
+    void shouldNotChangeAnythingWhenAllParametersAreNull(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        BigDecimal originalAmount = installment.getAmount();
+        LocalDate originalDueDate = installment.getDueDate();
+        String originalBarcode = installment.getBarcode();
+
+        installment.updateInstallment(null, null, null);
+
+        assertEquals(originalAmount, installment.getAmount());
+        assertEquals(originalDueDate, installment.getDueDate());
+        assertEquals(originalBarcode, installment.getBarcode());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAmountIsInvalid(){
+        Installment installment = new Installment(
+                new BigDecimal("100.00"),
+                LocalDate.now(),
+                "123"
+        );
+
+        assertThrows(
+                InvalidInstallmentAmountException.class,
+                () -> installment.updateInstallment(new BigDecimal("-10"), null, null)
+        );
+    }
 
 }
