@@ -75,7 +75,7 @@ class PayInstallmentUseCaseTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
-        payInstallmentUseCase.execute(UUID.randomUUID(), installment.getInstallmentId());
+        payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID());
 
         verify(installmentRepository, times(1)).save(installment);
 
@@ -165,7 +165,7 @@ class PayInstallmentUseCaseTest {
 
         assertThrows(
                 InstallmentAccessDeniedException.class,
-                () -> payInstallmentUseCase.execute(UUID.randomUUID(), installment.getInstallmentId())
+                () -> payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID())
         );
 
         verify(installmentRepository, never()).save(installment);
