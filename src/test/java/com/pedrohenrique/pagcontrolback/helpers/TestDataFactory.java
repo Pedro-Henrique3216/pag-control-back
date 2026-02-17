@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.helpers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
+import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -117,4 +118,27 @@ public class TestDataFactory {
                 .then()
                 .statusCode(201);
     }
+
+    public void createSupplier(
+            UUID userId,
+            String name,
+            String cnpj,
+            int port
+    ) {
+
+        SupplierRequestDto dto = new SupplierRequestDto(
+                name,
+                cnpj
+        );
+        RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when()
+                .post("http://localhost:" + port + "/api/suppliers/{userId}", userId)
+                .then()
+                .statusCode(201);
+    }
+
+
 }
