@@ -1,12 +1,14 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
+import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -29,6 +32,9 @@ class SupplierControllerTest {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private TestDataFactory factory;
 
     private User user;
 
@@ -196,6 +202,58 @@ class SupplierControllerTest {
         List<String> errors = response.path("errors");
         assertNotNull(errors);
         assertTrue(errors.contains("Supplier with this CNPJ already exists for this user."));
+    }
+
+    @Test
+    void shouldReturnSuppliersWhenUserHasSuppliers() {
+
+        factory.createSupplier(user.getId(), "Fornecedor 1", null, port);
+        factory.createSupplier(user.getId(), "Fornecedor 2", null, port);
+
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}", user.getId())
+                .then()
+                .statusCode(200)
+                .body("$.size()", is(2));
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenUserHasNoSuppliers(){
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}", user.getId())
+                .then()
+                .statusCode(200)
+                .body("$.size()", is(0));
+    }
+
+    @Test
+    void shouldReturn404WhenUserDoesNotExist(){
+        var userId = UUID.randomUUID();
+
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}", userId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldReturn400WhenUserIdIsInvalid(){
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}", "invalid-uuid")
+                .then()
+                .statusCode(400);
     }
 
 }
