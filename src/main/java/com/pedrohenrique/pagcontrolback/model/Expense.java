@@ -19,6 +19,7 @@ public class Expense {
     @Column(length = 100, name = "invoice_number")
     private String invoiceNumber;
     @Column(name = "payment_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private PaymentType paymentType;
     @ManyToOne
     @JoinColumn(name = "supplier_id")
