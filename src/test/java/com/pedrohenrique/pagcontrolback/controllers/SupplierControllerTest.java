@@ -255,5 +255,47 @@ class SupplierControllerTest {
                 .then()
                 .statusCode(400);
     }
+    @Test
+    void shouldReturnSupplierWhenUserIdAndSupplierIdAreValid(){
+        factory.createSupplier(user.getId(), "Fornecedor 1", null, port);
+
+        Supplier supplier = supplierRepository.findAll().get(0);
+
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}/{supplierId}", user.getId(), supplier.getId())
+                .then()
+                .statusCode(200)
+                .body("name", is("Fornecedor 1"));
+    }
+
+    @Test
+    void shouldReturn404WhenSupplierIsNotFoundForUser(){
+        var supplierId = UUID.randomUUID();
+
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}/{supplierId}", user.getId(), supplierId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldReturn404WhenGetByUserIdAndSupplierIdUserDoesNotExist(){
+        var userId = UUID.randomUUID();
+        var supplierId = UUID.randomUUID();
+
+        RestAssured
+                .given()
+                .accept(ContentType.JSON)
+                .when()
+                .get("/{userId}/{supplierId}", userId, supplierId)
+                .then()
+                .statusCode(404);
+    }
 
 }
