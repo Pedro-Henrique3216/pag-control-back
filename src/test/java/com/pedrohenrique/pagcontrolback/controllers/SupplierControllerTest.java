@@ -76,7 +76,6 @@ class SupplierControllerTest {
                 .statusCode(201)
                 .extract()
                 .response();
-        ;
         assertNotNull(response);
         assertEquals("Supplier Name", response.jsonPath().getString("name"));
     }
