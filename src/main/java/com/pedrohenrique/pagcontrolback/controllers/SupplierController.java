@@ -5,6 +5,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.usecases.CreateSupplierUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.GetSupplierByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListSuppliersUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,17 @@ public class SupplierController {
 
     private final ListSuppliersUseCase listSuppliersUseCase;
 
-    public SupplierController(CreateSupplierUseCase createSupplierUseCase, ListSuppliersUseCase listSuppliersUseCase) {
+    private final GetSupplierByIdUseCase getSupplierByIdUseCase;
+
+    public SupplierController(
+            CreateSupplierUseCase createSupplierUseCase,
+            ListSuppliersUseCase listSuppliersUseCase,
+            GetSupplierByIdUseCase getSupplierByIdUseCase
+    ) {
         this.createSupplierUseCase = createSupplierUseCase;
         this.listSuppliersUseCase = listSuppliersUseCase;
+        this.getSupplierByIdUseCase = getSupplierByIdUseCase;
+
     }
 
     @PostMapping("/{userId}")
@@ -46,5 +55,11 @@ public class SupplierController {
         return ResponseEntity.ok(responseDtos);
     }
 
+    @GetMapping("/{userId}/{supplierId}")
+    public ResponseEntity<SupplierResponseDto> getSupplierById(@PathVariable UUID userId, @PathVariable UUID supplierId) {
+        Supplier supplier = getSupplierByIdUseCase.execute(userId, supplierId);
+        SupplierResponseDto responseDto = SupplierMapper.fromDomain(supplier);
+        return ResponseEntity.ok(responseDto);
+    }
 
 }
