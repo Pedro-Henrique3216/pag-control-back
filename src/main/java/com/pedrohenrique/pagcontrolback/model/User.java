@@ -112,6 +112,10 @@ public class User implements UserDetails {
         return suppliers;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
