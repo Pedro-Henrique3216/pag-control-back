@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

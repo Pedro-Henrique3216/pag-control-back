@@ -4,7 +4,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.UserResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.UserMapper;
 import com.pedrohenrique.pagcontrolback.model.User;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import com.pedrohenrique.pagcontrolback.usecases.CreateUserUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
