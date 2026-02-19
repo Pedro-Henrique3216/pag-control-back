@@ -33,7 +33,7 @@ class UserControllerTest {
         UserRequestDto request = new UserRequestDto(
                 "John Doe",
                 "JD Supplies",
-                "teste@gmail.com",
+                "testeCreate@gmail.com",
                 "12345678Ab@",
                 "(11)92222-3333",
                 PersonType.PJ
@@ -94,7 +94,7 @@ class UserControllerTest {
         UserRequestDto request = new UserRequestDto(
                 "John Doe",
                 "JD Supplies",
-                "teste@gmail.com",
+                "testeLogin@gmail.com",
                 "12345678Ab@",
                 "(11)92222-3333",
                 PersonType.PJ
@@ -109,7 +109,7 @@ class UserControllerTest {
                 .statusCode(201);
 
         LoginRequestDto loginRequest = new LoginRequestDto(
-                "teste@gmail.com",
+                "testeLogin@gmail.com",
                 "12345678Ab@"
         );
 
@@ -149,7 +149,7 @@ class UserControllerTest {
         UserRequestDto request = new UserRequestDto(
                 "John Doe",
                 "JD Supplies",
-                "teste@gmail.com",
+                "testeError@gmail.com",
                 "12345678Ab@",
                 "(11)92222-3333",
                 PersonType.PJ
@@ -164,7 +164,7 @@ class UserControllerTest {
                 .statusCode(201);
 
         LoginRequestDto loginRequest = new LoginRequestDto(
-                "teste@gmail.com",
+                "testeError@gmail.com",
                 "senhaerrada"
         );
 
