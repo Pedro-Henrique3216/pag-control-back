@@ -87,10 +87,10 @@ class SupplierControllerTest {
 
         var response = RestAssured.given()
                 .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(requestDto)
                 .when()
-                .post("/{userId}", user.getId())
+                .post()
                 .then()
                 .statusCode(201)
                 .extract()
@@ -110,10 +110,10 @@ class SupplierControllerTest {
 
         var response = RestAssured.given()
                 .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(requestDto)
                 .when()
-                .post("/{userId}", user.getId())
+                .post()
                 .then()
                 .statusCode(400)
                 .extract()
@@ -128,57 +128,6 @@ class SupplierControllerTest {
     }
 
     @Test
-    void whenUserIdIsInvalid_thenReturn400() {
-
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "Supplier Name",
-                "12.345.678/0001-95"
-        );
-
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
-                .body(requestDto)
-                .when()
-                .post("/{userId}", "invalid-uuid")
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
-
-        assertNotNull(response);
-    }
-
-    @Test
-    void whenUserNotFound_thenReturn404() {
-
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "Supplier Name",
-                "12.345.678/0001-95"
-        );
-
-        var userId = UUID.randomUUID();
-
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
-                .body(requestDto)
-                .when()
-                .post("/{userId}", userId)
-                .then()
-                .statusCode(404)
-                .extract()
-                .response();
-
-        assertNotNull(response);
-
-        List<String> errors = response.path("errors");
-
-        assertNotNull(errors);
-        assertTrue(errors.contains("User not found with ID: " + userId));
-    }
-
-    @Test
     void whenCnpjIsInvalid_thenReturn400() {
 
         SupplierRequestDto requestDto = new SupplierRequestDto(
@@ -188,10 +137,10 @@ class SupplierControllerTest {
 
         var response = RestAssured.given()
                 .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(requestDto)
                 .when()
-                .post("/{userId}", user.getId())
+                .post()
                 .then()
                 .statusCode(400)
                 .extract()
@@ -222,10 +171,10 @@ class SupplierControllerTest {
 
         var response = RestAssured.given()
                 .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
+                .contentType(ContentType.JSON)
                 .body(requestDto)
                 .when()
-                .post("/{userId}", user.getId())
+                .post()
                 .then()
                 .statusCode(409)
                 .extract()
@@ -242,15 +191,15 @@ class SupplierControllerTest {
     @Test
     void shouldReturnSuppliersWhenUserHasSuppliers() {
 
-        factory.createSupplier(user.getId(), "Fornecedor 1", null, port, token);
-        factory.createSupplier(user.getId(), "Fornecedor 2", null, port, token);
+        factory.createSupplier("Fornecedor 1", null, port, token);
+        factory.createSupplier("Fornecedor 2", null, port, token);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("$.size()", is(2));
@@ -264,44 +213,16 @@ class SupplierControllerTest {
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("$.size()", is(0));
     }
 
     @Test
-    void shouldReturn404WhenUserDoesNotExist() {
+    void shouldReturnSupplierWhenSupplierIdIsValidAndBelongsToUser() {
 
-        var userId = UUID.randomUUID();
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get("/{userId}", userId)
-                .then()
-                .statusCode(404);
-    }
-
-    @Test
-    void shouldReturn400WhenUserIdIsInvalid() {
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get("/{userId}", "invalid-uuid")
-                .then()
-                .statusCode(400);
-    }
-
-    @Test
-    void shouldReturnSupplierWhenUserIdAndSupplierIdAreValid() {
-
-        factory.createSupplier(user.getId(), "Fornecedor 1", null, port, token);
+        factory.createSupplier("Fornecedor 1", null, port, token);
 
         Supplier supplier = supplierRepository.findAll().get(0);
 
@@ -310,39 +231,51 @@ class SupplierControllerTest {
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{userId}/{supplierId}", user.getId(), supplier.getId())
+                .get("/{supplierId}", supplier.getId())
                 .then()
                 .statusCode(200)
                 .body("name", is("Fornecedor 1"));
     }
 
     @Test
-    void shouldReturn404WhenSupplierIsNotFoundForUser() {
-
-        var supplierId = UUID.randomUUID();
+    void shouldReturn404WhenSupplierIsNotFound() {
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{userId}/{supplierId}", user.getId(), supplierId)
+                .get("/{supplierId}", UUID.randomUUID())
                 .then()
                 .statusCode(404);
     }
 
     @Test
-    void shouldReturn404WhenGetByUserIdAndSupplierIdUserDoesNotExist() {
+    void shouldReturn404WhenSupplierDoesNotBelongToUser() {
 
-        var userId = UUID.randomUUID();
-        var supplierId = UUID.randomUUID();
+        User otherUser = userRepository.save(
+                new User(
+                        "Other User",
+                        null,
+                        "other@gmail.com",
+                        passwordEncoder.encode("password123"),
+                        "12345678900",
+                        PersonType.PF
+                )
+        );
+
+        Supplier supplier = new Supplier(
+                "Fornecedor de outro usuário"
+        );
+        supplier.setUser(otherUser);
+        supplierRepository.save(supplier);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{userId}/{supplierId}", userId, supplierId)
+                .get("/{supplierId}", supplier.getId())
                 .then()
                 .statusCode(404);
     }

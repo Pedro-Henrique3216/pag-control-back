@@ -16,7 +16,6 @@ import java.util.UUID;
 public class TestDataFactory {
 
     public void createExpense(
-            UUID userId,
             UUID supplierId,
             String invoiceNumber,
             LocalDate date,
@@ -39,21 +38,19 @@ public class TestDataFactory {
                 .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
-                .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
+                .post("http://localhost:" + port + "/api/expenses")
                 .then()
                 .statusCode(201);
     }
 
 
     public void createExpense(
-            UUID userId,
             UUID supplierId,
             String invoiceNumber,
             int port,
             String token
     ) {
         createExpense(
-                userId,
                 supplierId,
                 invoiceNumber,
                 LocalDate.of(2026, 2, 2),
@@ -63,7 +60,6 @@ public class TestDataFactory {
     }
 
     public void createExpense(
-            UUID userId,
             UUID supplierId,
             String invoiceNumber,
             BigDecimal amount,
@@ -89,13 +85,12 @@ public class TestDataFactory {
                 .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
-                .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
+                .post("http://localhost:" + port + "/api/expenses")
                 .then()
                 .statusCode(201);
     }
 
     public void createExpense(
-            UUID userId,
             UUID supplierId,
             String invoiceNumber,
             BigDecimal amount,
@@ -122,13 +117,12 @@ public class TestDataFactory {
                 .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
-                .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
+                .post("http://localhost:" + port + "/api/expenses")
                 .then()
                 .statusCode(201);
     }
 
     public void createSupplier(
-            UUID userId,
             String name,
             String cnpj,
             int port,
@@ -145,7 +139,7 @@ public class TestDataFactory {
                 .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
-                .post("http://localhost:" + port + "/api/suppliers/{userId}", userId)
+                .post("http://localhost:" + port + "/api/suppliers")
                 .then()
                 .statusCode(201);
     }

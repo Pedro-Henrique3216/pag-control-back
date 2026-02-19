@@ -87,21 +87,20 @@ class InstallmentControllerTest {
 
         Supplier s = new Supplier("Supplier Inc.");
         s.setUser(user);
-
         supplier = supplierRepository.save(s);
     }
 
     @Test
     void whenGetInstallmentsWithoutFilters_thenReturnAllUserInstallments() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001", port, token);
-        factory.createExpense(user.getId(), supplier.getId(), "INV-002", port, token);
+        factory.createExpense(supplier.getId(), "INV-001", port, token);
+        factory.createExpense(supplier.getId(), "INV-002", port, token);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(2));
@@ -110,18 +109,28 @@ class InstallmentControllerTest {
     @Test
     void whenGetInstallmentsFilteredByMonth_thenReturnOnlyInstallmentsFromMonth() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                LocalDate.of(2026, 2, 10), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                LocalDate.of(2026, 2, 10),
+                port,
+                token
+        );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-002",
-                LocalDate.of(2026, 1, 10), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-002",
+                LocalDate.of(2026, 1, 10),
+                port,
+                token
+        );
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .queryParam("month", "2026-02")
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(1));
@@ -134,15 +143,15 @@ class InstallmentControllerTest {
         s.setUser(user);
         Supplier otherSupplier = supplierRepository.save(s);
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001", port, token);
-        factory.createExpense(user.getId(), otherSupplier.getId(), "INV-002", port, token);
+        factory.createExpense(supplier.getId(), "INV-001", port, token);
+        factory.createExpense(otherSupplier.getId(), "INV-002", port, token);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .queryParam("supplier_id", supplier.getId())
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(1));
@@ -151,17 +160,27 @@ class InstallmentControllerTest {
     @Test
     void whenGetInstallmentsFilteredByStatus_thenReturnOnlyInstallmentsWithStatus() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                port,
+                token
+        );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-002", port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-002",
+                port,
+                token
+        );
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .queryParam("status", "UNPAID")
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(2));
@@ -170,18 +189,29 @@ class InstallmentControllerTest {
     @Test
     void whenGetInstallmentsWithOverdueTrue_thenReturnOnlyOverdueInstallments() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now().minusDays(20), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now().minusDays(20),
+                port,
+                token
+        );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-002",
-                BigDecimal.valueOf(300), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-002",
+                BigDecimal.valueOf(300),
+                port,
+                token
+        );
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .queryParam("overdue", true)
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(2));
@@ -190,61 +220,33 @@ class InstallmentControllerTest {
     @Test
     void whenGetInstallmentsWithDueInNext7DaysTrue_thenReturnOnlyInstallmentsDueInNext7Days() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now().minusDays(10), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now().minusDays(10),
+                port,
+                token
+        );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-002",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-002",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .queryParam("due_in_next_days", true)
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(200)
                 .body("size()", Matchers.is(2));
-    }
-
-    @Test
-    void whenGetInstallmentsWithMultipleFilters_thenReturnOnlyMatchingInstallments() {
-
-        Supplier s = new Supplier("Other Supplier Inc.");
-        s.setUser(user);
-        Supplier otherSupplier = supplierRepository.save(s);
-
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now().minusDays(10), port, token);
-
-        factory.createExpense(user.getId(), otherSupplier.getId(), "INV-002",
-                BigDecimal.valueOf(300), LocalDate.now().minusDays(10), port, token);
-
-        factory.createExpense(user.getId(), supplier.getId(), "INV-003",
-                BigDecimal.valueOf(300), port, token);
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .queryParam("supplier_id", supplier.getId())
-                .queryParam("overdue", true)
-                .when()
-                .get("/{userId}", user.getId())
-                .then()
-                .statusCode(200)
-                .body("size()", Matchers.is(1));
-    }
-
-    @Test
-    void whenGetInstallmentsWithInvalidUser_thenReturn404() {
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .when()
-                .get("/{userId}", "00000000-0000-0000-0000-000000000000")
-                .then()
-                .statusCode(404);
     }
 
     @Test
@@ -253,9 +255,9 @@ class InstallmentControllerTest {
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
-                .queryParam("supplier_id", "00000000-0000-0000-0000-000000000000")
+                .queryParam("supplier_id", UUID.randomUUID())
                 .when()
-                .get("/{userId}", user.getId())
+                .get()
                 .then()
                 .statusCode(404);
     }
@@ -263,8 +265,14 @@ class InstallmentControllerTest {
     @Test
     void shouldPayInstallmentWhenDataIsValid() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
         Expense expense = expenseRepository.findAll()
                 .stream()
@@ -282,8 +290,7 @@ class InstallmentControllerTest {
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .when()
-                .get("/{userId}/{installmentId}/pay",
-                        user.getId(), installment.getInstallmentId())
+                .get("/{installmentId}/pay", installment.getInstallmentId())
                 .then()
                 .statusCode(200);
 
@@ -295,27 +302,13 @@ class InstallmentControllerTest {
     }
 
     @Test
-    void shouldPayInstallmentReturn404WhenUserNotFound() {
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .when()
-                .get("/{userId}/{installmentId}/pay",
-                        UUID.randomUUID(), UUID.randomUUID())
-                .then()
-                .statusCode(404);
-    }
-
-    @Test
     void shouldPayInstallmentReturn404WhenInstallmentNotFound() {
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .when()
-                .get("/{userId}/{installmentId}/pay",
-                        user.getId(), UUID.randomUUID())
+                .get("/{installmentId}/pay", UUID.randomUUID())
                 .then()
                 .statusCode(404);
     }
@@ -334,8 +327,14 @@ class InstallmentControllerTest {
                 )
         );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
         Expense expense = expenseRepository.findAll()
                 .stream()
@@ -349,12 +348,17 @@ class InstallmentControllerTest {
                 .findFirst()
                 .orElseThrow();
 
+        String otherToken = authFactory.loginAndGetToken(
+                port,
+                "teste2@gmail.com",
+                "password123"
+        );
+
         RestAssured
                 .given()
-                .header("Authorization", "Bearer " + token)
+                .header("Authorization", "Bearer " + otherToken)
                 .when()
-                .get("/{userId}/{installmentId}/pay",
-                        otherUser.getId(), installment.getInstallmentId())
+                .get("/{installmentId}/pay", installment.getInstallmentId())
                 .then()
                 .statusCode(403);
     }
@@ -362,8 +366,14 @@ class InstallmentControllerTest {
     @Test
     void shouldUpdateInstallmentWhenRequestIsValid() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
         Expense expense = expenseRepository.findAll()
                 .stream()
@@ -389,8 +399,7 @@ class InstallmentControllerTest {
                 .contentType("application/json")
                 .body(dto)
                 .when()
-                .put("/{userId}/{installmentId}",
-                        user.getId(), installment.getInstallmentId())
+                .put("/{installmentId}", installment.getInstallmentId())
                 .then()
                 .statusCode(200);
 
@@ -406,20 +415,16 @@ class InstallmentControllerTest {
     @Test
     void shouldReturn400WhenRequestBodyIsInvalid() {
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
-        Expense expense = expenseRepository.findAll()
-                .stream()
-                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
-                .findFirst()
-                .orElseThrow();
-
-        Installment installment = installmentRepository.findAll()
-                .stream()
-                .filter(i -> i.getExpense().getId().equals(expense.getId()))
-                .findFirst()
-                .orElseThrow();
+        Installment installment = installmentRepository.findAll().get(0);
 
         InstallmentUpdateDto dto = new InstallmentUpdateDto(
                 BigDecimal.valueOf(-500),
@@ -433,46 +438,9 @@ class InstallmentControllerTest {
                 .contentType("application/json")
                 .body(dto)
                 .when()
-                .put("/{userId}/{installmentId}",
-                        user.getId(), installment.getInstallmentId())
+                .put("/{installmentId}", installment.getInstallmentId())
                 .then()
                 .statusCode(400);
-    }
-
-    @Test
-    void shouldReturn404WhenUserDoesNotExist() {
-
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
-
-        Expense expense = expenseRepository.findAll()
-                .stream()
-                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
-                .findFirst()
-                .orElseThrow();
-
-        Installment installment = installmentRepository.findAll()
-                .stream()
-                .filter(i -> i.getExpense().getId().equals(expense.getId()))
-                .findFirst()
-                .orElseThrow();
-
-        InstallmentUpdateDto dto = new InstallmentUpdateDto(
-                BigDecimal.valueOf(500),
-                LocalDate.now().plusDays(10),
-                "12345678901234567890"
-        );
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
-                .body(dto)
-                .when()
-                .put("/{userId}/{installmentId}",
-                        UUID.randomUUID(), installment.getInstallmentId())
-                .then()
-                .statusCode(404);
     }
 
     @Test
@@ -490,14 +458,13 @@ class InstallmentControllerTest {
                 .contentType("application/json")
                 .body(dto)
                 .when()
-                .put("/{userId}/{installmentId}",
-                        user.getId(), UUID.randomUUID())
+                .put("/{installmentId}", UUID.randomUUID())
                 .then()
                 .statusCode(404);
     }
 
     @Test
-    void shouldReturn403WhenInstallmentDoesNotBelongToUser() {
+    void shouldReturn403WhenUpdatingInstallmentDoesNotBelongToUser() {
 
         User otherUser = userRepository.save(
                 new User(
@@ -510,20 +477,22 @@ class InstallmentControllerTest {
                 )
         );
 
-        factory.createExpense(user.getId(), supplier.getId(), "INV-001",
-                BigDecimal.valueOf(300), LocalDate.now(), port, token);
+        factory.createExpense(
+                supplier.getId(),
+                "INV-001",
+                BigDecimal.valueOf(300),
+                LocalDate.now(),
+                port,
+                token
+        );
 
-        Expense expense = expenseRepository.findAll()
-                .stream()
-                .filter(ex -> ex.getInvoiceNumber().equals("INV-001"))
-                .findFirst()
-                .orElseThrow();
+        Installment installment = installmentRepository.findAll().get(0);
 
-        Installment installment = installmentRepository.findAll()
-                .stream()
-                .filter(i -> i.getExpense().getId().equals(expense.getId()))
-                .findFirst()
-                .orElseThrow();
+        String otherToken = authFactory.loginAndGetToken(
+                port,
+                "testefs@gmail.com",
+                "password123"
+        );
 
         InstallmentUpdateDto dto = new InstallmentUpdateDto(
                 BigDecimal.valueOf(500),
@@ -533,12 +502,11 @@ class InstallmentControllerTest {
 
         RestAssured
                 .given()
-                .header("Authorization", "Bearer " + token)
+                .header("Authorization", "Bearer " + otherToken)
                 .contentType("application/json")
                 .body(dto)
                 .when()
-                .put("/{userId}/{installmentId}",
-                        otherUser.getId(), installment.getInstallmentId())
+                .put("/{installmentId}", installment.getInstallmentId())
                 .then()
                 .statusCode(403);
     }
