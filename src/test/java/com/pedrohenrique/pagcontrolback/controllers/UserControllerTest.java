@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.dtos.request.LoginRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
 import io.restassured.RestAssured;
@@ -86,6 +87,94 @@ class UserControllerTest {
         ));
 
         assertTrue(errors.contains("Phone not valid"));
+    }
+
+    @Test
+    void shouldLoginSuccessfully(){
+        UserRequestDto request = new UserRequestDto(
+                "John Doe",
+                "JD Supplies",
+                "teste@gmail.com",
+                "12345678Ab@",
+                "(11)92222-3333",
+                PersonType.PJ
+        );
+
+        RestAssured.given()
+                .contentType("application/json")
+                .body(request)
+                .when()
+                .post("/signin")
+                .then()
+                .statusCode(201);
+
+        LoginRequestDto loginRequest = new LoginRequestDto(
+                "teste@gmail.com",
+                "12345678Ab@"
+        );
+
+        String token = RestAssured.given()
+                .contentType("application/json")
+                .body(loginRequest)
+                .when()
+                .post("/login")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("token");
+
+        assertNotNull(token);
+    }
+
+    @Test
+    void shouldReturn400WhenEmailIsInvalid(){
+
+        LoginRequestDto loginRequest = new LoginRequestDto(
+                "invalid-email",
+                "12345678Ab@"
+        );
+
+        RestAssured.given()
+                .contentType("application/json")
+                .body(loginRequest)
+                .when()
+                .post("/login")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    void shouldReturn401WhenCredentialsAreInvalid(){
+
+        UserRequestDto request = new UserRequestDto(
+                "John Doe",
+                "JD Supplies",
+                "teste@gmail.com",
+                "12345678Ab@",
+                "(11)92222-3333",
+                PersonType.PJ
+        );
+
+        RestAssured.given()
+                .contentType("application/json")
+                .body(request)
+                .when()
+                .post("/signin")
+                .then()
+                .statusCode(201);
+
+        LoginRequestDto loginRequest = new LoginRequestDto(
+                "teste@gmail.com",
+                "senhaerrada"
+        );
+
+        RestAssured.given()
+                .contentType("application/json")
+                .body(loginRequest)
+                .when()
+                .post("/login")
+                .then()
+                .statusCode(401);
     }
 
 }
