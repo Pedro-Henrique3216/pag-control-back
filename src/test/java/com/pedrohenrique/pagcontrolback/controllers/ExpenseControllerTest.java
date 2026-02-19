@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
+import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -44,8 +46,15 @@ class ExpenseControllerTest {
     @Autowired
     private TestDataFactory testDataFactory;
 
+    @Autowired
+    private AuthTestFactory authTestFactory;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private User user;
     private Supplier supplier;
+    private String token;
 
     @BeforeEach
     void setUp() {
@@ -63,10 +72,16 @@ class ExpenseControllerTest {
                         "John Doe",
                         null,
                         "testeExpense@gmail.com",
-                        "password123",
+                        passwordEncoder.encode("password123"),
                         "12345678900",
                         PersonType.PF
                 )
+        );
+
+        token = authTestFactory.loginAndGetToken(
+                port,
+                "testeExpense@gmail.com",
+                "password123"
         );
 
         Supplier s = new Supplier("Supplier Inc.");
@@ -77,7 +92,6 @@ class ExpenseControllerTest {
 
     @Test
     void whenCreateExpenseWithInstallments_thenReturn201() {
-
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
@@ -93,6 +107,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -127,6 +142,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -162,6 +178,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", randomUserId)
@@ -196,6 +213,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -212,7 +230,6 @@ class ExpenseControllerTest {
 
     @Test
     void whenInstallmentsAreMissing_thenReturn400() {
-
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
@@ -225,6 +242,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -258,6 +276,7 @@ class ExpenseControllerTest {
         var response = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(expenseRequestDto)
                 .when()
                 .post("/{userId}", user.getId())
@@ -275,12 +294,13 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesWithoutFilters_thenReturnAllUserExpenses() {
 
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port);
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-2", port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port, token);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-2", port, token);
 
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .when()
                         .get("/{userId}", user.getId())
                         .then()
@@ -298,12 +318,13 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByInvoiceNumber_thenReturnOnlyMatchingExpense() {
 
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-100", port);
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-200", port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-100", port, token);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-200", port, token);
 
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .queryParam("invoice_number", "INV-100")
                         .when()
                         .get("/{userId}", user.getId())
@@ -326,12 +347,13 @@ class ExpenseControllerTest {
         otherSupplier.setUser(user);
         otherSupplier = supplierRepository.save(otherSupplier);
 
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port);
-        testDataFactory.createExpense(user.getId(), otherSupplier.getId(), "INV-2", port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-1", port, token);
+        testDataFactory.createExpense(user.getId(), otherSupplier.getId(), "INV-2", port, token);
 
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .queryParam("supplier_id", supplier.getId())
                         .when()
                         .get("/{userId}", user.getId())
@@ -349,12 +371,13 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByMonth_thenReturnOnlyExpensesInThatMonth() {
 
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-JAN", LocalDate.of(2026, 1, 10), port);
-        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-FEB", LocalDate.of(2026, 2, 9), port);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-JAN", LocalDate.of(2026, 1, 10), port, token);
+        testDataFactory.createExpense(user.getId(), supplier.getId(), "INV-FEB", LocalDate.of(2026, 2, 9), port, token);
 
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .queryParam("month", "2026-02")
                         .when()
                         .get("/{userId}", user.getId())
@@ -376,6 +399,7 @@ class ExpenseControllerTest {
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .when()
                         .get("/{userId}", user.getId())
                         .then()
@@ -396,6 +420,7 @@ class ExpenseControllerTest {
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
                         .queryParam("month", future.toString())
                         .when()
                         .get("/{userId}", user.getId())

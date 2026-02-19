@@ -20,7 +20,8 @@ public class TestDataFactory {
             UUID supplierId,
             String invoiceNumber,
             LocalDate date,
-            int port
+            int port,
+            String token
     ) {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
@@ -35,6 +36,7 @@ public class TestDataFactory {
         RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
                 .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
@@ -47,14 +49,16 @@ public class TestDataFactory {
             UUID userId,
             UUID supplierId,
             String invoiceNumber,
-            int port
+            int port,
+            String token
     ) {
         createExpense(
                 userId,
                 supplierId,
                 invoiceNumber,
                 LocalDate.of(2026, 2, 2),
-                port
+                port,
+                token
         );
     }
 
@@ -63,7 +67,8 @@ public class TestDataFactory {
             UUID supplierId,
             String invoiceNumber,
             BigDecimal amount,
-            int port
+            int port,
+            String token
     ) {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
@@ -81,6 +86,7 @@ public class TestDataFactory {
         RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
                 .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
@@ -94,7 +100,8 @@ public class TestDataFactory {
             String invoiceNumber,
             BigDecimal amount,
             LocalDate date,
-            int port
+            int port,
+            String token
     ) {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
@@ -112,6 +119,7 @@ public class TestDataFactory {
         RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
                 .post("http://localhost:" + port + "/api/expenses/{userId}", userId)
@@ -123,7 +131,8 @@ public class TestDataFactory {
             UUID userId,
             String name,
             String cnpj,
-            int port
+            int port,
+            String token
     ) {
 
         SupplierRequestDto dto = new SupplierRequestDto(
@@ -133,6 +142,7 @@ public class TestDataFactory {
         RestAssured
                 .given()
                 .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
                 .body(dto)
                 .when()
                 .post("http://localhost:" + port + "/api/suppliers/{userId}", userId)
