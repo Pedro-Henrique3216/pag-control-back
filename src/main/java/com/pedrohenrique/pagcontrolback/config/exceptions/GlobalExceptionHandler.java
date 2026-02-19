@@ -113,6 +113,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(TokenGenerationException.class)
+    public ResponseEntity<HandleExceptionInternalDto> handleTokenGeneration(TokenGenerationException ex) {
+        return ResponseEntity.internalServerError().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<HandleExceptionInternalDto> handleGenericException(Exception ex){
