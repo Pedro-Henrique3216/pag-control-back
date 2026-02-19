@@ -104,9 +104,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler({
+            BadCredentialsException.class,
+            InvalidTokenException.class
+    })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<HandleExceptionInternalDto> handleBadCredentials(BadCredentialsException ex){
+    public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedExceptio(RuntimeException ex){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
     }
 
