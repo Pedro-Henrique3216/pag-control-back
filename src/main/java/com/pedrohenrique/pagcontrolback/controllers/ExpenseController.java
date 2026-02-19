@@ -5,12 +5,14 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateExpenseWithInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListExpensesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,14 +33,18 @@ public class ExpenseController {
         this.listExpensesUseCase = listExpensesUseCase;
     }
 
-    @PostMapping("/{userId}")
+    @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ExpenseResponseDto> createExpenseWithInstallments(@Valid @RequestBody ExpenseRequestDto expenseRequestDto, UriComponentsBuilder uriBuilder, @PathVariable UUID userId) {
+    public ResponseEntity<ExpenseResponseDto> createExpenseWithInstallments(
+            @Valid @RequestBody ExpenseRequestDto expenseRequestDto,
+            UriComponentsBuilder uriBuilder,
+            @AuthenticationPrincipal User user
+    ) {
 
         Expense expense = ExpenseMapper.toDomain(expenseRequestDto);
 
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(
-                userId,
+                user.getId(),
                 expenseRequestDto.supplierId(),
                 expense,
                 expenseRequestDto.barcodeByDueInDays(),
@@ -49,10 +55,10 @@ public class ExpenseController {
         return ResponseEntity.created(uri).body(ExpenseMapper.fromDomain(expenseSaved));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ExpenseResponseDto>> getExpenses(
-            @PathVariable UUID userId,
+            @AuthenticationPrincipal User user,
 
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM")
@@ -72,7 +78,7 @@ public class ExpenseController {
         );
         List<Expense> expenses = listExpensesUseCase.execute(
                 query,
-                userId
+                user.getId()
         );
 
         return ResponseEntity.ok(expenses.stream()

@@ -4,11 +4,13 @@ import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateSupplierUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.GetSupplierByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListSuppliersUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -37,27 +39,36 @@ public class SupplierController {
 
     }
 
-    @PostMapping("/{userId}")
-    public ResponseEntity<SupplierResponseDto> save(@Valid @RequestBody SupplierRequestDto dto, UriComponentsBuilder uriComponentsBuilder, @PathVariable UUID userId) {
+    @PostMapping
+    public ResponseEntity<SupplierResponseDto> save(
+            @Valid @RequestBody SupplierRequestDto dto,
+            UriComponentsBuilder uriComponentsBuilder,
+            @AuthenticationPrincipal User user
+    ) {
         Supplier supplier = SupplierMapper.toDomain(dto);
-        Supplier savedSupplier = createSupplierUseCase.execute(supplier, userId);
+        Supplier savedSupplier = createSupplierUseCase.execute(supplier, user.getId());
         URI uri = uriComponentsBuilder.path("/suppliers/{id}").buildAndExpand(savedSupplier.getId()).toUri();
         SupplierResponseDto responseDto = SupplierMapper.fromDomain(savedSupplier);
         return ResponseEntity.created(uri).body(responseDto);
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<SupplierResponseDto>> listSuppliers(@PathVariable UUID userId) {
-        List<Supplier> suppliers = listSuppliersUseCase.execute(userId);
+    @GetMapping
+    public ResponseEntity<List<SupplierResponseDto>> listSuppliers(
+            @AuthenticationPrincipal User user
+    ) {
+        List<Supplier> suppliers = listSuppliersUseCase.execute(user.getId());
         List<SupplierResponseDto> responseDtos = suppliers.stream()
                 .map(SupplierMapper::fromDomain)
                 .toList();
         return ResponseEntity.ok(responseDtos);
     }
 
-    @GetMapping("/{userId}/{supplierId}")
-    public ResponseEntity<SupplierResponseDto> getSupplierById(@PathVariable UUID userId, @PathVariable UUID supplierId) {
-        Supplier supplier = getSupplierByIdUseCase.execute(userId, supplierId);
+    @GetMapping("/{supplierId}")
+    public ResponseEntity<SupplierResponseDto> getSupplierById(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID supplierId
+    ) {
+        Supplier supplier = getSupplierByIdUseCase.execute(user.getId(), supplierId);
         SupplierResponseDto responseDto = SupplierMapper.fromDomain(supplier);
         return ResponseEntity.ok(responseDto);
     }
