@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.config.exceptions;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -101,6 +102,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(InstallmentAccessDeniedException ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<HandleExceptionInternalDto> handleBadCredentials(BadCredentialsException ex){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(Exception.class)
