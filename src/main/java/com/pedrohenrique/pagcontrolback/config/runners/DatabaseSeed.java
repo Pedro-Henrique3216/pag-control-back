@@ -9,6 +9,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,7 +25,8 @@ public class DatabaseSeed {
             UserRepository userRepository,
             SupplierRepository supplierRepository,
             ExpenseRepository expenseRepository,
-            InstallmentRepository installmentRepository
+            InstallmentRepository installmentRepository,
+            PasswordEncoder passwordEncoder
     ) {
         return args -> {
 
@@ -38,7 +40,7 @@ public class DatabaseSeed {
                         "User " + u,
                         null,
                         "user" + u + "@mail.com",
-                        "123",
+                        passwordEncoder.encode("123456"),
                         "1199999000" + u,
                         PersonType.PF
                 );
