@@ -30,9 +30,10 @@ public class Category {
 
     public Category() {}
 
-    public Category(String name) {
+    public Category(String name, CategoryType categoryType) {
         validateName(name);
         this.name = name;
+        this.categoryType = categoryType;
     }
 
     private void validateName(String name) {
@@ -51,6 +52,10 @@ public class Category {
 
     public User getUser() {
         return user;
+    }
+
+    public CategoryType getCategoryType() {
+        return categoryType;
     }
 
     public Set<Expense> getExpenses() {
