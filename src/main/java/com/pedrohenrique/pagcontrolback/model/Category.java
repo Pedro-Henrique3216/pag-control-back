@@ -31,7 +31,14 @@ public class Category {
     public Category() {}
 
     public Category(String name) {
+        validateName(name);
         this.name = name;
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new CategoryNameInvalidException("Category name cannot be null or empty");
+        }
     }
 
     public UUID getId() {
