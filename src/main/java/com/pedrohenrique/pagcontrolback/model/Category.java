@@ -31,8 +31,7 @@ public class Category {
     public Category() {}
 
     public Category(String name, CategoryType categoryType) {
-        validateName(name);
-        this.name = name;
+        this.name = normalizeName(name);
         this.categoryType = categoryType;
     }
 
@@ -40,6 +39,11 @@ public class Category {
         if (name == null || name.trim().isEmpty()) {
             throw new CategoryNameInvalidException("Category name cannot be null or empty");
         }
+    }
+
+    private String normalizeName(String name) {
+        validateName(name);
+        return name.trim().toLowerCase();
     }
 
     public UUID getId() {
