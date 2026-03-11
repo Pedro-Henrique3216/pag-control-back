@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryNameInvalidException;
+import com.pedrohenrique.pagcontrolback.exceptions.CategoryTypeInvalidException;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -43,6 +44,12 @@ public class Category {
     private void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new CategoryNameInvalidException("Category name cannot be null or empty");
+        }
+    }
+
+    private void validateCategoryType(CategoryType categoryType) {
+        if (categoryType == null) {
+            throw new CategoryTypeInvalidException("Category type cannot be null");
         }
     }
 
