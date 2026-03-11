@@ -38,7 +38,10 @@ public class GlobalExceptionHandler {
             SupplierRequiredException.class,
             UserIdRequiredException.class,
             UserRequiredException.class,
-            FutureMonthNotAllowedException.class
+            FutureMonthNotAllowedException.class,
+            CategoryRequiredException.class,
+            CategoryTypeInvalidException.class,
+            CategoryNameInvalidException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -71,6 +74,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             SupplierAlreadyExistsWithCnpjException.class,
             InstallmentAlreadyPaidException.class,
+            CategoryAlreadyExistsException.class
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<HandleExceptionInternalDto> handleConflictException(RuntimeException ex){
