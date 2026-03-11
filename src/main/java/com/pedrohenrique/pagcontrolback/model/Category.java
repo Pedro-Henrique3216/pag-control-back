@@ -38,6 +38,7 @@ public class Category {
 
     public Category(String name, CategoryType categoryType) {
         this.name = normalizeName(name);
+        validateCategoryType(categoryType);
         this.categoryType = categoryType;
     }
 
