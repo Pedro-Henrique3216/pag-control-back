@@ -65,6 +65,7 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             SupplierNotFoundException.class,
             InstallmentNotFoundException.class,
+            CategoryNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
