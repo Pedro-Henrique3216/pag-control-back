@@ -28,6 +28,7 @@ public class ExpenseMapper {
                         .stream()
                         .map(Installment::getAmount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add),
+                expense.getCategory().getId(),
                 expense.getInstallments()
                         .stream()
                         .map(InstallmentMapper::fromDomain)

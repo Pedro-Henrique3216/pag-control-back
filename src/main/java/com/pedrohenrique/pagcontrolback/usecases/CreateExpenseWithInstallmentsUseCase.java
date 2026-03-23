@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -19,14 +20,21 @@ public class CreateExpenseWithInstallmentsUseCase {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final SupplierRepository supplierRepository;
+    private final CategoryRepository categoryRepository;
 
-    public CreateExpenseWithInstallmentsUseCase(ExpenseRepository expenseRepository, UserRepository userRepository, SupplierRepository supplierRepository) {
+    public CreateExpenseWithInstallmentsUseCase(
+            ExpenseRepository expenseRepository,
+            UserRepository userRepository,
+            SupplierRepository supplierRepository,
+            CategoryRepository categoryRepository
+    ) {
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.supplierRepository = supplierRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    public Expense execute(UUID userId, UUID supplierId, Expense expense, Map<Integer, String> barcodeByDueInDays, BigDecimal amount) {
+    public Expense execute(UUID userId, UUID supplierId, UUID categoryId, Expense expense, Map<Integer, String> barcodeByDueInDays, BigDecimal amount) {
 
         if (expense == null) {
             throw new ExpenseRequiredException("Expense is required");
@@ -45,6 +53,12 @@ public class CreateExpenseWithInstallmentsUseCase {
 
         Supplier supplier = supplierRepository.findById(supplierId)
                         .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + supplierId));
+
+        if(categoryId != null) {
+            Category category = categoryRepository.findCategoryByIdAndUserId(categoryId, userId)
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + categoryId));
+            expense.assignCategory(category);
+        }
 
         expense.setUser(user);
         expense.setSupplier(supplier);

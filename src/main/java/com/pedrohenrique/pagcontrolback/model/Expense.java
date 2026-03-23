@@ -33,6 +33,9 @@ public class Expense {
     private User user;
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Installment> installments = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     public Expense() {}
 
@@ -109,12 +112,23 @@ public class Expense {
         return installments;
     }
 
+    public Category getCategory() {
+        return category;
+    }
+
     public void setUser(User user) {
         this.user = user;
     }
 
     public void setSupplier(Supplier supplier) {
         this.supplier = supplier;
+    }
+
+    public void assignCategory(Category category) {
+        if(category.getCategoryType() != CategoryType.EXPENSE) {
+            throw new CategoryTypeInvalidException("Category must be EXPENSE");
+        }
+        this.category = category;
     }
 
     public void addInstallment(Installment installment) {

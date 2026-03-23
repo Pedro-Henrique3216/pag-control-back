@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.dtos.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,9 @@ public record ExpenseRequestDto(
         Map<Integer, String> barcodeByDueInDays,
         @NotNull(message = "Total amount is required")
         @DecimalMin(value = "0.01", inclusive = true, message = "Total amount must be greater than zero")
-        BigDecimal totalAmount
+        BigDecimal totalAmount,
+        @JsonProperty(value = "category_id")
+        UUID categoryId
 ) {
 }
 

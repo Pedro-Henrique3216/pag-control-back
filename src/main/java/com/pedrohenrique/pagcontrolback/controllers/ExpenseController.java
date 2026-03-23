@@ -46,6 +46,7 @@ public class ExpenseController {
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(
                 user.getId(),
                 expenseRequestDto.supplierId(),
+                expenseRequestDto.categoryId(),
                 expense,
                 expenseRequestDto.barcodeByDueInDays(),
                 expenseRequestDto.totalAmount()

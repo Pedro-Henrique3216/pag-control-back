@@ -19,6 +19,8 @@ public record ExpenseResponseDto(
         LocalDate date,
         @JsonProperty("total_amount")
         BigDecimal totalAmount,
+        @JsonProperty("category_id")
+        UUID categoryId,
         List<InstallmentResponseDto> installments
 ) {
 }
