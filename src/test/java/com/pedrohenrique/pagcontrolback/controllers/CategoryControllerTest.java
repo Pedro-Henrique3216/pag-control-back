@@ -3,8 +3,6 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.model.CategoryType;
-import com.pedrohenrique.pagcontrolback.model.PersonType;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -13,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import static io.restassured.RestAssured.given;
@@ -31,12 +28,8 @@ class CategoryControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private AuthTestFactory authTestFactory;
 
-    private User user;
     private String token;
 
     @BeforeEach
@@ -47,21 +40,19 @@ class CategoryControllerTest {
 
         userRepository.deleteAll();
 
-        user = userRepository.save(
-                new User(
-                        "John Doe",
-                        null,
-                        "testeCategory@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authTestFactory.createUser(
+                "John Doe",
+                "teste@gmail.com",
+                "Password123@",
+                "11912345678",
+                port
         );
+
 
         token = authTestFactory.loginAndGetToken(
                 port,
-                "testeCategory@gmail.com",
-                "password123"
+                "teste@gmail.com",
+                "Password123@"
         );
     }
 

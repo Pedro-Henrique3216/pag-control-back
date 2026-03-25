@@ -3,10 +3,11 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
-import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
-import com.pedrohenrique.pagcontrolback.model.*;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
-import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
+import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
+import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
+import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
+import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
+import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -38,23 +38,20 @@ class ExpenseControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private SupplierRepository supplierRepository;
-
-    @Autowired
-    private ExpenseRepository expenseRepository;
-
-    @Autowired
-    private TestDataFactory testDataFactory;
+    private ExpenseFactory expenseFactory;
 
     @Autowired
     private AuthTestFactory authTestFactory;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private SupplierFactory supplierFactory;
 
-    private User user;
-    private Supplier supplier;
+    @Autowired
+    private CategoryFactory categoryFactory;
+
     private String token;
+
+    private UUID supplierId;
 
     @BeforeEach
     void setUp() {
@@ -63,46 +60,47 @@ class ExpenseControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/expenses";
 
-        expenseRepository.deleteAll();
-        supplierRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = userRepository.save(
-                new User(
-                        "John Doe",
-                        null,
-                        "testeExpense@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authTestFactory.createUser(
+                "teste",
+                "teste@gmail.com",
+                "Password123@",
+                "11999999999",
+                port
         );
 
         token = authTestFactory.loginAndGetToken(
                 port,
-                "testeExpense@gmail.com",
-                "password123"
+                "teste@gmail.com",
+                "Password123@"
         );
 
-        Supplier s = new Supplier("Supplier Inc.");
-        s.setUser(user);
+        supplierId = supplierFactory.createSupplier(
+                "teste",
+                null,
+                port,
+                token
+        );
 
-        supplier = supplierRepository.save(s);
     }
 
     @Test
     void whenCreateExpenseWithInstallments_thenReturn201() {
 
+        UUID categoryId = categoryFactory.createCategory(port, token);
+
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
-                supplier.getId(),
+                supplierId,
                 LocalDate.of(2026, 2, 2),
                 new HashMap<>() {{
                     put(30, "1234567890123456");
                     put(60, "9876543210987654");
                 }},
-                BigDecimal.valueOf(400.00)
+                BigDecimal.valueOf(400.00),
+                categoryId
         );
 
         var response = RestAssured
@@ -126,6 +124,7 @@ class ExpenseControllerTest {
         assertEquals(LocalDate.of(2026, 2, 2), expenseResponseDto.date());
         assertEquals("9876543210987654", expenseResponseDto.installments().get(1).barcode());
         assertEquals(InstallmentStatus.UNPAID, expenseResponseDto.installments().get(0).status());
+        assertEquals(categoryId, expenseResponseDto.categoryId());
     }
 
     @Test
@@ -134,8 +133,9 @@ class ExpenseControllerTest {
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 null,
-                supplier.getId(),
+                supplierId,
                 LocalDate.of(2026, 2, 2),
+                null,
                 null,
                 null
         );
@@ -173,7 +173,8 @@ class ExpenseControllerTest {
                     put(30, "1234567890123456");
                     put(60, "9876543210987654");
                 }},
-                BigDecimal.valueOf(400.00)
+                BigDecimal.valueOf(400.00),
+                null
         );
 
         var response = RestAssured
@@ -200,10 +201,11 @@ class ExpenseControllerTest {
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
-                supplier.getId(),
+                supplierId,
                 LocalDate.of(2026, 2, 2),
                 null,
-                BigDecimal.valueOf(400.00)
+                BigDecimal.valueOf(400.00),
+                null
         );
 
         var response = RestAssured
@@ -232,12 +234,13 @@ class ExpenseControllerTest {
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
                 PaymentType.CREDIT,
-                supplier.getId(),
+                supplierId,
                 LocalDate.of(2026, 2, 2),
                 new HashMap<>() {{
                     put(-1, "1234567890123456");
                 }},
-                BigDecimal.valueOf(400.00)
+                BigDecimal.valueOf(400.00),
+                null
         );
 
         var response = RestAssured
@@ -261,8 +264,8 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesWithoutFilters_thenReturnAllUserExpenses() {
 
-        testDataFactory.createExpense(supplier.getId(), "INV-1", port, token);
-        testDataFactory.createExpense(supplier.getId(), "INV-2", port, token);
+        expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
+        expenseFactory.createExpense(supplierId, "INV-2", LocalDate.now(), port, token);
 
         var response =
                 RestAssured.given()
@@ -285,8 +288,9 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByInvoiceNumber_thenReturnOnlyMatchingExpense() {
 
-        testDataFactory.createExpense(supplier.getId(), "INV-100", port, token);
-        testDataFactory.createExpense(supplier.getId(), "INV-200", port, token);
+        expenseFactory.createExpense(supplierId, "INV-100", LocalDate.now(), port, token);
+
+        expenseFactory.createExpense(supplierId, "INV-200", LocalDate.now(), port, token);
 
         var response =
                 RestAssured.given()
@@ -310,18 +314,21 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesBySupplier_thenReturnOnlySupplierExpenses() {
 
-        Supplier otherSupplier = new Supplier("Other supplier");
-        otherSupplier.setUser(user);
-        otherSupplier = supplierRepository.save(otherSupplier);
+        UUID otherSupplierId = supplierFactory.createSupplier(
+                "other supplier",
+                null,
+                port,
+                token
+        );
 
-        testDataFactory.createExpense(supplier.getId(), "INV-1", port, token);
-        testDataFactory.createExpense(otherSupplier.getId(), "INV-2", port, token);
+        expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
+        expenseFactory.createExpense(otherSupplierId, "INV-2", LocalDate.now(), port, token);
 
         var response =
                 RestAssured.given()
                         .accept(ContentType.JSON)
                         .header("Authorization", "Bearer " + token)
-                        .queryParam("supplier_id", supplier.getId())
+                        .queryParam("supplier_id", supplierId)
                         .when()
                         .get()
                         .then()
@@ -338,8 +345,21 @@ class ExpenseControllerTest {
     @Test
     void whenGetExpensesByMonth_thenReturnOnlyExpensesInThatMonth() {
 
-        testDataFactory.createExpense(supplier.getId(), "INV-JAN", LocalDate.of(2026, 1, 10), port, token);
-        testDataFactory.createExpense(supplier.getId(), "INV-FEB", LocalDate.of(2026, 2, 9), port, token);
+        expenseFactory.createExpense(
+                supplierId,
+                "INV-JAN",
+                LocalDate.of(2026, 1, 10),
+                port,
+                token
+        );
+
+        expenseFactory.createExpense(
+                supplierId,
+                "INV-FEB",
+                LocalDate.of(2026, 2, 10),
+                port,
+                token
+        );
 
         var response =
                 RestAssured.given()

@@ -2,11 +2,13 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
-import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
-import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
+import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
+import com.pedrohenrique.pagcontrolback.model.Expense;
+import com.pedrohenrique.pagcontrolback.model.Installment;
+import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import org.hamcrest.Matchers;
@@ -15,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -35,25 +36,22 @@ class InstallmentControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private SupplierRepository supplierRepository;
-
-    @Autowired
     private ExpenseRepository expenseRepository;
 
     @Autowired
     private InstallmentRepository installmentRepository;
 
     @Autowired
-    private TestDataFactory factory;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private ExpenseFactory factory;
 
     @Autowired
     private AuthTestFactory authFactory;
 
-    private User user;
-    private Supplier supplier;
+    @Autowired
+    private SupplierFactory supplierFactory;
+
+    private UUID supplierId;
+
     private String token;
 
     @BeforeEach
@@ -63,38 +61,35 @@ class InstallmentControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/installments";
 
-        installmentRepository.deleteAll();
-        expenseRepository.deleteAll();
-        supplierRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = userRepository.save(
-                new User(
-                        "John Doe",
-                        null,
-                        "testeExpense@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authFactory.createUser(
+                "teste",
+                "teste@gmail.com",
+                "Password123@",
+                "11999999999",
+                port
         );
 
         token = authFactory.loginAndGetToken(
                 port,
-                "testeExpense@gmail.com",
-                "password123"
+                "teste@gmail.com",
+                "Password123@"
         );
 
-        Supplier s = new Supplier("Supplier Inc.");
-        s.setUser(user);
-        supplier = supplierRepository.save(s);
+        supplierId = supplierFactory.createSupplier(
+                "Supplier Inc.",
+                null,
+                port,
+                token
+        );
     }
 
     @Test
     void whenGetInstallmentsWithoutFilters_thenReturnAllUserInstallments() {
 
-        factory.createExpense(supplier.getId(), "INV-001", port, token);
-        factory.createExpense(supplier.getId(), "INV-002", port, token);
+        factory.createExpense(supplierId, "INV-001", LocalDate.now(), port, token);
+        factory.createExpense(supplierId, "INV-002", LocalDate.now(), port, token);
 
         RestAssured
                 .given()
@@ -110,17 +105,17 @@ class InstallmentControllerTest {
     void whenGetInstallmentsFilteredByMonth_thenReturnOnlyInstallmentsFromMonth() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
-                LocalDate.of(2026, 2, 10),
+                LocalDate.of(2026, 2, 1),
                 port,
                 token
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-002",
-                LocalDate.of(2026, 1, 10),
+                LocalDate.now(),
                 port,
                 token
         );
@@ -139,17 +134,20 @@ class InstallmentControllerTest {
     @Test
     void whenGetInstallmentsFilteredBySupplier_thenReturnOnlySupplierInstallments() {
 
-        Supplier s = new Supplier("Other Supplier Inc.");
-        s.setUser(user);
-        Supplier otherSupplier = supplierRepository.save(s);
+        UUID otherSupplier = supplierFactory.createSupplier(
+                "Other Supplier Inc.",
+                null,
+                port,
+                token
+        );
 
-        factory.createExpense(supplier.getId(), "INV-001", port, token);
-        factory.createExpense(otherSupplier.getId(), "INV-002", port, token);
+        factory.createExpense(supplierId, "INV-001", LocalDate.now(), port, token);
+        factory.createExpense(otherSupplier, "INV-002", LocalDate.now(), port, token);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
-                .queryParam("supplier_id", supplier.getId())
+                .queryParam("supplier_id", supplierId)
                 .when()
                 .get()
                 .then()
@@ -161,16 +159,18 @@ class InstallmentControllerTest {
     void whenGetInstallmentsFilteredByStatus_thenReturnOnlyInstallmentsWithStatus() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
+                LocalDate.now(),
                 port,
                 token
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-002",
+                LocalDate.now(),
                 port,
                 token
         );
@@ -190,7 +190,7 @@ class InstallmentControllerTest {
     void whenGetInstallmentsWithOverdueTrue_thenReturnOnlyOverdueInstallments() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now().minusDays(20),
@@ -199,9 +199,10 @@ class InstallmentControllerTest {
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-002",
                 BigDecimal.valueOf(300),
+                LocalDate.now(),
                 port,
                 token
         );
@@ -221,7 +222,7 @@ class InstallmentControllerTest {
     void whenGetInstallmentsWithDueInNext7DaysTrue_thenReturnOnlyInstallmentsDueInNext7Days() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now().minusDays(10),
@@ -230,7 +231,7 @@ class InstallmentControllerTest {
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-002",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -266,7 +267,7 @@ class InstallmentControllerTest {
     void shouldPayInstallmentWhenDataIsValid() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -316,19 +317,16 @@ class InstallmentControllerTest {
     @Test
     void shouldPayInstallmentReturn403WhenInstallmentDoesNotBelongToUser() {
 
-        User otherUser = userRepository.save(
-                new User(
-                        "Jane Doe",
-                        null,
-                        "teste2@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authFactory.createUser(
+                "Jane Doe",
+                "teste2@gmail.com",
+                "Password123@",
+                "11912345678",
+                port
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -351,7 +349,7 @@ class InstallmentControllerTest {
         String otherToken = authFactory.loginAndGetToken(
                 port,
                 "teste2@gmail.com",
-                "password123"
+                "Password123@"
         );
 
         RestAssured
@@ -367,7 +365,7 @@ class InstallmentControllerTest {
     void shouldUpdateInstallmentWhenRequestIsValid() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -416,7 +414,7 @@ class InstallmentControllerTest {
     void shouldReturn400WhenRequestBodyIsInvalid() {
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -466,19 +464,16 @@ class InstallmentControllerTest {
     @Test
     void shouldReturn403WhenUpdatingInstallmentDoesNotBelongToUser() {
 
-        User otherUser = userRepository.save(
-                new User(
-                        "Jane Doe",
-                        null,
-                        "testefs@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authFactory.createUser(
+                "Jane Doe",
+                "testefs@gmail.com",
+                "Password123@",
+                "11987654321",
+                port
         );
 
         factory.createExpense(
-                supplier.getId(),
+                supplierId,
                 "INV-001",
                 BigDecimal.valueOf(300),
                 LocalDate.now(),
@@ -491,7 +486,7 @@ class InstallmentControllerTest {
         String otherToken = authFactory.loginAndGetToken(
                 port,
                 "testefs@gmail.com",
-                "password123"
+                "Password123@"
         );
 
         InstallmentUpdateDto dto = new InstallmentUpdateDto(

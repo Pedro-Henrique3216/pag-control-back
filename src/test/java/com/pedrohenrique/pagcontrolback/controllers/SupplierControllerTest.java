@@ -2,10 +2,8 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
-import com.pedrohenrique.pagcontrolback.helpers.TestDataFactory;
-import com.pedrohenrique.pagcontrolback.model.PersonType;
+import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
@@ -15,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -38,15 +35,11 @@ class SupplierControllerTest {
     private SupplierRepository supplierRepository;
 
     @Autowired
-    private TestDataFactory factory;
+    private SupplierFactory factory;
 
     @Autowired
     private AuthTestFactory authFactory;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    private User user;
     private String token;
 
     @BeforeEach
@@ -56,24 +49,20 @@ class SupplierControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/suppliers";
 
-        supplierRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = userRepository.save(
-                new User(
-                        "John Doe",
-                        null,
-                        "testeSupplier@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authFactory.createUser(
+                "teste",
+                "teste@gmail.com",
+                "Password123@",
+                "11999999999",
+                port
         );
 
         token = authFactory.loginAndGetToken(
                 port,
-                "testeSupplier@gmail.com",
-                "password123"
+                "teste@gmail.com",
+                "Password123@"
         );
     }
 
@@ -157,12 +146,12 @@ class SupplierControllerTest {
     @Test
     void whenSupplierWithSameCnpjAlreadyExists_thenReturn409() {
 
-        Supplier supplier = new Supplier(
+        factory.createSupplier(
                 "Existing Supplier",
-                "12.345.6780001-95"
+                "12.345.678/0001-95",
+                port,
+                token
         );
-        supplier.setUser(user);
-        supplierRepository.save(supplier);
 
         SupplierRequestDto requestDto = new SupplierRequestDto(
                 "Supplier Name",
@@ -253,29 +242,28 @@ class SupplierControllerTest {
     @Test
     void shouldReturn404WhenSupplierDoesNotBelongToUser() {
 
-        User otherUser = userRepository.save(
-                new User(
-                        "Other User",
-                        null,
-                        "other@gmail.com",
-                        passwordEncoder.encode("password123"),
-                        "12345678900",
-                        PersonType.PF
-                )
+        authFactory.createUser(
+                "Other User",
+                "other@gmail.com",
+                "Password123@",
+                "11912345678",
+                port
         );
 
-        Supplier supplier = new Supplier(
-                "Fornecedor de outro usuário"
+        String otherToken = authFactory.loginAndGetToken(
+                port,
+                "other@gmail.com",
+                "Password123@"
         );
-        supplier.setUser(otherUser);
-        supplierRepository.save(supplier);
+
+        UUID supplierId = factory.createSupplier("Fornecedor de outro usuário", null, port, otherToken);
 
         RestAssured
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .accept(ContentType.JSON)
                 .when()
-                .get("/{supplierId}", supplier.getId())
+                .get("/{supplierId}", supplierId)
                 .then()
                 .statusCode(404);
     }
