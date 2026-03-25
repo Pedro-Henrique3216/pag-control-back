@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -34,6 +35,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
     @Mock
     private SupplierRepository supplierRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     @InjectMocks
     private CreateExpenseWithInstallmentsUseCase useCase;
 
@@ -63,6 +67,11 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 LocalDate.now()
         );
 
+        var category =  new Category(
+                "teste",
+                CategoryType.EXPENSE
+        );
+
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(30, null);
         installmentBarcodesWithDueInDays.put(60, null);
@@ -79,12 +88,16 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(expenseRepository.save(expense))
                 .thenReturn(expense);
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount);
+        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
+                .thenReturn(Optional.of(category));
+
+        Expense expenseSaved = useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount);
 
         verify(expenseRepository, times(1)).save(expense);
 
         assertEquals(3, expenseSaved.getInstallments().size());
         assertEquals(100.0, expenseSaved.getInstallments().get(0).getAmount().doubleValue());
+        assertEquals(category.getName(), expenseSaved.getCategory().getName());
     }
 
     @Test
@@ -111,7 +124,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(UserNotFoundException.class,
-                () -> useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount));
+                () -> useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount));
 
         verify(expenseRepository, never()).save(expense);
     }
@@ -152,7 +165,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(InstallmentsRequiredForPaymentTypeException.class,
-                () -> useCase.execute(userId, supplierId, expense, null, amount));
+                () -> useCase.execute(userId, supplierId, null, expense, null, amount));
 
         verify(expenseRepository, never()).save(expense);
     }
@@ -192,7 +205,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(SupplierNotFoundException.class,
-                () -> useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount));
+                () -> useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount));
 
         verify(expenseRepository, never()).save(expense);
     }
@@ -237,7 +250,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(MultipleInstallmentsNotAllowedForPaymentTypeException.class, () ->
-                useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
         );
 
         verify(expenseRepository, never()).save(expense);
@@ -282,7 +295,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(expenseRepository.save(expense))
                 .thenReturn(expense);
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount);
+        Expense expenseSaved = useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount);
 
         verify(expenseRepository, times(1)).save(expense);
 
@@ -331,7 +344,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
         );
 
         verify(expenseRepository, never()).save(expense);
@@ -373,7 +386,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(expenseRepository.save(expense))
                 .thenReturn(expense);
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, expense, null, amount);
+        Expense expenseSaved = useCase.execute(userId, supplierId, null, expense, null, amount);
 
         verify(expenseRepository, times(1)).save(expense);
 
@@ -420,9 +433,109 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         installmentBarcodesWithDueInDays.put(1, "123456789123");
 
         assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(userId, supplierId, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
         );
 
+    }
+
+    @Test
+    void shouldThrowCategoryNotFoundExceptionWhenCategoryDoesNotExist(){
+        var userId = UUID.randomUUID();
+
+        var user = new User(
+                "John Doe",
+                null,
+                "teste@gmail.com",
+                "password123",
+                "12345678900",
+                PersonType.PF
+        );
+
+        var supplierId = UUID.randomUUID();
+
+        var supplier = new Supplier(
+                "Supplier Inc."
+        );
+
+        var expense = new Expense(
+                "INV123",
+                PaymentType.CREDIT,
+                LocalDate.now()
+        );
+
+        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
+        installmentBarcodesWithDueInDays.put(30, null);
+        installmentBarcodesWithDueInDays.put(60, null);
+        installmentBarcodesWithDueInDays.put(90, "123456789123");
+
+        var amount = new BigDecimal("300.00");
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(supplierRepository.findById(supplierId))
+                .thenReturn(Optional.of(supplier));
+
+        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                CategoryNotFoundException.class,
+                () -> useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount)
+        );
+
+    }
+
+    @Test
+    void shouldThrowCategoryTypeInvalidExceptionWhenCategoryIsNotExpenseType(){
+        var userId = UUID.randomUUID();
+
+        var user = new User(
+                "John Doe",
+                null,
+                "teste@gmail.com",
+                "password123",
+                "12345678900",
+                PersonType.PF
+        );
+
+        var supplierId = UUID.randomUUID();
+
+        var supplier = new Supplier(
+                "Supplier Inc."
+        );
+
+        var expense = new Expense(
+                "INV123",
+                PaymentType.CREDIT,
+                LocalDate.now()
+        );
+
+        var category =  new Category(
+                "teste",
+                CategoryType.INCOME
+        );
+
+        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
+        installmentBarcodesWithDueInDays.put(30, null);
+        installmentBarcodesWithDueInDays.put(60, null);
+        installmentBarcodesWithDueInDays.put(90, "123456789123");
+
+        var amount = new BigDecimal("300.00");
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+
+        when(supplierRepository.findById(supplierId))
+                .thenReturn(Optional.of(supplier));
+
+        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
+                .thenReturn(Optional.of(category));
+
+        assertThrows(
+                CategoryTypeInvalidException.class,
+                () -> useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount)
+        );
     }
 
 
