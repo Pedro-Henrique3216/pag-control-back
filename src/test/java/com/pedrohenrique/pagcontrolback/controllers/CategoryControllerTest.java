@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
+import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
 import com.pedrohenrique.pagcontrolback.model.CategoryType;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
@@ -29,6 +30,9 @@ class CategoryControllerTest {
 
     @Autowired
     private AuthTestFactory authTestFactory;
+
+    @Autowired
+    private CategoryFactory categoryFactory;
 
     private String token;
 
@@ -155,9 +159,29 @@ class CategoryControllerTest {
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
-                .post("/categories")
+                .post()
                 .then()
                 .statusCode(403);
+    }
+
+    @Test
+    void shouldReturn200WhenFindAllCategoriesByUser() {
+        categoryFactory.createCategory(
+                port,
+                token
+        );
+
+        given()
+            .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(1))
+                .body("[0].id", notNullValue())
+                .body("[0].name", equalTo("teste"))
+                .body("[0].category_type", equalTo("EXPENSE"));
     }
 
 }
