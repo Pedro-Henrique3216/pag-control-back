@@ -6,25 +6,27 @@ import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
 import com.pedrohenrique.pagcontrolback.model.Category;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCategoryUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.ListCategoryUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
 
     private final CreateCategoryUseCase createCategoryUseCase;
+    private final ListCategoryUseCase listCategoryUseCase;
 
-    public CategoryController(CreateCategoryUseCase createCategoryUseCase) {
+    public CategoryController(CreateCategoryUseCase createCategoryUseCase, ListCategoryUseCase listCategoryUseCase) {
         this.createCategoryUseCase = createCategoryUseCase;
+        this.listCategoryUseCase = listCategoryUseCase;
     }
 
     @PostMapping
@@ -37,5 +39,15 @@ public class CategoryController {
         Category categorySaved = createCategoryUseCase.execute(category, user.getId());
         URI uri = uriComponentsBuilder.path("/categories/{id}").buildAndExpand(categorySaved.getId()).toUri();
         return ResponseEntity.created(uri).body(CategoryMapper.fromDomain(categorySaved));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CategoryResponseDto>> getAllCategories(@AuthenticationPrincipal User user) {
+        List<CategoryResponseDto> categories = listCategoryUseCase.execute(user.getId())
+                .stream()
+                .map(CategoryMapper::fromDomain)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(categories);
     }
 }
