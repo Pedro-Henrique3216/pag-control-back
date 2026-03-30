@@ -5,7 +5,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
 import com.pedrohenrique.pagcontrolback.model.Category;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCategoryUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListCategoryUseCase;
 import jakarta.validation.Valid;

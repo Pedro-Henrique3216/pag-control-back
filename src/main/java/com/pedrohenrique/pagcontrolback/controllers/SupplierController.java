@@ -5,7 +5,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateSupplierUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.GetSupplierByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListSuppliersUseCase;

@@ -7,7 +7,6 @@ import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.InstallmentMapper;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.ListInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.PayInstallmentUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.UpdateInstallmentUseCase;
