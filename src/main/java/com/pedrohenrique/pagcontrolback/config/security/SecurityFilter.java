@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.config.security;
 
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -9,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Component
@@ -16,11 +18,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
 
-    private final UserRepository userRepository;
-
-    public SecurityFilter(TokenService tokenService, UserRepository userRepository) {
+    public SecurityFilter(TokenService tokenService) {
         this.tokenService = tokenService;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -28,39 +27,35 @@ public class SecurityFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
-    )  {
+    ) throws ServletException, IOException {
 
         String token = recoverToken(request);
 
         try {
             if (token != null) {
 
-                String subject = tokenService.validateToken(token);
-                UUID userId = UUID.fromString(subject);
+                UUID userId = tokenService.getUserId(token);
 
-                var user = userRepository.findById(userId).orElse(null);
+                UserPrincipal userPrincipal = new UserPrincipal(userId);
 
-                if (user != null) {
-                    var authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user,
-                                    null,
-                                    user.getAuthorities()
-                            );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userPrincipal,
+                                null,
+                                userPrincipal.getAuthorities()
+                        );
 
-                    SecurityContextHolder
+
+                SecurityContextHolder
                             .getContext()
                             .setAuthentication(authentication);
                 }
-            }
-
-            filterChain.doFilter(request, response);
-
         } catch (Exception e) {
-
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
+
+        filterChain.doFilter(request, response);
     }
 
     private String recoverToken(HttpServletRequest request) {

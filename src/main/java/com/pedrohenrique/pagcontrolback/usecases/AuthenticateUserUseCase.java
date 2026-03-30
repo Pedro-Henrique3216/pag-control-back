@@ -1,7 +1,7 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.config.security.TokenService;
-import com.pedrohenrique.pagcontrolback.model.User;
+import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,6 +25,7 @@ public class AuthenticateUserUseCase {
     public String execute(String email, String password) {
         UsernamePasswordAuthenticationToken usernamePassword  = new UsernamePasswordAuthenticationToken(email, password);
         Authentication authentication = authenticationManager.authenticate(usernamePassword);
-        return tokenService.generateToken((User) authentication.getPrincipal());
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        return tokenService.generateToken(userPrincipal.getUsername(), userPrincipal.getId());
     }
 }

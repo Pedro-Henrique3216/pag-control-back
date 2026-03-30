@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.config.security;
 
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,8 +18,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername (String email) {
-        return userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+
+        return new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword()
+        );
     }
 
 
