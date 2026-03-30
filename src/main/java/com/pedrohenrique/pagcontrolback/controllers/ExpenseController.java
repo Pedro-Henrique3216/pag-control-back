@@ -6,7 +6,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.CreateExpenseWithInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListExpensesUseCase;
 import jakarta.validation.Valid;
@@ -60,7 +59,7 @@ public class ExpenseController {
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ExpenseResponseDto>> getExpenses(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
 
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM")
