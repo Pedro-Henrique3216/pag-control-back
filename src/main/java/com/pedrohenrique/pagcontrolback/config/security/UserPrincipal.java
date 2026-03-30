@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.config.security;
 
-import com.pedrohenrique.pagcontrolback.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

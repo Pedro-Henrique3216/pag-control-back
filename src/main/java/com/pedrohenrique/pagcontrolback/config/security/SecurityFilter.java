@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.config.security;
 
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
