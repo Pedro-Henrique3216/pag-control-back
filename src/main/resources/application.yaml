@@ -11,6 +11,10 @@ logging:
   level:
     root: INFO
     com.pedrohenrique.pagcontrolback: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+  file:
+    name: logs/pag-control-back.log
 
 management:
   endpoints:
