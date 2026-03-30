@@ -1,6 +1,8 @@
 package com.pedrohenrique.pagcontrolback.config.exceptions;
 
 import com.pedrohenrique.pagcontrolback.exceptions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler({
             EmailAlreadyInUseException.class,
@@ -45,6 +49,7 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.badRequest().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.BAD_REQUEST.value(), LocalDateTime.now()));
     }
 
@@ -58,6 +63,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 LocalDateTime.now()
         );
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.badRequest().body(errorsDto);
     }
 
@@ -69,6 +75,7 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.NOT_FOUND.value(), LocalDateTime.now()));
     }
 
@@ -79,6 +86,7 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<HandleExceptionInternalDto> handleConflictException(RuntimeException ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.CONFLICT.value(), LocalDateTime.now()));
     }
 
@@ -99,13 +107,14 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 LocalDateTime.now()
         );
-
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(InstallmentAccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(InstallmentAccessDeniedException ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
     }
 
@@ -115,18 +124,21 @@ public class GlobalExceptionHandler {
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedExceptio(RuntimeException ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(TokenGenerationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<HandleExceptionInternalDto> handleTokenGeneration(TokenGenerationException ex) {
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<HandleExceptionInternalDto> handleGenericException(Exception ex){
+        logger.error(ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now()));
     }
 }
