@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
@@ -38,7 +39,7 @@ public class ExpenseController {
     public ResponseEntity<ExpenseResponseDto> createExpenseWithInstallments(
             @Valid @RequestBody ExpenseRequestDto expenseRequestDto,
             UriComponentsBuilder uriBuilder,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal UserPrincipal user
     ) {
 
         Expense expense = ExpenseMapper.toDomain(expenseRequestDto);

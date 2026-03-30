@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
@@ -43,7 +44,7 @@ public class SupplierController {
     public ResponseEntity<SupplierResponseDto> save(
             @Valid @RequestBody SupplierRequestDto dto,
             UriComponentsBuilder uriComponentsBuilder,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal UserPrincipal user
     ) {
         Supplier supplier = SupplierMapper.toDomain(dto);
         Supplier savedSupplier = createSupplierUseCase.execute(supplier, user.getId());
@@ -54,7 +55,7 @@ public class SupplierController {
 
     @GetMapping
     public ResponseEntity<List<SupplierResponseDto>> listSuppliers(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal UserPrincipal user
     ) {
         List<Supplier> suppliers = listSuppliersUseCase.execute(user.getId());
         List<SupplierResponseDto> responseDtos = suppliers.stream()
@@ -65,7 +66,7 @@ public class SupplierController {
 
     @GetMapping("/{supplierId}")
     public ResponseEntity<SupplierResponseDto> getSupplierById(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
             @PathVariable UUID supplierId
     ) {
         Supplier supplier = getSupplierByIdUseCase.execute(user.getId(), supplierId);

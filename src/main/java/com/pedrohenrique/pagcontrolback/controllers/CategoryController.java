@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
@@ -32,7 +33,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoryResponseDto> createCategory(
             @RequestBody @Valid CategoryRequestDto categoryRequest,
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
             UriComponentsBuilder uriComponentsBuilder
     ) {
         Category category = CategoryMapper.toDomain(categoryRequest);
@@ -42,7 +43,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDto>> getAllCategories(@AuthenticationPrincipal User user) {
+    public ResponseEntity<List<CategoryResponseDto>> getAllCategories(@AuthenticationPrincipal UserPrincipal user) {
         List<CategoryResponseDto> categories = listCategoryUseCase.execute(user.getId())
                 .stream()
                 .map(CategoryMapper::fromDomain)

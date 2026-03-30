@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListInstallmentQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
@@ -41,7 +42,7 @@ public class InstallmentController {
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<InstallmentResponseDto>> getExpenses(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
 
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM")
@@ -70,7 +71,7 @@ public class InstallmentController {
     @GetMapping("/{installmentId}/pay")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Void> payInstallment(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
             @PathVariable UUID installmentId
     ) {
         payInstallmentUseCase.execute(user.getId(), installmentId);
@@ -80,7 +81,7 @@ public class InstallmentController {
     @PutMapping("/{installmentId}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Void> updateInstallment(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal UserPrincipal user,
             @PathVariable UUID installmentId,
             @RequestBody InstallmentUpdateDto dto
     ) {
