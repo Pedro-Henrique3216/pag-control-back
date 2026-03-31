@@ -39,12 +39,15 @@ public class Expense {
 
     public Expense() {}
 
-    public Expense(String invoiceNumber, PaymentType paymentType, LocalDate expenseDate) {
+    public Expense(String invoiceNumber, PaymentType paymentType, LocalDate expenseDate, User user, Supplier supplier) {
         validateExpanseDate(expenseDate);
+        validatePaymentType(paymentType);
         this.invoiceNumber = invoiceNumber;
         this.createdAt = LocalDate.now();
         this.paymentType = paymentType;
         this.expenseDate = expenseDate;
+        this.user = user;
+        this.supplier = supplier;
     }
 
     private void validateExpanseDate(LocalDate expenseDate) {
@@ -54,6 +57,12 @@ public class Expense {
 
         if (expenseDate.isAfter(LocalDate.now())) {
             throw new ExpenseDateInTheFutureException("Expense date cannot be in the future.");
+        }
+    }
+
+    private void validatePaymentType(PaymentType paymentType) {
+        if (paymentType == null) {
+            throw new PaymentTypeRequiredException("Payment type is required.");
         }
     }
 
