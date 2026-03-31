@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateCategoryCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
@@ -35,8 +36,12 @@ public class CategoryController {
             @AuthenticationPrincipal UserPrincipal user,
             UriComponentsBuilder uriComponentsBuilder
     ) {
-        Category category = CategoryMapper.toDomain(categoryRequest);
-        Category categorySaved = createCategoryUseCase.execute(category, user.getId());
+        CreateCategoryCommand command = new CreateCategoryCommand(
+                categoryRequest.name(),
+                categoryRequest.categoryType(),
+                user.getId()
+        );
+        Category categorySaved = createCategoryUseCase.execute(command);
         URI uri = uriComponentsBuilder.path("/categories/{id}").buildAndExpand(categorySaved.getId()).toUri();
         return ResponseEntity.created(uri).body(CategoryMapper.fromDomain(categorySaved));
     }

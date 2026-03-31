@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
             UserIdRequiredException.class,
             UserRequiredException.class,
             FutureMonthNotAllowedException.class,
-            CategoryRequiredException.class,
+            CreateCategoryCommandRequiredException.class,
             CategoryTypeInvalidException.class,
             CategoryNameInvalidException.class
     })

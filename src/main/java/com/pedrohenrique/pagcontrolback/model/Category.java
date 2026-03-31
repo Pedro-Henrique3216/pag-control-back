@@ -36,10 +36,11 @@ public class Category {
 
     public Category() {}
 
-    public Category(String name, CategoryType categoryType) {
+    public Category(String name, CategoryType categoryType, User user) {
         this.name = normalizeName(name);
         validateCategoryType(categoryType);
         this.categoryType = categoryType;
+        this.user = user;
     }
 
     private void validateName(String name) {
