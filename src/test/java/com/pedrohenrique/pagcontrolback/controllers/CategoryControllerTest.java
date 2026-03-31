@@ -63,8 +63,6 @@ class CategoryControllerTest {
     @Test
     void shouldCreateCategorySuccessfully() {
 
-
-
         CategoryRequestDto body = new CategoryRequestDto(
                 "food",
                 CategoryType.EXPENSE

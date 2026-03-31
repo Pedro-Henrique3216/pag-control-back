@@ -69,7 +69,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var category =  new Category(
                 "teste",
-                CategoryType.EXPENSE
+                CategoryType.EXPENSE,
+                user
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
@@ -513,7 +514,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var category =  new Category(
                 "teste",
-                CategoryType.INCOME
+                CategoryType.INCOME,
+                user
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
