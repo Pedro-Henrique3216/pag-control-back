@@ -35,8 +35,6 @@ class CreateCategoryUseCaseTest {
     @Test
     void shouldThrowExceptionWhenCategoryIsNull() {
 
-        UUID userId = UUID.randomUUID();
-
         assertThrows(CreateCategoryCommandRequiredException.class, () -> {
             createCategoryUseCase.execute(null);
         });
