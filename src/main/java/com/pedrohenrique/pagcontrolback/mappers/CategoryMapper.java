@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.mappers;
 
-import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.model.Category;
 
