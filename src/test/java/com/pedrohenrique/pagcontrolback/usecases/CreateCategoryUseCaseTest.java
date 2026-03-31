@@ -1,7 +1,8 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateCategoryCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryAlreadyExistsException;
-import com.pedrohenrique.pagcontrolback.exceptions.CategoryRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.CreateCategoryCommandRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
@@ -36,18 +37,22 @@ class CreateCategoryUseCaseTest {
 
         UUID userId = UUID.randomUUID();
 
-        assertThrows(CategoryRequiredException.class, () -> {
-            createCategoryUseCase.execute(null, userId);
+        assertThrows(CreateCategoryCommandRequiredException.class, () -> {
+            createCategoryUseCase.execute(null);
         });
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsNull() {
 
-        Category category = new Category("food", CategoryType.EXPENSE);
+        CreateCategoryCommand command = new CreateCategoryCommand(
+                "food",
+                CategoryType.EXPENSE,
+                null
+        );
 
         assertThrows(UserRequiredException.class, () -> {
-            createCategoryUseCase.execute(category, null);
+            createCategoryUseCase.execute(command);
         });
     }
 
@@ -55,12 +60,16 @@ class CreateCategoryUseCaseTest {
     void shouldThrowExceptionWhenUserNotFound() {
 
         UUID userId = UUID.randomUUID();
-        Category category = new Category("food", CategoryType.EXPENSE);
+        CreateCategoryCommand command = new CreateCategoryCommand(
+                "food",
+                CategoryType.EXPENSE,
+                userId
+        );
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> {
-            createCategoryUseCase.execute(category, userId);
+            createCategoryUseCase.execute(command);
         });
     }
 
@@ -68,15 +77,19 @@ class CreateCategoryUseCaseTest {
     void shouldThrowExceptionWhenCategoryAlreadyExists() {
 
         UUID userId = UUID.randomUUID();
-        Category category = new Category("food", CategoryType.EXPENSE);
+        CreateCategoryCommand command = new CreateCategoryCommand(
+                "food",
+                CategoryType.EXPENSE,
+                userId
+        );
 
         User user = new User();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.existsCategoryByNameAndUser_Id("food", userId)).thenReturn(true);
+        when(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId("food", command.userId())).thenReturn(true);
 
         assertThrows(CategoryAlreadyExistsException.class, () -> {
-            createCategoryUseCase.execute(category, userId);
+            createCategoryUseCase.execute(command);
         });
     }
 
@@ -84,15 +97,25 @@ class CreateCategoryUseCaseTest {
     void shouldCreateCategorySuccessfully() {
 
         UUID userId = UUID.randomUUID();
-        Category category = new Category("food", CategoryType.EXPENSE);
+        CreateCategoryCommand command = new CreateCategoryCommand(
+                "food",
+                CategoryType.EXPENSE,
+                userId
+        );
 
         User user = new User();
 
+        Category category = new Category(
+                "food",
+                CategoryType.EXPENSE,
+                user
+        );
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.existsCategoryByNameAndUser_Id("food", userId)).thenReturn(false);
+        when(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId("food", userId)).thenReturn(false);
         when(categoryRepository.save(category)).thenReturn(category);
 
-        Category result = createCategoryUseCase.execute(category, userId);
+        Category result = createCategoryUseCase.execute(command);
 
         assertNotNull(result);
         assertEquals(user, category.getUser());
