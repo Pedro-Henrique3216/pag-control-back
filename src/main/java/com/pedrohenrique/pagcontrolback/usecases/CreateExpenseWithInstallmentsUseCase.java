@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
@@ -13,6 +14,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class CreateExpenseWithInstallmentsUseCase {
@@ -34,73 +36,85 @@ public class CreateExpenseWithInstallmentsUseCase {
         this.categoryRepository = categoryRepository;
     }
 
-    public Expense execute(UUID userId, UUID supplierId, UUID categoryId, Expense expense, Map<Integer, String> barcodeByDueInDays, BigDecimal amount) {
+    public Expense execute(CreateExpenseCommand command) {
 
-        if (expense == null) {
-            throw new ExpenseRequiredException("Expense is required");
+        if (command == null) {
+            throw new CreateExpenseCommandRequiredException("Create expense command is required");
         }
 
-        if (expense.getPaymentType() == null) {
-            throw new PaymentTypeRequiredException("Payment type is required");
-        }
-
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (command.totalAmount() == null || command.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidExpenseAmountException("Total amount must be greater than zero.");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+        if (command.userId() == null) {
+            throw new UserIdRequiredException("User ID is required.");
+        }
 
-        Supplier supplier = supplierRepository.findById(supplierId)
-                        .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + supplierId));
+        if (command.supplierId() == null) {
+            throw new SupplierRequiredException("Supplier ID is required.");
+        }
 
-        if(categoryId != null) {
-            Category category = categoryRepository.findCategoryByIdAndUserId(categoryId, userId)
-                    .orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + categoryId));
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + command.userId()));
+
+        Supplier supplier = supplierRepository.findById(command.supplierId())
+                        .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + command.supplierId()));
+
+        Expense expense = new Expense(
+                command.invoiceNumber(),
+                command.paymentType(),
+                command.date(),
+                user,
+                supplier
+        );
+
+        if(command.categoryId() != null) {
+            Category category = categoryRepository.findCategoryByIdAndUserId(command.categoryId(), command.userId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + command.categoryId()));
             expense.assignCategory(category);
         }
 
-        expense.setUser(user);
-        expense.setSupplier(supplier);
-
         if(expense.getPaymentType() == PaymentType.CREDIT || expense.getPaymentType() == PaymentType.BILL) {
 
-            if(barcodeByDueInDays == null || barcodeByDueInDays.isEmpty()) {
+            if(command.barcodeByDueInDays() == null || command.barcodeByDueInDays().isEmpty()) {
                 throw new InstallmentsRequiredForPaymentTypeException("Installment intervals must be provided for CREDIT or BILL payment types.");
             }
 
-            BigDecimal installmentAmount =
-                    amount.divide(
-                            BigDecimal.valueOf(barcodeByDueInDays.size()),
-                            2,
-                            RoundingMode.HALF_UP
-                    );
+            BigDecimal total = command.totalAmount();
+            int count = command.barcodeByDueInDays().size();
 
-            barcodeByDueInDays.entrySet().stream()
+            BigDecimal baseAmount = total.divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
+            BigDecimal remainder = total.subtract(baseAmount.multiply(BigDecimal.valueOf(count)));
+
+            AtomicInteger index = new AtomicInteger(0);
+
+            command.barcodeByDueInDays().entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .forEach(entry -> {
-                        Integer dueInDays = entry.getKey();
-                        if (dueInDays <= 0) {
-                            throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater than zero.");
+
+                        BigDecimal installmentValue = baseAmount;
+
+                        if (index.incrementAndGet() == count) {
+                            installmentValue = installmentValue.add(remainder);
                         }
-                        String barcode = entry.getValue();
 
                         Installment installment = new Installment(
-                                installmentAmount,
-                                calculateDueDate(expense.getExpenseDate(), dueInDays),
-                                barcode
+                                installmentValue,
+                                calculateDueDate(expense.getExpenseDate(), entry.getKey()),
+                                entry.getValue()
                         );
+
                         expense.addInstallment(installment);
                     });
 
         } else {
-            if (barcodeByDueInDays != null && barcodeByDueInDays.size() > 1) {
+            if (command.barcodeByDueInDays() != null && command.barcodeByDueInDays().size() > 1) {
                 throw new MultipleInstallmentsNotAllowedForPaymentTypeException(
                         "Only one installment is allowed for payment type " + expense.getPaymentType()
                 );
             }
 
-            if (barcodeByDueInDays != null && barcodeByDueInDays.keySet().stream().anyMatch(days -> days != 0)) {
+            if (command.barcodeByDueInDays() != null && command.barcodeByDueInDays().keySet().stream().anyMatch(days -> days != 0)) {
                 throw new InvalidInstallmentDueInDaysException(
                         "For payment type " + expense.getPaymentType() + ", installment due in days must be 0."
                 );
@@ -108,11 +122,11 @@ public class CreateExpenseWithInstallmentsUseCase {
 
             String barcode = null;
 
-            if (barcodeByDueInDays != null && !barcodeByDueInDays.isEmpty()) {
-                barcode = barcodeByDueInDays.values().iterator().next();
+            if (command.barcodeByDueInDays() != null && !command.barcodeByDueInDays().isEmpty()) {
+                barcode = command.barcodeByDueInDays().values().iterator().next();
             }
 
-            Installment installment = new Installment(amount, expense.getExpenseDate(), barcode);
+            Installment installment = new Installment(command.totalAmount(), expense.getExpenseDate(), barcode);
             expense.addInstallment(installment);
         }
 

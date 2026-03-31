@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
@@ -41,15 +42,19 @@ public class ExpenseController {
             @AuthenticationPrincipal UserPrincipal user
     ) {
 
-        Expense expense = ExpenseMapper.toDomain(expenseRequestDto);
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                expenseRequestDto.invoiceNumber(),
+                expenseRequestDto.paymentType(),
+                expenseRequestDto.supplierId(),
+                expenseRequestDto.date(),
+                expenseRequestDto.barcodeByDueInDays(),
+                expenseRequestDto.totalAmount(),
+                expenseRequestDto.categoryId(),
+                user.getId()
+        );
 
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(
-                user.getId(),
-                expenseRequestDto.supplierId(),
-                expenseRequestDto.categoryId(),
-                expense,
-                expenseRequestDto.barcodeByDueInDays(),
-                expenseRequestDto.totalAmount()
+                command
         );
 
         URI uri = uriBuilder.path("/expenses/{id}").buildAndExpand(expenseSaved.getId()).toUri();

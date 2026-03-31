@@ -34,7 +34,6 @@ public class GlobalExceptionHandler {
             InvalidInstallmentDueInDaysException.class,
             MultipleInstallmentsNotAllowedForPaymentTypeException.class,
             UserDomainException.class,
-            ExpenseRequiredException.class,
             PaymentTypeRequiredException.class,
             InvalidExpenseAmountException.class,
             InvalidSupplierCnpjException.class,
@@ -45,7 +44,8 @@ public class GlobalExceptionHandler {
             FutureMonthNotAllowedException.class,
             CreateCategoryCommandRequiredException.class,
             CategoryTypeInvalidException.class,
-            CategoryNameInvalidException.class
+            CategoryNameInvalidException.class,
+            CreateExpenseCommandRequiredException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
