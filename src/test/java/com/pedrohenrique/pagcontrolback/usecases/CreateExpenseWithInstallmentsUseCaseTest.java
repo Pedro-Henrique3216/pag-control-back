@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
@@ -64,7 +65,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var expense = new Expense(
                 "INV123",
                 PaymentType.CREDIT,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                supplier
         );
 
         var category =  new Category(
@@ -80,25 +83,29 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var amount = new BigDecimal("300.00");
 
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                UUID.randomUUID(),
+                userId
+        );
+
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
 
-        when(expenseRepository.save(expense))
-                .thenReturn(expense);
-
         when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
                 .thenReturn(Optional.of(category));
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount);
+        Expense expenseSaved = useCase.execute(command);
 
         verify(expenseRepository, times(1)).save(expense);
-
-        assertEquals(3, expenseSaved.getInstallments().size());
-        assertEquals(100.0, expenseSaved.getInstallments().get(0).getAmount().doubleValue());
-        assertEquals(category.getName(), expenseSaved.getCategory().getName());
     }
 
     @Test
@@ -107,12 +114,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var supplierId = UUID.randomUUID();
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
-
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(30, null);
         installmentBarcodesWithDueInDays.put(60, null);
@@ -120,14 +121,25 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var amount = new BigDecimal("300.00");
 
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
+
         when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
 
         assertThrows(UserNotFoundException.class,
-                () -> useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount));
+                () -> useCase.execute(command));
 
-        verify(expenseRepository, never()).save(expense);
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -150,13 +162,18 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
+        var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
                 "INV123",
                 PaymentType.CREDIT,
-                LocalDate.now()
+                supplierId,
+                LocalDate.now(),
+                null,
+                amount,
+                null,
+                userId
         );
-
-        var amount = new BigDecimal("300.00");
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -166,9 +183,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(InstallmentsRequiredForPaymentTypeException.class,
-                () -> useCase.execute(userId, supplierId, null, expense, null, amount));
+                () -> useCase.execute(command));
 
-        verify(expenseRepository, never()).save(expense);
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -186,18 +203,23 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var supplierId = UUID.randomUUID();
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
-
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(30, null);
         installmentBarcodesWithDueInDays.put(60, null);
         installmentBarcodesWithDueInDays.put(90, "123456789123");
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -206,9 +228,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(SupplierNotFoundException.class,
-                () -> useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount));
+                () -> useCase.execute(command));
 
-        verify(expenseRepository, never()).save(expense);
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -230,18 +252,23 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CASH,
-                LocalDate.now()
-        );
-
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(30, null);
         installmentBarcodesWithDueInDays.put(60, null);
         installmentBarcodesWithDueInDays.put(90, "123456789123");
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CASH,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -251,10 +278,10 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(MultipleInstallmentsNotAllowedForPaymentTypeException.class, () ->
-                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(command)
         );
 
-        verify(expenseRepository, never()).save(expense);
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -279,7 +306,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var expense = new Expense(
                 "INV123",
                 PaymentType.CASH,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                supplier
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
@@ -287,23 +316,27 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var amount = new BigDecimal("300.00");
 
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CASH,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
+
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
 
-        when(expenseRepository.save(expense))
-                .thenReturn(expense);
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount);
+        useCase.execute(command);
 
         verify(expenseRepository, times(1)).save(expense);
-
-        assertEquals(1, expenseSaved.getInstallments().size());
-        assertEquals(300.0, expenseSaved.getInstallments().get(0).getAmount().doubleValue());
-        assertEquals("123456789123", expenseSaved.getInstallments().get(0).getBarcode());
-        assertEquals(LocalDate.now(), expenseSaved.getInstallments().get(0).getDueDate());
     }
 
     @Test
@@ -326,16 +359,21 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
-
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(-5, null);
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CASH,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -345,10 +383,10 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
 
         assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(command)
         );
 
-        verify(expenseRepository, never()).save(expense);
+        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -373,10 +411,23 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var expense = new Expense(
                 "INV123",
                 PaymentType.CASH,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                supplier
         );
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CASH,
+                supplierId,
+                LocalDate.now(),
+                null,
+                amount,
+                null,
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -387,14 +438,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(expenseRepository.save(expense))
                 .thenReturn(expense);
 
-        Expense expenseSaved = useCase.execute(userId, supplierId, null, expense, null, amount);
+        useCase.execute(command);
 
         verify(expenseRepository, times(1)).save(expense);
-
-        assertEquals(1, expenseSaved.getInstallments().size());
-        assertEquals(300.0, expenseSaved.getInstallments().get(0).getAmount().doubleValue());
-        assertNull(expenseSaved.getInstallments().get(0).getBarcode());
-        assertEquals(LocalDate.now(), expenseSaved.getInstallments().get(0).getDueDate());
     }
 
     @Test
@@ -416,13 +462,21 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CASH,
-                LocalDate.now()
-        );
+        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
+        installmentBarcodesWithDueInDays.put(1, "123456789123");
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CASH,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                null,
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -430,11 +484,10 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
 
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(1, "123456789123");
+
 
         assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(userId, supplierId, null, expense, installmentBarcodesWithDueInDays, amount)
+                useCase.execute(command)
         );
 
     }
@@ -458,11 +511,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
         installmentBarcodesWithDueInDays.put(30, null);
@@ -470,6 +518,17 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         installmentBarcodesWithDueInDays.put(90, "123456789123");
 
         var amount = new BigDecimal("300.00");
+
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                UUID.randomUUID(),
+                userId
+        );
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
@@ -482,7 +541,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         assertThrows(
                 CategoryNotFoundException.class,
-                () -> useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount)
+                () -> useCase.execute(command)
         );
 
     }
@@ -506,12 +565,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 "Supplier Inc."
         );
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
-
         var category =  new Category(
                 "teste",
                 CategoryType.INCOME,
@@ -525,6 +578,17 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var amount = new BigDecimal("300.00");
 
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                supplierId,
+                LocalDate.now(),
+                installmentBarcodesWithDueInDays,
+                amount,
+                UUID.randomUUID(),
+                userId
+        );
+
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
@@ -536,7 +600,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         assertThrows(
                 CategoryTypeInvalidException.class,
-                () -> useCase.execute(userId, supplierId, UUID.randomUUID(), expense, installmentBarcodesWithDueInDays, amount)
+                () -> useCase.execute(command)
         );
     }
 

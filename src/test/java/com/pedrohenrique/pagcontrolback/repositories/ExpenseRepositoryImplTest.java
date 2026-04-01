@@ -53,10 +53,10 @@ class ExpenseRepositoryImplTest {
         Expense expense = new Expense(
                 invoice,
                 PaymentType.CASH,
-                date
+                date,
+                user,
+                supplier
         );
-        expense.setUser(user);
-        expense.setSupplier(supplier);
         em.persist(expense);
         return expense;
     }

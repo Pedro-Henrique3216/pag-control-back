@@ -106,7 +106,9 @@ class InstallmentTest {
         Expense expense = new Expense(
                 "123467897",
                 PaymentType.CASH,
-                LocalDate.now()
+                LocalDate.now(),
+                new User(),
+                new Supplier()
         );
 
         installment.setExpense(expense);
@@ -127,7 +129,9 @@ class InstallmentTest {
         Expense expense = new Expense(
                 "123467897",
                 PaymentType.DEBIT,
-                LocalDate.now()
+                LocalDate.now(),
+                new User(),
+                new Supplier()
         );
 
         installment.setExpense(expense);
@@ -148,7 +152,9 @@ class InstallmentTest {
         Expense expense = new Expense(
                 "123467897",
                 PaymentType.CREDIT,
-                LocalDate.now()
+                LocalDate.now(),
+                new User(),
+                new Supplier()
         );
 
         installment.setExpense(expense);

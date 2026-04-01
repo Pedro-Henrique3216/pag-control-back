@@ -52,9 +52,10 @@ class PayInstallmentUseCaseTest {
         Expense expense = new Expense(
                 "Test Expense",
                 PaymentType.CREDIT,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                new Supplier()
         );
-        expense.setUser(user);
 
         Installment installment = new Installment(
                 BigDecimal.valueOf(200),
@@ -147,9 +148,10 @@ class PayInstallmentUseCaseTest {
         Expense expense = new Expense(
                 "Test Expense",
                 PaymentType.CREDIT,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                new Supplier()
         );
-        expense.setUser(user);
 
         Installment installment = new Installment(
                 BigDecimal.valueOf(200),

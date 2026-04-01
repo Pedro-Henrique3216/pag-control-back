@@ -134,17 +134,16 @@ class ListExpensesUseCaseTest {
                 null
         );
 
-        Expense expense = new Expense(
-                "INV-1",
-                PaymentType.CREDIT,
-                LocalDate.now()
-        );
-
         Supplier supplier = new Supplier("Supplier test");
         User user = mock(User.class);
 
-        expense.setSupplier(supplier);
-        expense.setUser(user);
+        Expense expense = new Expense(
+                "INV-1",
+                PaymentType.CREDIT,
+                LocalDate.now(),
+                user,
+                supplier
+        );
 
         when(userRepository.existsById(userId)).thenReturn(true);
 

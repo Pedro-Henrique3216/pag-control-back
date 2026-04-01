@@ -13,7 +13,7 @@ class ExpenseTest {
     @Test
     void whenExpenseDateIsNull_thenThrowExpenseDateRequiredException(){
         Exception exception = assertThrows(ExpenseDateRequiredException.class, () -> {
-            new Expense("INV123", PaymentType.CASH, null);
+            new Expense("INV123", PaymentType.CASH, null, new User(), new Supplier());
         });
         String expectedMessage = "Expense date is required.";
         String actualMessage = exception.getMessage();
@@ -23,7 +23,7 @@ class ExpenseTest {
     @Test
     void whenExpenseDateIsInFuture_thenThrowExpenseDateInTheFutureException(){
         Exception exception = assertThrows(ExpenseDateInTheFutureException.class, () -> {
-            new Expense("INV123", PaymentType.CASH, LocalDate.now().plusDays(1));
+            new Expense("INV123", PaymentType.CASH, LocalDate.now().plusDays(1), new User(), new Supplier());
         });
         String expectedMessage = "Expense date cannot be in the future.";
         String actualMessage = exception.getMessage();
@@ -32,7 +32,7 @@ class ExpenseTest {
 
     @Test
     void whenAddNullInstallment_thenThrowInstallmentRequiredException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
         Exception exception = assertThrows(InstallmentRequiredException.class, () -> {
             expense.addInstallment(null);
         });
@@ -43,7 +43,7 @@ class ExpenseTest {
 
     @Test
     void whenPaymentTypeIsCashAndAddMoreThanOneInstallment_thenThrowMultipleInstallmentsNotAllowedForPaymentTypeException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
         Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now(), null);
         Installment installment2 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(60), null);
         expense.addInstallment(installment);
@@ -57,7 +57,7 @@ class ExpenseTest {
 
     @Test
     void whenPaymentTypeIsCashAndInstallmentDueDateIsDifferentFromExpenseDate_thenThrowInvalidInstallmentDueDateForPaymentTypeException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
         Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(30), null);
         Exception exception = assertThrows(InvalidInstallmentDueDateForPaymentTypeException.class, () -> {
             expense.addInstallment(installment);
@@ -69,7 +69,7 @@ class ExpenseTest {
 
     @Test
     void whenInstallmentDueDateIsBeforeExpenseDate_thenThrowInstallmentDueDateBeforeExpenseDateException(){
-        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now(), new User(), new Supplier());
         Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().minusDays(1), null);
         Exception exception = assertThrows(InstallmentDueDateBeforeExpenseDateException.class, () -> {
             expense.addInstallment(installment);
@@ -81,7 +81,7 @@ class ExpenseTest {
 
     @Test
     void whenPaymentTypeIsCashAndInstallmentIsValid_thenAddInstallment(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
         Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now(), null);
         expense.addInstallment(installment);
         assertEquals(1, expense.getInstallments().size());
@@ -90,7 +90,7 @@ class ExpenseTest {
 
     @Test
     void whenPaymentTypeIsCredit_thenAllowMultipleInstallments(){
-        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now());
+        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now(), new User(), new Supplier());
         Installment installment1 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(30), null);
         Installment installment2 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(60), null);
         expense.addInstallment(installment1);

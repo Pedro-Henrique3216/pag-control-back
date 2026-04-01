@@ -48,10 +48,10 @@ class InstallmentRepositoryImplTest {
         Expense e = new Expense(
                 "INV-" + UUID.randomUUID(),
                 PaymentType.CREDIT,
-                LocalDate.now()
+                LocalDate.now(),
+                user,
+                supplier
         );
-        e.setUser(user);
-        e.setSupplier(supplier);
         em.persist(e);
         return e;
     }
