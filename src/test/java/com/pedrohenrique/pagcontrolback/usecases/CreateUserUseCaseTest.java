@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -25,6 +26,15 @@ class CreateUserUseCaseTest {
     @InjectMocks
     private CreateUserUseCase createUserUseCase;
 
+    private final CreateUserCommand command = new CreateUserCommand(
+            "John Doe",
+            "JD Supplies",
+            "test@gmail.com",
+            "12345678",
+            "111-222-3333",
+            PersonType.PJ
+    );
+
     private final User user = new User(
             "John Doe",
             "JD Supplies",
@@ -37,21 +47,21 @@ class CreateUserUseCaseTest {
     @Test
     void whenUserAlreadyExists_shouldThrowEmailAlreadyInUseException() {
 
-        when(userRepository.existsUserByEmail(user.getEmail())).thenReturn(true);
+        when(userRepository.existsUserByEmail(command.email())).thenReturn(true);
 
         assertThrows(
                 com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException.class,
-                () -> createUserUseCase.execute(user)
+                () -> createUserUseCase.execute(command)
         );
     }
 
     @Test
     void whenUserDoesNotExist_shouldCreateUserSuccessfully() {
 
-        when(userRepository.existsUserByEmail(user.getEmail())).thenReturn(false);
+        when(userRepository.existsUserByEmail(command.email())).thenReturn(false);
         when(userRepository.save(user)).thenReturn(user);
 
-        User createdUser = createUserUseCase.execute(user);
+        User createdUser = createUserUseCase.execute(command);
 
         verify(userRepository, times(1)).save(user);
 
