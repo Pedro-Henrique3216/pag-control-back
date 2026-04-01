@@ -28,15 +28,12 @@ public class Supplier {
 
     public Supplier() {}
 
-    public Supplier(String name) {
-        validateName(name);
-        this.name = name;
-    }
 
-    public Supplier(String name, String cnpj) {
+    public Supplier(String name, String cnpj, User user) {
         validateName(name);
         this.name = name;
         setCnpj(cnpj);
+        setUser(user);
     }
 
     private void validateName(String name) {
