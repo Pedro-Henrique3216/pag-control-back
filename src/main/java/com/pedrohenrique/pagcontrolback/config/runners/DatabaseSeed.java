@@ -47,8 +47,7 @@ public class DatabaseSeed {
 
                 userRepository.save(user);
 
-                Supplier supplier = new Supplier("Supplier User " + u);
-                supplier.setUser(user);
+                Supplier supplier = new Supplier("Supplier User " + u, null, user);
                 supplierRepository.save(supplier);
 
                 for (int e = 1; e <= 5; e++) {
