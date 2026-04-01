@@ -59,7 +59,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         var expense = new Expense(
@@ -159,7 +161,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         var amount = new BigDecimal("300.00");
@@ -249,7 +253,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
@@ -300,7 +306,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         var expense = new Expense(
@@ -356,7 +364,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
@@ -405,7 +415,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         var expense = new Expense(
@@ -459,7 +471,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
@@ -508,7 +522,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
 
@@ -562,7 +578,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         var supplierId = UUID.randomUUID();
 
         var supplier = new Supplier(
-                "Supplier Inc."
+                "Supplier Inc.",
+                null,
+                new User()
         );
 
         var category =  new Category(

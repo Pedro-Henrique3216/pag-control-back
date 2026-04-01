@@ -134,8 +134,9 @@ class ListExpensesUseCaseTest {
                 null
         );
 
-        Supplier supplier = new Supplier("Supplier test");
+
         User user = mock(User.class);
+        Supplier supplier = new Supplier("Supplier test", null, user);
 
         Expense expense = new Expense(
                 "INV-1",

@@ -38,7 +38,7 @@ class ExpenseRepositoryImplTest {
     }
 
     private Supplier createSupplier(User user, String name) {
-        Supplier supplier = new Supplier(name);
+        Supplier supplier = new Supplier(name, null, user);
         supplier.setUser(user);
         em.persist(supplier);
         return supplier;

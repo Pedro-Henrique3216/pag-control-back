@@ -38,7 +38,7 @@ class InstallmentRepositoryImplTest {
     }
 
     private Supplier createSupplier(User user, String name) {
-        Supplier s = new Supplier(name);
+        Supplier s = new Supplier(name, null, user);
         s.setUser(user);
         em.persist(s);
         return s;
