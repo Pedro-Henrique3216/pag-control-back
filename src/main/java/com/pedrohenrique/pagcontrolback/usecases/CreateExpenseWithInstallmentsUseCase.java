@@ -81,8 +81,4 @@ public class CreateExpenseWithInstallmentsUseCase {
         return expenseRepository.save(expense);
     }
 
-    private LocalDate calculateDueDate(LocalDate expenseDay, int intervalInDays) {
-        return expenseDay.plusDays(intervalInDays);
-    }
-
 }
