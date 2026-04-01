@@ -103,7 +103,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
                 .thenReturn(Optional.of(category));
 
-        Expense expenseSaved = useCase.execute(command);
+        useCase.execute(command);
 
         verify(expenseRepository, times(1)).save(expense);
     }
