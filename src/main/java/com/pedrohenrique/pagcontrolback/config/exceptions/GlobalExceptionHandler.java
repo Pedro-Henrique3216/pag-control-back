@@ -46,6 +46,7 @@ public class GlobalExceptionHandler {
             CategoryTypeInvalidException.class,
             CategoryNameInvalidException.class,
             CreateExpenseCommandRequiredException.class,
+            CreateSupplierCommandRequiredException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){

@@ -1,10 +1,7 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
-import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
-import com.pedrohenrique.pagcontrolback.exceptions.SupplierRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
@@ -27,7 +24,7 @@ public class CreateSupplierUseCase {
     public Supplier execute(CreateSupplierCommand command) {
 
         if (command == null) {
-            throw new SupplierRequiredException("Supplier cannot be null.");
+            throw new CreateSupplierCommandRequiredException("Create supplier command cannot be null.");
         }
 
         if (command.userId() == null) {
