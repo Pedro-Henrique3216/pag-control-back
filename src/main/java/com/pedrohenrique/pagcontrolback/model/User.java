@@ -48,7 +48,7 @@ public class User {
         this.fantasyName = fantasyName;
         this.email = email;
         this.password = password;
-        this.phone = phone;
+        this.phone = normalizePhone(phone);
         this.personType = personType;
     }
 
@@ -67,6 +67,10 @@ public class User {
         if (personType == PersonType.PJ && (fantasyName == null || fantasyName.isBlank()))
             throw new UserDomainException("Fantasy name cannot be null or blank for companies (PJ)"); {
         }
+    }
+
+    private String normalizePhone(String phone) {
+        return phone.replaceAll("[^\\d]", "");
     }
 
     public UUID getId() {
