@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
@@ -45,8 +46,13 @@ public class SupplierController {
             UriComponentsBuilder uriComponentsBuilder,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        Supplier supplier = SupplierMapper.toDomain(dto);
-        Supplier savedSupplier = createSupplierUseCase.execute(supplier, user.getId());
+        CreateSupplierCommand command = new CreateSupplierCommand(
+                dto.name(),
+                dto.cnpj(),
+                user.getId()
+        );
+
+        Supplier savedSupplier = createSupplierUseCase.execute(command);
         URI uri = uriComponentsBuilder.path("/suppliers/{id}").buildAndExpand(savedSupplier.getId()).toUri();
         SupplierResponseDto responseDto = SupplierMapper.fromDomain(savedSupplier);
         return ResponseEntity.created(uri).body(responseDto);

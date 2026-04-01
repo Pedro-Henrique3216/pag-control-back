@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
@@ -23,24 +24,29 @@ public class CreateSupplierUseCase {
         this.userRepository = userRepository;
     }
 
-    public Supplier execute(Supplier supplier, UUID userId) {
+    public Supplier execute(CreateSupplierCommand command) {
 
-        if (supplier == null) {
+        if (command == null) {
             throw new SupplierRequiredException("Supplier cannot be null.");
         }
 
-        if (userId == null) {
+        if (command.userId() == null) {
             throw new UserIdRequiredException("User ID cannot be null.");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
 
-        if(supplier.getCnpj() != null && supplierRepository.existsSupplierByCnpjAndUser_Id(supplier.getCnpj(), userId)) {
+        Supplier supplier = new Supplier(
+                command.name(),
+                command.cnpj(),
+                user
+        );
+
+        if(supplier.getCnpj() != null && supplierRepository.existsSupplierByCnpjAndUser_Id(supplier.getCnpj(), command.userId())) {
             throw new SupplierAlreadyExistsWithCnpjException("Supplier with this CNPJ already exists for this user.");
         }
 
-        supplier.setUser(user);
         return supplierRepository.save(supplier);
     }
 }
