@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateInstallmentCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
@@ -59,49 +60,77 @@ class UpdateInstallmentUseCaseTest {
                 "12345678901234567890123456789012345678901234"
         );
 
-        installment.setExpense(expense);
+       expense.addInstallment(installment);
 
-        Installment installment2 = new Installment(
+        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
                 BigDecimal.valueOf(100),
                 LocalDate.now().plusDays(20),
-                "12345678901234567890123456789012345678901234"
+                "12345678901234567890123456789012345678901234",
+                user.getId(),
+                UUID.randomUUID()
         );
-
-        installment2.setExpense(expense);
 
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
-        updateInstallmentUseCase.execute(user.getId(), UUID.randomUUID(), installment2);
+        updateInstallmentUseCase.execute(command);
 
         verify(installmentRepository, times(1)).save(any(Installment.class));
     }
 
     @Test
     void shouldThrowUserRequiredExceptionWhenUserIdIsNull(){
+
+        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
         assertThrows(UserRequiredException.class, () -> {
-            updateInstallmentUseCase.execute(null, UUID.randomUUID(), null);
+            updateInstallmentUseCase.execute(command);
         });
     }
 
     @Test
     void shouldThrowInstallmentRequiredExceptionWhenInstallmentIdIsNull(){
+
+        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
+                null,
+                null,
+                null,
+                UUID.randomUUID(),
+                null
+        );
+
         assertThrows(InstallmentRequiredException.class, () -> {
-            updateInstallmentUseCase.execute(UUID.randomUUID(), null, null);
+            updateInstallmentUseCase.execute(command);
         });
     }
 
     @Test
     void shouldThrowUserNotFoundExceptionWhenUserDoesNotExist(){
+
+        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
+                null,
+                null,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID()
+        );
+
         when(userRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> {
-            updateInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID(), null);
+            updateInstallmentUseCase.execute(command);
         });
     }
 
     @Test
     void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist(){
+
         User user = new User(
                 "John Doe",
                 null,
@@ -113,16 +142,25 @@ class UpdateInstallmentUseCaseTest {
 
         ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
 
+        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
+                null,
+                null,
+                null,
+                user.getId(),
+                UUID.randomUUID()
+        );
+
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(InstallmentNotFoundException.class, () -> {
-            updateInstallmentUseCase.execute(user.getId(), UUID.randomUUID(), null);
+            updateInstallmentUseCase.execute(command);
         });
     }
 
     @Test
     void shouldThrowInstallmentAccessDeniedExceptionWhenInstallmentDoesNotBelongToUser(){
+
         User user = new User(
                 "John Doe",
                 null,
@@ -159,14 +197,21 @@ class UpdateInstallmentUseCaseTest {
                 "12345678901234567890123456789012345678901234"
         );
 
-        installment.setExpense(expense);
+       expense.addInstallment(installment);
 
+       UpdateInstallmentCommand command = new UpdateInstallmentCommand(
+               null,
+               null,
+               null,
+               user2.getId(),
+               UUID.randomUUID()
+       );
 
         when(userRepository.findById(any())).thenReturn(Optional.of(user2));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
         assertThrows(InstallmentAccessDeniedException.class, () -> {
-            updateInstallmentUseCase.execute(user2.getId(), UUID.randomUUID(), null);
+            updateInstallmentUseCase.execute(command);
         });
     }
 
