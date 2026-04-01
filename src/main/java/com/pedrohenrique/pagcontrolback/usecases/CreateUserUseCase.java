@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -17,11 +18,21 @@ public class CreateUserUseCase {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User execute(User user) {
-        if(userRepository.existsUserByEmail((user.getEmail()))) {
+    public User execute(CreateUserCommand command) {
+
+        if(userRepository.existsUserByEmail((command.email()))) {
             throw new EmailAlreadyInUseException("Email already exists");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        User user = new User(
+                command.name(),
+                command.fantasyName(),
+                command.email(),
+                passwordEncoder.encode(command.password()),
+                command.phone(),
+                command.personType()
+        );
+
         return userRepository.save(user);
     }
 

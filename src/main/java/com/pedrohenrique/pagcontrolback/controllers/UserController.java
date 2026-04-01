@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.LoginRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.LoginResponseDto;
@@ -32,8 +33,15 @@ public class UserController {
 
     @PostMapping("/signin")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto, UriComponentsBuilder uriBuilder) {
-        User user = UserMapper.toDomain(userRequestDto);
-        User userSaved = createUserUseCase.execute(user);
+        CreateUserCommand command = new CreateUserCommand(
+                userRequestDto.name(),
+                userRequestDto.fantasyName(),
+                userRequestDto.email(),
+                userRequestDto.password(),
+                userRequestDto.phone(),
+                userRequestDto.personType()
+        );
+        User userSaved = createUserUseCase.execute(command);
         URI uri = uriBuilder.path("/users/{id}").buildAndExpand(userSaved.getId()).toUri();
         return ResponseEntity.created(uri).body(UserMapper.toResponse(userSaved));
     }

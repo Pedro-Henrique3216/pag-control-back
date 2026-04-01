@@ -1,27 +1,9 @@
 package com.pedrohenrique.pagcontrolback.mappers;
 
-import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.UserResponseDto;
 import com.pedrohenrique.pagcontrolback.model.User;
 
 public class UserMapper {
-
-    public static User toDomain(UserRequestDto userRequestDto) {
-
-        String phoneNormalized = new UserMapper().normalizePhone(userRequestDto.phone());
-        return new User(
-                userRequestDto.name(),
-                userRequestDto.fantasyName(),
-                userRequestDto.email(),
-                userRequestDto.password(),
-                phoneNormalized,
-                userRequestDto.personType()
-        );
-    }
-
-    private String normalizePhone(String phone) {
-        return phone.replaceAll("[^\\d]", "");
-    }
 
     public static UserResponseDto toResponse(User user) {
         return new UserResponseDto(
