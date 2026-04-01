@@ -3,11 +3,10 @@ package com.pedrohenrique.pagcontrolback.model;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Table(name = "expenses")
 @Entity
@@ -144,6 +143,86 @@ public class Expense {
         validateInstallments(paymentType, installment);
         installments.add(installment);
         installment.setExpense(this);
+    }
+
+    private void generateMultipleInstallments(
+            BigDecimal total,
+            Map<Integer, String> barcodeByDueInDays
+    ) {
+        if (barcodeByDueInDays == null || barcodeByDueInDays.isEmpty()) {
+            throw new InstallmentsRequiredForPaymentTypeException("Installment intervals must be provided for CREDIT or BILL payment types.");
+        }
+
+        int count = barcodeByDueInDays.size();
+
+        BigDecimal baseAmount = total.divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
+        BigDecimal remainder = total.subtract(baseAmount.multiply(BigDecimal.valueOf(count)));
+
+        int index = 0;
+
+        for (var entry : barcodeByDueInDays.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+
+            int dueInDays = entry.getKey();
+
+            if (dueInDays <= 0) {
+                throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater than zero.");
+            }
+
+            index++;
+
+            BigDecimal value = baseAmount;
+
+            if (index == count) {
+                value = value.add(remainder);
+            }
+
+            Installment installment = new Installment(
+                    value,
+                    expenseDate.plusDays(dueInDays),
+                    entry.getValue()
+            );
+
+            this.addInstallment(installment);
+        }
+    }
+
+    public void generateInstallments(
+            BigDecimal total,
+            Map<Integer, String> barcodeByDueInDays
+    ) {
+        if (paymentType == PaymentType.CREDIT || paymentType == PaymentType.BILL) {
+            generateMultipleInstallments(total, barcodeByDueInDays);
+        } else {
+            generateSingleInstallment(total, barcodeByDueInDays);
+        }
+    }
+
+    private void generateSingleInstallment(
+            BigDecimal total,
+            Map<Integer, String> barcodeByDueInDays
+    ) {
+        if (barcodeByDueInDays != null && barcodeByDueInDays.size() > 1) {
+            throw new MultipleInstallmentsNotAllowedForPaymentTypeException(
+                    "Only one installment is allowed for payment type " + this.getPaymentType()
+            );
+        }
+
+        if (barcodeByDueInDays != null &&
+                barcodeByDueInDays.keySet().stream().anyMatch(days -> days != 0)) {
+            throw new InvalidInstallmentDueInDaysException(
+                    "For payment type " + this.getPaymentType() + ", installment due in days must be 0."
+            );
+        }
+
+        String barcode = null;
+
+        if (barcodeByDueInDays != null && !barcodeByDueInDays.isEmpty()) {
+            barcode = barcodeByDueInDays.values().iterator().next();
+        }
+
+        Installment installment = new Installment(total, expenseDate, barcode);
+
+        this.addInstallment(installment);
     }
 
     @Override

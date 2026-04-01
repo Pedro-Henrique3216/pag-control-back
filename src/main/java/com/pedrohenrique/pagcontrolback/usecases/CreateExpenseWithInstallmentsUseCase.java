@@ -73,64 +73,10 @@ public class CreateExpenseWithInstallmentsUseCase {
             expense.assignCategory(category);
         }
 
-        if(expense.getPaymentType() == PaymentType.CREDIT || expense.getPaymentType() == PaymentType.BILL) {
-
-            if(command.barcodeByDueInDays() == null || command.barcodeByDueInDays().isEmpty()) {
-                throw new InstallmentsRequiredForPaymentTypeException("Installment intervals must be provided for CREDIT or BILL payment types.");
-            }
-
-            BigDecimal total = command.totalAmount();
-            int count = command.barcodeByDueInDays().size();
-
-            BigDecimal baseAmount = total.divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
-            BigDecimal remainder = total.subtract(baseAmount.multiply(BigDecimal.valueOf(count)));
-
-            AtomicInteger index = new AtomicInteger(0);
-
-            command.barcodeByDueInDays().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(entry -> {
-                        int dueInDays = entry.getKey();
-                        if (dueInDays <= 0) {
-                            throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater than zero.");
-                        }
-                        BigDecimal installmentValue = baseAmount;
-
-                        if (index.incrementAndGet() == count) {
-                            installmentValue = installmentValue.add(remainder);
-                        }
-
-                        Installment installment = new Installment(
-                                installmentValue,
-                                calculateDueDate(expense.getExpenseDate(), dueInDays),
-                                entry.getValue()
-                        );
-
-                        expense.addInstallment(installment);
-                    });
-
-        } else {
-            if (command.barcodeByDueInDays() != null && command.barcodeByDueInDays().size() > 1) {
-                throw new MultipleInstallmentsNotAllowedForPaymentTypeException(
-                        "Only one installment is allowed for payment type " + expense.getPaymentType()
-                );
-            }
-
-            if (command.barcodeByDueInDays() != null && command.barcodeByDueInDays().keySet().stream().anyMatch(days -> days != 0)) {
-                throw new InvalidInstallmentDueInDaysException(
-                        "For payment type " + expense.getPaymentType() + ", installment due in days must be 0."
-                );
-            }
-
-            String barcode = null;
-
-            if (command.barcodeByDueInDays() != null && !command.barcodeByDueInDays().isEmpty()) {
-                barcode = command.barcodeByDueInDays().values().iterator().next();
-            }
-
-            Installment installment = new Installment(command.totalAmount(), expense.getExpenseDate(), barcode);
-            expense.addInstallment(installment);
-        }
+        expense.generateInstallments(
+                command.totalAmount(),
+                command.barcodeByDueInDays()
+        );
 
         return expenseRepository.save(expense);
     }
