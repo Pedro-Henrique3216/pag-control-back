@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateInstallmentCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.User;
@@ -20,30 +21,30 @@ public class UpdateInstallmentUseCase {
         this.installmentRepository = installmentRepository;
     }
 
-    public void execute(UUID userId, UUID installmentId, Installment installment) {
+    public void execute(UpdateInstallmentCommand command) {
 
-        if(userId == null){
+        if(command.userId() == null){
             throw new UserRequiredException("User ID is required");
         }
 
-        if(installmentId == null){
+        if(command.installmentId() == null){
             throw new InstallmentRequiredException("Installment ID is required");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
 
-        Installment existingInstallment = installmentRepository.findById(installmentId)
-                .orElseThrow(() -> new InstallmentNotFoundException("Installment not found with ID: " + installmentId));
+        Installment existingInstallment = installmentRepository.findById(command.installmentId())
+                .orElseThrow(() -> new InstallmentNotFoundException("Installment not found with ID: " + command.installmentId()));
 
         if(!existingInstallment.getExpense().getUser().equals(user)){
             throw new InstallmentAccessDeniedException("User does not have permission to update installment");
         }
 
         existingInstallment.updateInstallment(
-                installment.getAmount(),
-                installment.getDueDate(),
-                installment.getBarcode()
+                command.amount(),
+                command.dueDate(),
+                command.barcode()
         );
 
         installmentRepository.save(existingInstallment);
