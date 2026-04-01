@@ -90,7 +90,10 @@ public class CreateExpenseWithInstallmentsUseCase {
             command.barcodeByDueInDays().entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .forEach(entry -> {
-
+                        int dueInDays = entry.getKey();
+                        if (dueInDays <= 0) {
+                            throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater than zero.");
+                        }
                         BigDecimal installmentValue = baseAmount;
 
                         if (index.incrementAndGet() == count) {
@@ -99,7 +102,7 @@ public class CreateExpenseWithInstallmentsUseCase {
 
                         Installment installment = new Installment(
                                 installmentValue,
-                                calculateDueDate(expense.getExpenseDate(), entry.getKey()),
+                                calculateDueDate(expense.getExpenseDate(), dueInDays),
                                 entry.getValue()
                         );
 
