@@ -8,8 +8,6 @@ import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 public class UpdateInstallmentUseCase {
 
