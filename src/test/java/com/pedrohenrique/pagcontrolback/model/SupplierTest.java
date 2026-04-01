@@ -11,7 +11,7 @@ class SupplierTest {
 
     @Test
     void shouldCreateSupplierWithOnlyName(){
-        Supplier supplier = new Supplier("Supplier A");
+        Supplier supplier = new Supplier("Supplier A", null, new User());
         assertNotNull(supplier);
         assertEquals("Supplier A", supplier.getName());
         assertNull(supplier.getCnpj());
@@ -19,7 +19,7 @@ class SupplierTest {
 
     @Test
     void shouldCreateSupplierWithNameAndValidCnpj(){
-        Supplier supplier = new Supplier("Supplier B", "12.345.678/0001-95");
+        Supplier supplier = new Supplier("Supplier B", "12.345.678/0001-95", new User());
         assertNotNull(supplier);
         assertEquals("Supplier B", supplier.getName());
         assertEquals("12345678000195", supplier.getCnpj());
@@ -28,7 +28,7 @@ class SupplierTest {
     @Test
     void shouldThrowSupplierNameRequiredExceptionWhenNameIsNull(){
         SupplierNameRequiredException exception = assertThrows(SupplierNameRequiredException.class, () -> {
-            new Supplier(null);
+            new Supplier(null, null, new User());
         });
         assertEquals("Supplier name cannot be null or empty.", exception.getMessage());
     }
@@ -36,14 +36,14 @@ class SupplierTest {
     @Test
     void shouldThrowSupplierNameRequiredExceptionWhenNameIsBlank(){
         SupplierNameRequiredException exception = assertThrows(SupplierNameRequiredException.class, () -> {
-            new Supplier("   ");
+            new Supplier("   ", null, new User());
         });
         assertEquals("Supplier name cannot be null or empty.", exception.getMessage());
     }
 
     @Test
     void shouldThrowUserRequiredExceptionWhenSettingNullUser(){
-        Supplier supplier = new Supplier("Supplier C");
+        Supplier supplier = new Supplier("Supplier C",  null, new User());
         UserRequiredException exception = assertThrows(UserRequiredException.class, () -> {
             supplier.setUser(null);
         });
@@ -52,7 +52,7 @@ class SupplierTest {
 
     @Test
     void shouldAcceptNullCnpj(){
-        Supplier supplier = new Supplier("Supplier D", null);
+        Supplier supplier = new Supplier("Supplier D", null, new User());
         assertNotNull(supplier);
         assertEquals("Supplier D", supplier.getName());
         assertNull(supplier.getCnpj());
@@ -60,7 +60,7 @@ class SupplierTest {
 
     @Test
     void shouldAcceptBlankCnpj(){
-        Supplier supplier = new Supplier("Supplier E", "   ");
+        Supplier supplier = new Supplier("Supplier E", "   ", new User());
         assertNotNull(supplier);
         assertEquals("Supplier E", supplier.getName());
         assertNull(supplier.getCnpj());
@@ -68,7 +68,7 @@ class SupplierTest {
 
     @Test
     void shouldRemoveNonDigitsFromCnpj(){
-        Supplier supplier = new Supplier("Supplier F", "12.345.678/0001-95");
+        Supplier supplier = new Supplier("Supplier F", "12.345.678/0001-95", new User());
         assertNotNull(supplier);
         assertEquals("Supplier F", supplier.getName());
         assertEquals("12345678000195", supplier.getCnpj());
@@ -77,7 +77,7 @@ class SupplierTest {
     @Test
     void shouldThrowInvalidSupplierCnpjExceptionWhenCnpjIsInvalid(){
         InvalidSupplierCnpjException exception = assertThrows(InvalidSupplierCnpjException.class, () -> {
-            new Supplier("Supplier G", "invalid-cnpj");
+            new Supplier("Supplier G", "invalid-cnpj", new User());
         });
         assertEquals("Invalid CNPJ format.", exception.getMessage());
     }

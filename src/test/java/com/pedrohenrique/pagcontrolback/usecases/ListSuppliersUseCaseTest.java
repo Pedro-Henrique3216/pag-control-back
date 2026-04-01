@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -61,8 +62,8 @@ class ListSuppliersUseCaseTest {
         UUID userId = UUID.randomUUID();
 
         List<Supplier> suppliers = List.of(
-                new Supplier("Supplier 1"),
-                new Supplier("Supplier 2")
+                new Supplier("Supplier 1", null, new User()),
+                new Supplier("Supplier 2", null, new User())
         );
 
         when(userRepository.existsById(userId)).thenReturn(true);

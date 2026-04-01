@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
@@ -37,7 +38,9 @@ class CreateSupplierUseCaseTest {
     @Test
     void shouldCreateSupplierWhenDataIsValid(){
         Supplier supplier = new Supplier(
-                "Supplier Name"
+                "Supplier Name",
+                null,
+                new User()
         );
         User user = new User(
                 "John Doe",
@@ -51,7 +54,13 @@ class CreateSupplierUseCaseTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(supplierRepository.save(any(Supplier.class))).thenReturn(supplier);
 
-        Supplier createdSupplier = createSupplierUseCase.execute(supplier, UUID.randomUUID());
+        CreateSupplierCommand command = new CreateSupplierCommand(
+                "Supplier Name",
+                null,
+                UUID.randomUUID()
+        );
+
+        Supplier createdSupplier = createSupplierUseCase.execute(command);
 
         verify(supplierRepository, times(1)).save(supplier);
 
@@ -61,10 +70,8 @@ class CreateSupplierUseCaseTest {
 
     @Test
     void shouldThrowSupplierRequiredExceptionWhenSupplierIsNull(){
-        UUID userId = UUID.randomUUID();
-
         SupplierRequiredException exception = assertThrows(SupplierRequiredException.class, () -> {
-            createSupplierUseCase.execute(null, userId);
+            createSupplierUseCase.execute(null);
         });
 
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -74,12 +81,15 @@ class CreateSupplierUseCaseTest {
 
     @Test
     void shouldThrowUserIdRequiredExceptionWhenUserIdIsNull(){
-        Supplier supplier = new Supplier(
-                "Supplier Name"
+
+        CreateSupplierCommand command = new CreateSupplierCommand(
+                "Supplier Name",
+                null,
+                null
         );
 
         UserIdRequiredException exception = assertThrows(UserIdRequiredException.class, () -> {
-            createSupplierUseCase.execute(supplier, null);
+            createSupplierUseCase.execute(command);
         });
 
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -89,15 +99,18 @@ class CreateSupplierUseCaseTest {
 
     @Test
     void shouldThrowUserNotFoundExceptionWhenUserDoesNotExist(){
-        Supplier supplier = new Supplier(
-                "Supplier Name"
-        );
         UUID userId = UUID.randomUUID();
+        CreateSupplierCommand command = new CreateSupplierCommand(
+                "Supplier Name",
+                null,
+                userId
+        );
+
 
         when(userRepository.findById(any())).thenReturn(Optional.empty());
 
         UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
-            createSupplierUseCase.execute(supplier, userId);
+            createSupplierUseCase.execute(command);
         });
 
         verify(supplierRepository, never()).save(any(Supplier.class));
@@ -107,17 +120,19 @@ class CreateSupplierUseCaseTest {
 
     @Test
     void shouldThrowSupplierAlreadyExistsWithCnpjExceptionWhenCnpjAlreadyExistsForUser(){
-        Supplier supplier = new Supplier(
-                "Supplier Name"
-        );
-        supplier.setCnpj("97.958.900/0001-88");
         UUID userId = UUID.randomUUID();
+
+        CreateSupplierCommand command = new CreateSupplierCommand(
+                "Supplier Name",
+                "97.958.900/0001-88",
+                userId
+        );
 
         when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
         when(supplierRepository.existsSupplierByCnpjAndUser_Id(anyString(), any())).thenReturn(true);
 
         SupplierAlreadyExistsWithCnpjException exception = assertThrows(SupplierAlreadyExistsWithCnpjException.class, () -> {
-            createSupplierUseCase.execute(supplier, userId);
+            createSupplierUseCase.execute(command);
         });
 
         verify(supplierRepository, never()).save(any(Supplier.class));

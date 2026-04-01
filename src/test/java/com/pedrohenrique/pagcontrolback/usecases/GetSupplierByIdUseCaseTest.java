@@ -46,10 +46,10 @@ class GetSupplierByIdUseCaseTest {
         );
 
         Supplier supplier = new Supplier(
-                "Supplier 1"
+                "Supplier 1",
+                null,
+                user
         );
-
-        supplier.setUser(user);
 
         when(userRepository.existsById(any())).thenReturn(true);
         when(supplierRepository.findByIdAndUser_Id(any(), any())).thenReturn(Optional.of(supplier));
