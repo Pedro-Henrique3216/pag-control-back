@@ -1,14 +1,15 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
-import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.exceptions.CreateSupplierCommandRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class CreateSupplierUseCase {
