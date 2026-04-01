@@ -2,7 +2,10 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
-import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.model.Category;
+import com.pedrohenrique.pagcontrolback.model.Expense;
+import com.pedrohenrique.pagcontrolback.model.Supplier;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
@@ -10,10 +13,7 @@ import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class CreateExpenseWithInstallmentsUseCase {
