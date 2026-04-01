@@ -62,11 +62,10 @@ public class DatabaseSeed {
                     Expense expense = new Expense(
                             "INV-" + u + "-" + e,
                             paymentType,
-                            LocalDate.now().minusDays(e)
+                            LocalDate.now().minusDays(e),
+                            user,
+                            supplier
                     );
-
-                    expense.setUser(user);
-                    expense.setSupplier(supplier);
 
                     expenseRepository.save(expense);
 
