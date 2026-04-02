@@ -41,7 +41,7 @@ public class CreateExpenseWithInstallmentsUseCase {
         }
 
         if (command.totalAmount() == null || command.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidExpenseAmountException("Total amount must be greater than zero.");
+            throw new InvalidAmountException("Total amount must be greater than zero.");
         }
 
         if (command.userId() == null) {

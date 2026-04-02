@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
             MultipleInstallmentsNotAllowedForPaymentTypeException.class,
             UserDomainException.class,
             PaymentTypeRequiredException.class,
-            InvalidExpenseAmountException.class,
+            InvalidAmountException.class,
             InvalidSupplierCnpjException.class,
             SupplierNameRequiredException.class,
             SupplierRequiredException.class,
