@@ -40,7 +40,7 @@ public class Category {
         this.name = normalizeName(name);
         validateCategoryType(categoryType);
         this.categoryType = categoryType;
-        this.user = user;
+        this.user = Objects.requireNonNull(user, "User cannot be null");
     }
 
     private void validateName(String name) {

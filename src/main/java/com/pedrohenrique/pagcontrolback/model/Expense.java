@@ -45,7 +45,7 @@ public class Expense {
         this.createdAt = LocalDate.now();
         this.paymentType = paymentType;
         this.expenseDate = expenseDate;
-        this.user = user;
+        this.user = Objects.requireNonNull(user, "User cannot be null");
         this.supplier = supplier;
     }
 
