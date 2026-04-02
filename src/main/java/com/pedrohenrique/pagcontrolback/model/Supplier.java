@@ -63,10 +63,11 @@ public class Supplier {
     }
 
     public void setUser(User user) {
-        if (user == null) {
-            throw new UserRequiredException("Supplier must have an user.");
+        try {
+            this.user = Objects.requireNonNull(user);
+        } catch (NullPointerException e) {
+            throw new UserRequiredException("User cannot be null");
         }
-        this.user = user;
     }
 
     public void setCnpj(String cnpj) {

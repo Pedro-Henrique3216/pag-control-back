@@ -45,7 +45,7 @@ public class Expense {
         this.createdAt = LocalDate.now();
         this.paymentType = paymentType;
         this.expenseDate = expenseDate;
-        this.user = Objects.requireNonNull(user, "User cannot be null");
+        setUser(user);
         this.supplier = supplier;
     }
 
@@ -125,7 +125,11 @@ public class Expense {
     }
 
     public void setUser(User user) {
-        this.user = user;
+        try {
+            this.user = Objects.requireNonNull(user);
+        } catch (NullPointerException e) {
+            throw new UserRequiredException("User cannot be null");
+        }
     }
 
     public void setSupplier(Supplier supplier) {
