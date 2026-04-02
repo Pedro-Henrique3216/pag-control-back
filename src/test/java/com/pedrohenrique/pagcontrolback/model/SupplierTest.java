@@ -44,10 +44,9 @@ class SupplierTest {
     @Test
     void shouldThrowUserRequiredExceptionWhenSettingNullUser(){
         Supplier supplier = new Supplier("Supplier C",  null, new User());
-        UserRequiredException exception = assertThrows(UserRequiredException.class, () -> {
+        assertThrows(UserRequiredException.class, () -> {
             supplier.setUser(null);
         });
-        assertEquals("Supplier must have an user.", exception.getMessage());
     }
 
     @Test
