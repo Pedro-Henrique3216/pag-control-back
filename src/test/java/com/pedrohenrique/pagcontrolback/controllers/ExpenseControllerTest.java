@@ -88,7 +88,7 @@ class ExpenseControllerTest {
     @Test
     void whenCreateExpenseWithInstallments_thenReturn201() {
 
-        UUID categoryId = categoryFactory.createCategory(port, token);
+        UUID categoryId = categoryFactory.createCategoryExpense(port, token);
 
         ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
                 null,
