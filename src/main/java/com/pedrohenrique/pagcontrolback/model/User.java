@@ -34,6 +34,8 @@ public class User {
     private Set<Supplier> suppliers = new HashSet<>();
     @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
     private Set<Category> categories = new HashSet<>();
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    private Set<Income> incomes = new HashSet<>();
 
     public User(
             String name,
@@ -111,6 +113,10 @@ public class User {
 
     public Set<Category> getCategories() {
         return categories;
+    }
+
+    public Set<Income> getIncomes() {
+        return incomes;
     }
 
     public void setPassword(String password) {
