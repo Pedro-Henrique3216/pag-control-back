@@ -4,7 +4,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
 import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
-import com.pedrohenrique.pagcontrolback.model.Expense;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
