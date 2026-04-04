@@ -164,7 +164,7 @@ class CategoryControllerTest {
 
     @Test
     void shouldReturn200WhenFindAllCategoriesByUser() {
-        categoryFactory.createCategory(
+        categoryFactory.createCategoryExpense(
                 port,
                 token
         );
