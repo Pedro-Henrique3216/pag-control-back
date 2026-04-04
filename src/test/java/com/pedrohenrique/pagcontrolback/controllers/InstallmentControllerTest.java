@@ -6,7 +6,6 @@ import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
 import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
@@ -34,9 +33,6 @@ class InstallmentControllerTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ExpenseRepository expenseRepository;
 
     @Autowired
     private InstallmentRepository installmentRepository;
