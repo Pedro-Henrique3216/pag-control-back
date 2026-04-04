@@ -8,7 +8,8 @@ public record CreateIncomeCommand(
         BigDecimal amount,
         String description,
         LocalDate date,
-        UUID categoryId,
-        UUID userId
+        UUID userId,
+        UUID categoryId
+
 ) {
 }

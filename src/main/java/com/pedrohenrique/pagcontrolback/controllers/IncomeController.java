@@ -34,8 +34,8 @@ public class IncomeController {
                 dto.amount(),
                 dto.description(),
                 dto.date(),
-                dto.categoryId(),
-                user.getId()
+                user.getId(),
+                dto.categoryId()
         );
         Income createdIncome = createIncomeUseCase.execute(command);
         URI uri = uriBuilder.path("/incomes/{id}").buildAndExpand(createdIncome.getId()).toUri();
