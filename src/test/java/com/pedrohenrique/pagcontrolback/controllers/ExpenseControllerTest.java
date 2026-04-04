@@ -12,6 +12,7 @@ import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,12 +51,10 @@ class ExpenseControllerTest {
     private CategoryFactory categoryFactory;
 
     private String token;
-
     private UUID supplierId;
 
     @BeforeEach
     void setUp() {
-
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
         RestAssured.basePath = "/api/expenses";
@@ -82,194 +81,201 @@ class ExpenseControllerTest {
                 port,
                 token
         );
-
     }
 
-    @Test
-    void whenCreateExpenseWithInstallments_thenReturn201() {
+    @Nested
+    class CreateExpense {
 
-        UUID categoryId = categoryFactory.createCategoryExpense(port, token);
+        @Nested
+        class Success {
 
-        ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
-                null,
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.of(2026, 2, 2),
-                new HashMap<>() {{
-                    put(30, "1234567890123456");
-                    put(60, "9876543210987654");
-                }},
-                BigDecimal.valueOf(400.00),
-                categoryId
-        );
+            @Test
+            void shouldCreateExpenseWithInstallments() {
 
-        var response = RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(expenseRequestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(201)
-                .extract()
-                .response();
+                UUID categoryId = categoryFactory.createCategoryExpense(port, token);
 
-        ExpenseResponseDto expenseResponseDto =
-                response.body().as(ExpenseResponseDto.class);
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>() {{
+                            put(30, "1234567890123456");
+                            put(60, "9876543210987654");
+                        }},
+                        BigDecimal.valueOf(400.00),
+                        categoryId
+                );
 
-        assertNotNull(response);
-        assertEquals(200, expenseResponseDto.installments().get(0).amount().intValue());
-        assertEquals(2, expenseResponseDto.installments().size());
-        assertEquals(LocalDate.of(2026, 2, 2), expenseResponseDto.date());
-        assertEquals("9876543210987654", expenseResponseDto.installments().get(1).barcode());
-        assertEquals(InstallmentStatus.UNPAID, expenseResponseDto.installments().get(0).status());
-        assertEquals(categoryId, expenseResponseDto.categoryId());
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .response();
+
+                ExpenseResponseDto body =
+                        response.body().as(ExpenseResponseDto.class);
+
+                assertNotNull(body);
+                assertEquals(2, body.installments().size());
+                assertEquals(200, body.installments().get(0).amount().intValue());
+                assertEquals(LocalDate.of(2026, 2, 2), body.date());
+                assertEquals("9876543210987654", body.installments().get(1).barcode());
+                assertEquals(InstallmentStatus.UNPAID, body.installments().get(0).status());
+                assertEquals(categoryId, body.categoryId());
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn400WhenRequestIsInvalid() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null, null, supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        null, null, null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertNotNull(errors);
+                assertTrue(errors.contains("Payment type is required"));
+                assertTrue(errors.contains("Total amount is required"));
+            }
+
+            @Test
+            void shouldReturn404WhenSupplierNotFound() {
+
+                UUID randomSupplierId = UUID.randomUUID();
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        PaymentType.CREDIT,
+                        randomSupplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>() {{
+                            put(30, "1234567890123456");
+                        }},
+                        BigDecimal.valueOf(400.00),
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(404)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Supplier not found with id: " + randomSupplierId));
+            }
+
+            @Test
+            void shouldReturn400WhenInstallmentsMissing() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        null,
+                        BigDecimal.valueOf(400.00),
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains(
+                        "Installment intervals must be provided for CREDIT or BILL payment types."
+                ));
+            }
+
+            @Test
+            void shouldReturn400WhenInstallmentDaysInvalid() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>() {{
+                            put(-1, "1234567890123456");
+                        }},
+                        BigDecimal.valueOf(400.00),
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Installment due in days must be greater than zero."));
+            }
+        }
     }
 
-    @Test
-    void whenRequestBodyIsInvalid_thenReturn400() {
+    @Nested
+    class GetExpenses {
 
-        ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
-                null,
-                null,
-                supplierId,
-                LocalDate.of(2026, 2, 2),
-                null,
-                null,
-                null
-        );
+        @Nested
+        class Success {
 
-        var response = RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(expenseRequestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
+            @Test
+            void shouldReturnAllExpenses() {
 
-        List<String> errors = response.path("errors");
+                expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
+                expenseFactory.createExpense(supplierId, "INV-2", LocalDate.now(), port, token);
 
-        assertNotNull(errors);
-        assertTrue(errors.contains("Payment type is required"));
-        assertTrue(errors.contains("Total amount is required"));
-    }
-
-    @Test
-    void whenSupplierNotFound_thenReturn404() {
-
-        UUID randomSupplierId = UUID.randomUUID();
-
-        ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
-                null,
-                PaymentType.CREDIT,
-                randomSupplierId,
-                LocalDate.of(2026, 2, 2),
-                new HashMap<>() {{
-                    put(30, "1234567890123456");
-                    put(60, "9876543210987654");
-                }},
-                BigDecimal.valueOf(400.00),
-                null
-        );
-
-        var response = RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(expenseRequestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(404)
-                .extract()
-                .response();
-
-        List<String> errors = response.path("errors");
-
-        assertNotNull(errors);
-        assertTrue(errors.contains("Supplier not found with id: " + randomSupplierId));
-    }
-
-    @Test
-    void whenInstallmentsAreMissing_thenReturn400() {
-
-        ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
-                null,
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.of(2026, 2, 2),
-                null,
-                BigDecimal.valueOf(400.00),
-                null
-        );
-
-        var response = RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(expenseRequestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
-
-        List<String> errors = response.path("errors");
-
-        assertNotNull(errors);
-        assertTrue(errors.contains(
-                "Installment intervals must be provided for CREDIT or BILL payment types."
-        ));
-    }
-
-    @Test
-    void whenInstallmentDueInDaysIsInvalid_thenReturn400() {
-
-        ExpenseRequestDto expenseRequestDto = new ExpenseRequestDto(
-                null,
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.of(2026, 2, 2),
-                new HashMap<>() {{
-                    put(-1, "1234567890123456");
-                }},
-                BigDecimal.valueOf(400.00),
-                null
-        );
-
-        var response = RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(expenseRequestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
-
-        List<String> errors = response.path("errors");
-
-        assertNotNull(errors);
-        assertTrue(errors.contains("Installment due in days must be greater than zero."));
-    }
-
-    @Test
-    void whenGetExpensesWithoutFilters_thenReturnAllUserExpenses() {
-
-        expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
-        expenseFactory.createExpense(supplierId, "INV-2", LocalDate.now(), port, token);
-
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .when()
                         .get()
@@ -278,23 +284,18 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> invoices = response.jsonPath().getList("invoice_number");
+                List<String> invoices = response.jsonPath().getList("invoice_number");
 
-        assertEquals(2, invoices.size());
-        assertTrue(invoices.contains("INV-1"));
-        assertTrue(invoices.contains("INV-2"));
-    }
+                assertEquals(2, invoices.size());
+            }
 
-    @Test
-    void whenGetExpensesByInvoiceNumber_thenReturnOnlyMatchingExpense() {
+            @Test
+            void shouldFilterByInvoiceNumber() {
 
-        expenseFactory.createExpense(supplierId, "INV-100", LocalDate.now(), port, token);
+                expenseFactory.createExpense(supplierId, "INV-100", LocalDate.now(), port, token);
+                expenseFactory.createExpense(supplierId, "INV-200", LocalDate.now(), port, token);
 
-        expenseFactory.createExpense(supplierId, "INV-200", LocalDate.now(), port, token);
-
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .queryParam("invoice_number", "INV-100")
                         .when()
@@ -304,29 +305,23 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> invoices =
-                response.jsonPath().getList("invoice_number");
+                List<String> invoices = response.jsonPath().getList("invoice_number");
 
-        assertEquals(1, invoices.size());
-        assertEquals("INV-100", invoices.get(0));
-    }
+                assertEquals(1, invoices.size());
+                assertEquals("INV-100", invoices.get(0));
+            }
 
-    @Test
-    void whenGetExpensesBySupplier_thenReturnOnlySupplierExpenses() {
+            @Test
+            void shouldFilterBySupplier() {
 
-        UUID otherSupplierId = supplierFactory.createSupplier(
-                "other supplier",
-                null,
-                port,
-                token
-        );
+                UUID otherSupplierId = supplierFactory.createSupplier(
+                        "other supplier", null, port, token
+                );
 
-        expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
-        expenseFactory.createExpense(otherSupplierId, "INV-2", LocalDate.now(), port, token);
+                expenseFactory.createExpense(supplierId, "INV-1", LocalDate.now(), port, token);
+                expenseFactory.createExpense(otherSupplierId, "INV-2", LocalDate.now(), port, token);
 
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .queryParam("supplier_id", supplierId)
                         .when()
@@ -336,34 +331,23 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> invoices =
-                response.jsonPath().getList("invoice_number");
+                List<String> invoices = response.jsonPath().getList("invoice_number");
 
-        assertEquals(1, invoices.size());
-    }
+                assertEquals(1, invoices.size());
+            }
 
-    @Test
-    void whenGetExpensesByMonth_thenReturnOnlyExpensesInThatMonth() {
+            @Test
+            void shouldFilterByMonth() {
 
-        expenseFactory.createExpense(
-                supplierId,
-                "INV-JAN",
-                LocalDate.of(2026, 1, 10),
-                port,
-                token
-        );
+                expenseFactory.createExpense(
+                        supplierId, "INV-JAN", LocalDate.of(2026, 1, 10), port, token
+                );
 
-        expenseFactory.createExpense(
-                supplierId,
-                "INV-FEB",
-                LocalDate.of(2026, 2, 10),
-                port,
-                token
-        );
+                expenseFactory.createExpense(
+                        supplierId, "INV-FEB", LocalDate.of(2026, 2, 10), port, token
+                );
 
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .queryParam("month", "2026-02")
                         .when()
@@ -373,19 +357,16 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> invoices =
-                response.jsonPath().getList("invoice_number");
+                List<String> invoices = response.jsonPath().getList("invoice_number");
 
-        assertEquals(1, invoices.size());
-        assertEquals("INV-FEB", invoices.get(0));
-    }
+                assertEquals(1, invoices.size());
+                assertEquals("INV-FEB", invoices.get(0));
+            }
 
-    @Test
-    void whenGetExpensesForUserWithoutExpenses_thenReturnEmptyList() {
+            @Test
+            void shouldReturnEmptyListWhenNoExpenses() {
 
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .when()
                         .get()
@@ -394,19 +375,21 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<?> list = response.jsonPath().getList("$");
+                List<?> list = response.jsonPath().getList("$");
 
-        assertTrue(list.isEmpty());
-    }
+                assertTrue(list.isEmpty());
+            }
+        }
 
-    @Test
-    void whenGetExpensesWithFutureMonth_thenReturn400() {
+        @Nested
+        class Errors {
 
-        YearMonth future = YearMonth.now().plusMonths(1);
+            @Test
+            void shouldReturn400WhenMonthIsFuture() {
 
-        var response =
-                RestAssured.given()
-                        .accept(ContentType.JSON)
+                YearMonth future = YearMonth.now().plusMonths(1);
+
+                var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .queryParam("month", future.toString())
                         .when()
@@ -416,9 +399,10 @@ class ExpenseControllerTest {
                         .extract()
                         .response();
 
-        List<String> errors = response.path("errors");
+                List<String> errors = response.path("errors");
 
-        assertNotNull(errors);
-        assertTrue(errors.contains("Month cannot be in the future."));
+                assertTrue(errors.contains("Month cannot be in the future."));
+            }
+        }
     }
 }
