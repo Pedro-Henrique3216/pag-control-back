@@ -9,6 +9,7 @@ import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,7 +45,6 @@ class SupplierControllerTest {
 
     @BeforeEach
     void setUp() {
-
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
         RestAssured.basePath = "/api/suppliers";
@@ -66,205 +66,222 @@ class SupplierControllerTest {
         );
     }
 
-    @Test
-    void whenCreateSupplier_thenReturn201() {
+    @Nested
+    class CreateSupplier {
 
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "Supplier Name",
-                "12.345.678/0001-95"
-        );
+        @Nested
+        class Success {
 
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType(ContentType.JSON)
-                .body(requestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(201)
-                .extract()
-                .response();
+            @Test
+            void shouldCreateSupplier() {
 
-        assertNotNull(response);
-        assertEquals("Supplier Name", response.jsonPath().getString("name"));
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Supplier Name",
+                        "12.345.678/0001-95"
+                );
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .response();
+
+                assertEquals("Supplier Name", response.jsonPath().getString("name"));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn400WhenBodyIsInvalid() {
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "",
+                        "invalid-cnpj"
+                );
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("name must not be blank"));
+            }
+
+            @Test
+            void shouldReturn400WhenCnpjIsInvalid() {
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Supplier Name",
+                        "invalid-cnpj"
+                );
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Invalid CNPJ format."));
+            }
+
+            @Test
+            void shouldReturn409WhenCnpjAlreadyExists() {
+
+                factory.createSupplier(
+                        "Existing Supplier",
+                        "12.345.678/0001-95",
+                        port,
+                        token
+                );
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Supplier Name",
+                        "12.345.678/0001-95"
+                );
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(409)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Supplier with this CNPJ already exists for this user."));
+            }
+        }
     }
 
-    @Test
-    void whenRequestBodyIsInvalid_thenReturn400() {
+    @Nested
+    class GetSuppliers {
 
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "",
-                "invalid-cnpj"
-        );
+        @Nested
+        class Success {
 
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType(ContentType.JSON)
-                .body(requestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
+            @Test
+            void shouldReturnAllSuppliers() {
 
-        assertNotNull(response);
+                factory.createSupplier("Fornecedor 1", null, port, token);
+                factory.createSupplier("Fornecedor 2", null, port, token);
 
-        List<String> errors = response.path("errors");
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .body("$.size()", is(2));
+            }
 
-        assertNotNull(errors);
-        assertTrue(errors.contains("name must not be blank"));
+            @Test
+            void shouldReturnEmptyListWhenNoSuppliers() {
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .body("$.size()", is(0));
+            }
+        }
     }
 
-    @Test
-    void whenCnpjIsInvalid_thenReturn400() {
+    @Nested
+    class GetSupplierById {
 
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "Supplier Name",
-                "invalid-cnpj"
-        );
+        @Nested
+        class Success {
 
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType(ContentType.JSON)
-                .body(requestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(400)
-                .extract()
-                .response();
+            @Test
+            void shouldReturnSupplierWhenValid() {
 
-        assertNotNull(response);
+                factory.createSupplier("Fornecedor 1", null, port, token);
 
-        List<String> errors = response.path("errors");
+                Supplier supplier = supplierRepository.findAll().get(0);
 
-        assertNotNull(errors);
-        assertTrue(errors.contains("Invalid CNPJ format."));
-    }
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{id}", supplier.getId())
+                        .then()
+                        .statusCode(200)
+                        .body("name", is("Fornecedor 1"));
+            }
+        }
 
-    @Test
-    void whenSupplierWithSameCnpjAlreadyExists_thenReturn409() {
+        @Nested
+        class Errors {
 
-        factory.createSupplier(
-                "Existing Supplier",
-                "12.345.678/0001-95",
-                port,
-                token
-        );
+            @Test
+            void shouldReturn404WhenNotFound() {
 
-        SupplierRequestDto requestDto = new SupplierRequestDto(
-                "Supplier Name",
-                "12.345.678/0001-95"
-        );
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{id}", UUID.randomUUID())
+                        .then()
+                        .statusCode(404);
+            }
 
-        var response = RestAssured.given()
-                .header("Authorization", "Bearer " + token)
-                .contentType(ContentType.JSON)
-                .body(requestDto)
-                .when()
-                .post()
-                .then()
-                .statusCode(409)
-                .extract()
-                .response();
+            @Test
+            void shouldReturn404WhenSupplierDoesNotBelongToUser() {
 
-        assertNotNull(response);
+                authFactory.createUser(
+                        "Other User",
+                        "other@gmail.com",
+                        "Password123@",
+                        "11912345678",
+                        port
+                );
 
-        List<String> errors = response.path("errors");
+                String otherToken = authFactory.loginAndGetToken(
+                        port,
+                        "other@gmail.com",
+                        "Password123@"
+                );
 
-        assertNotNull(errors);
-        assertTrue(errors.contains("Supplier with this CNPJ already exists for this user."));
-    }
+                UUID supplierId = factory.createSupplier(
+                        "Outro fornecedor",
+                        null,
+                        port,
+                        otherToken
+                );
 
-    @Test
-    void shouldReturnSuppliersWhenUserHasSuppliers() {
-
-        factory.createSupplier("Fornecedor 1", null, port, token);
-        factory.createSupplier("Fornecedor 2", null, port, token);
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get()
-                .then()
-                .statusCode(200)
-                .body("$.size()", is(2));
-    }
-
-    @Test
-    void shouldReturnEmptyListWhenUserHasNoSuppliers() {
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get()
-                .then()
-                .statusCode(200)
-                .body("$.size()", is(0));
-    }
-
-    @Test
-    void shouldReturnSupplierWhenSupplierIdIsValidAndBelongsToUser() {
-
-        factory.createSupplier("Fornecedor 1", null, port, token);
-
-        Supplier supplier = supplierRepository.findAll().get(0);
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get("/{supplierId}", supplier.getId())
-                .then()
-                .statusCode(200)
-                .body("name", is("Fornecedor 1"));
-    }
-
-    @Test
-    void shouldReturn404WhenSupplierIsNotFound() {
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get("/{supplierId}", UUID.randomUUID())
-                .then()
-                .statusCode(404);
-    }
-
-    @Test
-    void shouldReturn404WhenSupplierDoesNotBelongToUser() {
-
-        authFactory.createUser(
-                "Other User",
-                "other@gmail.com",
-                "Password123@",
-                "11912345678",
-                port
-        );
-
-        String otherToken = authFactory.loginAndGetToken(
-                port,
-                "other@gmail.com",
-                "Password123@"
-        );
-
-        UUID supplierId = factory.createSupplier("Fornecedor de outro usuário", null, port, otherToken);
-
-        RestAssured
-                .given()
-                .header("Authorization", "Bearer " + token)
-                .accept(ContentType.JSON)
-                .when()
-                .get("/{supplierId}", supplierId)
-                .then()
-                .statusCode(404);
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{id}", supplierId)
+                        .then()
+                        .statusCode(404);
+            }
+        }
     }
 }
