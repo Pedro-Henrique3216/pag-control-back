@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public record IncomeRequestDto(
         @NotNull(message = "amount is required")
-        @DecimalMin(value = "0.01", inclusive = true, message = "Total amount must be greater than zero")
+        @DecimalMin(value = "0.01", message = "Total amount must be greater than zero")
         BigDecimal amount,
         @NotBlank(message = "Description is required")
         String description,
