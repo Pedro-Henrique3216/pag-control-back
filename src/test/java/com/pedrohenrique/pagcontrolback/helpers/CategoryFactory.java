@@ -11,13 +11,35 @@ import java.util.UUID;
 @Component
 public class CategoryFactory {
 
-    public UUID createCategory(
+    public UUID createCategoryExpense(
             int port,
             String token
     ) {
         CategoryRequestDto dto = new CategoryRequestDto(
                 "Teste",
                 CategoryType.EXPENSE
+        );
+        String id =  RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .body(dto)
+                .when()
+                .post("http://localhost:" + port + "/api/categories")
+                .then()
+                .statusCode(201)
+                .extract().body().path("id");
+
+        return UUID.fromString(id);
+    }
+
+    public UUID createCategoryIncome(
+            int port,
+            String token
+    ) {
+        CategoryRequestDto dto = new CategoryRequestDto(
+                "Teste",
+                CategoryType.INCOME
         );
         String id =  RestAssured
                 .given()
