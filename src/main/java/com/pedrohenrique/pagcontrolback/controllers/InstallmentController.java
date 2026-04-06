@@ -41,7 +41,7 @@ public class InstallmentController {
 
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<InstallmentResponseDto>> getExpenses(
+    public ResponseEntity<List<InstallmentResponseDto>> getInstallments(
             @AuthenticationPrincipal UserPrincipal user,
 
             @RequestParam(required = false)
