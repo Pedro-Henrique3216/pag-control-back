@@ -46,6 +46,12 @@ class GetDashboardUseCaseTest {
             when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(2000));
 
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(BigDecimal.valueOf(300));
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(2);
+
             List<CategorySummaryDto> categories = List.of(
                     new CategorySummaryDto("Food", BigDecimal.valueOf(1500)),
                     new CategorySummaryDto("Outros", BigDecimal.valueOf(500))
@@ -60,6 +66,8 @@ class GetDashboardUseCaseTest {
             assertEquals(BigDecimal.valueOf(3000), response.totalIncome());
             assertEquals(BigDecimal.valueOf(2000), response.totalExpense());
             assertEquals(BigDecimal.valueOf(1000), response.balance());
+            assertEquals(BigDecimal.valueOf(300), response.overdueTotal());
+            assertEquals(2, response.overdueCount());
             assertEquals(2, response.expensesByCategory().size());
         }
 
@@ -73,6 +81,12 @@ class GetDashboardUseCaseTest {
 
             when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(1500));
+
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(0);
 
             when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
@@ -98,6 +112,12 @@ class GetDashboardUseCaseTest {
             when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(null);
 
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(null);
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(null);
+
             when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
@@ -107,6 +127,8 @@ class GetDashboardUseCaseTest {
             assertEquals(BigDecimal.ZERO, response.totalIncome());
             assertEquals(BigDecimal.ZERO, response.totalExpense());
             assertEquals(BigDecimal.ZERO, response.balance());
+            assertEquals(BigDecimal.ZERO, response.overdueTotal());
+            assertEquals(0, response.overdueCount());
         }
 
         @Test
@@ -119,6 +141,12 @@ class GetDashboardUseCaseTest {
 
             when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(500));
+
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(0);
 
             when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
@@ -144,6 +172,12 @@ class GetDashboardUseCaseTest {
             when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.ZERO);
 
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(0);
+
             when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
@@ -165,6 +199,35 @@ class GetDashboardUseCaseTest {
                     eq(userId),
                     eq(LocalDate.of(2026, 2, 1)),
                     eq(LocalDate.of(2026, 2, 28))
+            );
+        }
+
+        @Test
+        void shouldHandleMonthWith31Days() {
+            UUID userId = UUID.randomUUID();
+            YearMonth month = YearMonth.of(2026, 1);
+
+            when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.sumOverdueByUser(any()))
+                    .thenReturn(BigDecimal.ZERO);
+
+            when(installmentRepository.countOverdueByUser(any()))
+                    .thenReturn(0);
+
+            when(installmentRepository.sumByCategory(any(), any(), any()))
+                    .thenReturn(List.of());
+
+            getDashboardUseCase.execute(userId, month);
+
+            verify(incomeRepository).sumByUserIdAndDateBetween(
+                    eq(userId),
+                    eq(LocalDate.of(2026, 1, 1)),
+                    eq(LocalDate.of(2026, 1, 31))
             );
         }
     }
