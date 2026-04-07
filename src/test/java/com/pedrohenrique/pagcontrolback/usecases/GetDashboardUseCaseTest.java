@@ -2,8 +2,8 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.DashboardResponseDto;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
+import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ class GetDashboardUseCaseTest {
     private IncomeRepository incomeRepository;
 
     @Mock
-    private ExpenseRepository expenseRepository;
+    private InstallmentRepository installmentRepository;
 
     @InjectMocks
     private GetDashboardUseCase getDashboardUseCase;
@@ -43,7 +43,7 @@ class GetDashboardUseCaseTest {
             when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(3000));
 
-            when(expenseRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(2000));
 
             List<CategorySummaryDto> categories = List.of(
@@ -51,7 +51,7 @@ class GetDashboardUseCaseTest {
                     new CategorySummaryDto("Outros", BigDecimal.valueOf(500))
             );
 
-            when(expenseRepository.sumByCategory(any(), any(), any()))
+            when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(categories);
 
             DashboardResponseDto response =
@@ -71,10 +71,10 @@ class GetDashboardUseCaseTest {
             when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(1000));
 
-            when(expenseRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(1500));
 
-            when(expenseRepository.sumByCategory(any(), any(), any()))
+            when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
             DashboardResponseDto response =
@@ -95,10 +95,10 @@ class GetDashboardUseCaseTest {
             when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(null);
 
-            when(expenseRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(null);
 
-            when(expenseRepository.sumByCategory(any(), any(), any()))
+            when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
             DashboardResponseDto response =
@@ -117,10 +117,10 @@ class GetDashboardUseCaseTest {
             when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(1000));
 
-            when(expenseRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.valueOf(500));
 
-            when(expenseRepository.sumByCategory(any(), any(), any()))
+            when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
             DashboardResponseDto response =
@@ -141,10 +141,10 @@ class GetDashboardUseCaseTest {
             when(incomeRepository.sumByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.ZERO);
 
-            when(expenseRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
+            when(installmentRepository.sumPaidByUserIdAndDateBetween(any(), any(), any()))
                     .thenReturn(BigDecimal.ZERO);
 
-            when(expenseRepository.sumByCategory(any(), any(), any()))
+            when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(List.of());
 
             getDashboardUseCase.execute(userId, month);
@@ -155,13 +155,13 @@ class GetDashboardUseCaseTest {
                     eq(LocalDate.of(2026, 2, 28))
             );
 
-            verify(expenseRepository).sumPaidByUserIdAndDateBetween(
+            verify(installmentRepository).sumPaidByUserIdAndDateBetween(
                     eq(userId),
                     eq(LocalDate.of(2026, 2, 1)),
                     eq(LocalDate.of(2026, 2, 28))
             );
 
-            verify(expenseRepository).sumByCategory(
+            verify(installmentRepository).sumByCategory(
                     eq(userId),
                     eq(LocalDate.of(2026, 2, 1)),
                     eq(LocalDate.of(2026, 2, 28))
