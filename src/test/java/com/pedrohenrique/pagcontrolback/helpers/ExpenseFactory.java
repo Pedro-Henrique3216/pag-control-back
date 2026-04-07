@@ -86,5 +86,44 @@ public class ExpenseFactory {
         System.out.println(response);
     }
 
+    public void createExpense(
+            UUID supplierId,
+            String invoiceNumber,
+            BigDecimal amount,
+            LocalDate date,
+            UUID categoryId,
+            int port,
+            String token
+    ) {
+
+        ExpenseRequestDto dto = new ExpenseRequestDto(
+                invoiceNumber,
+                PaymentType.CREDIT,
+                supplierId,
+                date,
+                new HashMap<>() {{
+                    put(5, null);
+                    put(10, null);
+                }},
+                amount,
+                categoryId
+        );
+
+        String response = RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .body(dto)
+                .when()
+                .post("http://localhost:" + port + "/api/expenses")
+                .then()
+                .statusCode(201)
+                .extract()
+                .response()
+                .asString();
+
+        System.out.println(response);
+    }
+
 
 }
