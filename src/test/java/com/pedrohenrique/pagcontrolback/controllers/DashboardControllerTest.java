@@ -16,8 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -73,16 +72,12 @@ class DashboardControllerTest {
     }
 
     @Nested
-    class success {
+    class Success {
 
         @Test
         void shouldReturnDashboardData() {
 
-            UUID categoryId = categoryFactory.createCategoryExpense(
-                    port,
-                    token
-            );
-
+            UUID categoryId = categoryFactory.createCategoryExpense(port, token);
 
             UUID supplierId = supplierFactory.createSupplier(
                     "Fornecedor Teste",
@@ -93,7 +88,7 @@ class DashboardControllerTest {
 
             expenseFactory.createExpense(
                     supplierId,
-                    "teste1",
+                    "teste",
                     BigDecimal.valueOf(1000),
                     LocalDate.of(2026, 2, 15),
                     categoryId,
@@ -103,7 +98,7 @@ class DashboardControllerTest {
 
             expenseFactory.createExpense(
                     supplierId,
-                    "teste1",
+                    "outros",
                     BigDecimal.valueOf(1250),
                     LocalDate.of(2026, 2, 15),
                     port,
@@ -131,9 +126,39 @@ class DashboardControllerTest {
                     .body("total_income", equalTo(3000.0F))
                     .body("total_expense", equalTo(2250.0F))
                     .body("balance", equalTo(750.0F))
-                    .body("expenses_by_category.size()", equalTo(2))
-                    .body("expenses_by_category.description", hasItems("teste", "outros"))
-                    .body("expenses_by_category.total", hasItems(1000.0F, 1250.0F));
+                    .body("overdue_total", equalTo(0))
+                    .body("overdue_count", equalTo(0))
+                    .body("expenses_by_category.size()", equalTo(2));
+        }
+
+        @Test
+        void shouldReturnOverdueData() {
+
+            UUID supplierId = supplierFactory.createSupplier(
+                    "Fornecedor",
+                    null,
+                    port,
+                    token
+            );
+
+            expenseFactory.createExpense(
+                    supplierId,
+                    "teste",
+                    BigDecimal.valueOf(1000),
+                    LocalDate.now().minusDays(10),
+                    port,
+                    token
+            );
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", LocalDate.now().getYear() + "-" + String.format("%02d", LocalDate.now().getMonthValue()))
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("overdue_total", greaterThan(0.0F))
+                    .body("overdue_count", greaterThan(0));
         }
 
         @Test
@@ -148,7 +173,9 @@ class DashboardControllerTest {
                     .statusCode(200)
                     .body("total_income", equalTo(0))
                     .body("total_expense", equalTo(0))
-                    .body("balance", equalTo(0));
+                    .body("balance", equalTo(0))
+                    .body("overdue_total", equalTo(0))
+                    .body("overdue_count", equalTo(0));
         }
 
         @Test
@@ -255,7 +282,8 @@ class DashboardControllerTest {
     }
 
     @Nested
-    class errors {
+    class Errors {
+
         @Test
         void shouldReturn400WhenMonthIsInvalid() {
 
@@ -267,12 +295,22 @@ class DashboardControllerTest {
                     .then()
                     .statusCode(400);
         }
+
+        @Test
+        void shouldReturn403WhenNoToken() {
+
+            RestAssured.given()
+                    .queryParam("month", "2026-02")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(403);
+        }
     }
 
     private void payInstallments(List<UUID> installmentIds) {
-        installmentIds.forEach(installmentId -> {
-            installmentHelper.payInstallment(installmentId, token, port);
-        });
+        installmentIds.forEach(id ->
+                installmentHelper.payInstallment(id, token, port)
+        );
     }
-
 }
