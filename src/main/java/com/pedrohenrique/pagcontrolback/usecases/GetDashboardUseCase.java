@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,12 +29,17 @@ public class GetDashboardUseCase {
         LocalDate startMonth = month.atDay(1);
         LocalDate endMonth = month.atEndOfMonth();
 
-        BigDecimal totalIncome = incomeRepository.sumByUserIdAndDateBetween(userId, startMonth, endMonth);
-        BigDecimal totalExpense = expenseRepository.sumPaidByUserIdAndDateBetween(userId, startMonth, endMonth);
+        BigDecimal totalIncome = Optional.ofNullable(
+                incomeRepository.sumByUserIdAndDateBetween(userId, startMonth, endMonth)
+        ).orElse(BigDecimal.ZERO);
+
+        BigDecimal totalExpense = Optional.ofNullable(
+                expenseRepository.sumPaidByUserIdAndDateBetween(userId, startMonth, endMonth)
+        ).orElse(BigDecimal.ZERO);
+
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
         List<CategorySummaryDto> byCategory = expenseRepository.sumByCategory(userId, startMonth, endMonth);
-        System.out.println(byCategory);
 
         return new DashboardResponseDto(
                 totalIncome,
