@@ -4,6 +4,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.DashboardResponseDto;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
+import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,11 +18,11 @@ import java.util.UUID;
 public class GetDashboardUseCase {
 
     private final IncomeRepository incomeRepository;
-    private final ExpenseRepository expenseRepository;
+    private final InstallmentRepository installmentRepository;
 
-    public GetDashboardUseCase(IncomeRepository incomeRepository, ExpenseRepository expenseRepository) {
+    public GetDashboardUseCase(IncomeRepository incomeRepository, InstallmentRepository installmentRepository) {
         this.incomeRepository = incomeRepository;
-        this.expenseRepository = expenseRepository;
+        this.installmentRepository = installmentRepository;
     }
 
     public DashboardResponseDto execute(UUID userId, YearMonth month) {
@@ -34,12 +35,12 @@ public class GetDashboardUseCase {
         ).orElse(BigDecimal.ZERO);
 
         BigDecimal totalExpense = Optional.ofNullable(
-                expenseRepository.sumPaidByUserIdAndDateBetween(userId, startMonth, endMonth)
+                installmentRepository.sumPaidByUserIdAndDateBetween(userId, startMonth, endMonth)
         ).orElse(BigDecimal.ZERO);
 
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
-        List<CategorySummaryDto> byCategory = expenseRepository.sumByCategory(userId, startMonth, endMonth);
+        List<CategorySummaryDto> byCategory = installmentRepository.sumByCategory(userId, startMonth, endMonth);
 
         return new DashboardResponseDto(
                 totalIncome,
