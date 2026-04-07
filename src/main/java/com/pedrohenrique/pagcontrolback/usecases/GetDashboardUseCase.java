@@ -2,7 +2,6 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.DashboardResponseDto;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import org.springframework.stereotype.Service;
@@ -40,12 +39,21 @@ public class GetDashboardUseCase {
 
         BigDecimal balance = totalIncome.subtract(totalExpense);
 
+        BigDecimal totalOverdue = Optional.ofNullable(
+                installmentRepository.sumOverdueByUser(userId)
+        ).orElse(BigDecimal.ZERO);
+
+        Integer overdueCount = Optional.ofNullable(installmentRepository.countOverdueByUser(userId))
+                .orElse(0);
+
         List<CategorySummaryDto> byCategory = installmentRepository.sumByCategory(userId, startMonth, endMonth);
 
         return new DashboardResponseDto(
                 totalIncome,
                 totalExpense,
                 balance,
+                totalOverdue,
+                overdueCount,
                 byCategory);
 
     }

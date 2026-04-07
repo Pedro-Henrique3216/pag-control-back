@@ -11,6 +11,10 @@ public record DashboardResponseDto(
         @JsonProperty("total_expense")
         BigDecimal totalExpense,
         BigDecimal balance,
+        @JsonProperty("overdue_total")
+        BigDecimal overdueTotal,
+        @JsonProperty("overdue_count")
+        Integer overdueCount,
         @JsonProperty("expenses_by_category")
         List<CategorySummaryDto> expensesByCategory
 ) {

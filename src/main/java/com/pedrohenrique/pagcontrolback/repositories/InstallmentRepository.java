@@ -35,4 +35,22 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         GROUP BY COALESCE(c.name, 'outros')
     """)
     List<CategorySummaryDto> sumByCategory(UUID userId, LocalDate start, LocalDate end);
+
+    @Query("""
+        SELECT COALESCE(SUM(i.amount), 0)
+        FROM Installment i
+        WHERE i.expense.user.id = :userId
+        AND i.status = 'UNPAID'
+        AND i.dueDate < CURRENT_DATE
+     """)
+    BigDecimal sumOverdueByUser(UUID userId);
+
+    @Query("""
+        SELECT COUNT(i)
+        FROM Installment i
+        WHERE i.expense.user.id = :userId
+        AND i.status = 'UNPAID'
+        AND i.dueDate < CURRENT_DATE
+    """)
+    Integer countOverdueByUser(UUID userId);
 }
