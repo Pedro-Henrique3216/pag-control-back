@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +57,10 @@ public class GetDashboardUseCase {
                 .orElse(0);
 
         List<CategorySummaryDto> byCategory = installmentRepository.sumByCategory(userId, startMonth, endMonth);
+
+        if (byCategory == null) {
+            byCategory = new ArrayList<>();
+        }
 
         return new DashboardResponseDto(
                 totalIncome,
