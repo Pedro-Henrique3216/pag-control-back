@@ -53,4 +53,22 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         AND i.dueDate < CURRENT_DATE
     """)
     Integer countOverdueByUser(UUID userId);
+
+    @Query("""
+        SELECT COALESCE(SUM(i.amount), 0)
+        FROM Installment i
+        WHERE i.expense.user.id = :userId
+        AND i.status = 'UNPAID'
+        AND i.dueDate >= :futureDate
+    """)
+    BigDecimal sumUpcomingByUser(UUID userId, LocalDate futureDate);
+
+    @Query("""
+        SELECT COUNT(i)
+        FROM Installment i
+        WHERE i.expense.user.id = :userId
+        AND i.status = 'UNPAID'
+        AND i.dueDate >= :futureDate
+    """)
+    Integer countUpcomingByUser(UUID userId, LocalDate futureDate);
 }

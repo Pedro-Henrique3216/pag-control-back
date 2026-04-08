@@ -46,6 +46,15 @@ public class GetDashboardUseCase {
         Integer overdueCount = Optional.ofNullable(installmentRepository.countOverdueByUser(userId))
                 .orElse(0);
 
+        LocalDate futureDate = LocalDate.now().plusDays(7);
+
+        BigDecimal upcomingTotal = Optional.ofNullable(
+                installmentRepository.sumUpcomingByUser(userId, futureDate)
+        ).orElse(BigDecimal.ZERO);
+
+        Integer upcomingCount = Optional.ofNullable(installmentRepository.countUpcomingByUser(userId, futureDate))
+                .orElse(0);
+
         List<CategorySummaryDto> byCategory = installmentRepository.sumByCategory(userId, startMonth, endMonth);
 
         return new DashboardResponseDto(
@@ -54,6 +63,8 @@ public class GetDashboardUseCase {
                 balance,
                 totalOverdue,
                 overdueCount,
+                upcomingTotal,
+                upcomingCount,
                 byCategory);
 
     }
