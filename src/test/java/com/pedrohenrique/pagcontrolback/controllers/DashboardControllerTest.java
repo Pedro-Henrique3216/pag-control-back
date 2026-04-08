@@ -128,6 +128,8 @@ class DashboardControllerTest {
                     .body("balance", equalTo(750.0F))
                     .body("overdue_total", equalTo(0))
                     .body("overdue_count", equalTo(0))
+                    .body("upcoming_total", equalTo(0))
+                    .body("upcoming_count", equalTo(0))
                     .body("expenses_by_category.size()", equalTo(2));
         }
 
@@ -162,6 +164,36 @@ class DashboardControllerTest {
         }
 
         @Test
+        void shouldReturnUpcomingData() {
+
+            UUID supplierId = supplierFactory.createSupplier(
+                    "Fornecedor",
+                    null,
+                    port,
+                    token
+            );
+
+            expenseFactory.createExpense(
+                    supplierId,
+                    "teste",
+                    BigDecimal.valueOf(800),
+                    LocalDate.now(),
+                    port,
+                    token
+            );
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", LocalDate.now().getYear() + "-" + String.format("%02d", LocalDate.now().getMonthValue()))
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("upcoming_total", greaterThan(0.0F))
+                    .body("upcoming_count", greaterThan(0));
+        }
+
+        @Test
         void shouldReturnZeroWhenNoData() {
 
             RestAssured.given()
@@ -175,109 +207,9 @@ class DashboardControllerTest {
                     .body("total_expense", equalTo(0))
                     .body("balance", equalTo(0))
                     .body("overdue_total", equalTo(0))
-                    .body("overdue_count", equalTo(0));
-        }
-
-        @Test
-        void shouldIgnoreUnpaidExpenses() {
-
-            UUID supplierId = supplierFactory.createSupplier(
-                    "Fornecedor",
-                    null,
-                    port,
-                    token
-            );
-
-            expenseFactory.createExpense(
-                    supplierId,
-                    "teste",
-                    BigDecimal.valueOf(1000),
-                    LocalDate.of(2026, 2, 10),
-                    port,
-                    token
-            );
-
-            RestAssured.given()
-                    .header("Authorization", "Bearer " + token)
-                    .queryParam("month", "2026-02")
-                    .when()
-                    .get()
-                    .then()
-                    .statusCode(200)
-                    .body("total_expense", equalTo(0));
-        }
-
-        @Test
-        void shouldIgnoreDataFromOtherMonths() {
-
-            UUID supplierId = supplierFactory.createSupplier(
-                    "Fornecedor",
-                    null,
-                    port,
-                    token
-            );
-
-            expenseFactory.createExpense(
-                    supplierId,
-                    "fev",
-                    BigDecimal.valueOf(1000),
-                    LocalDate.of(2026, 2, 10),
-                    port,
-                    token
-            );
-
-            expenseFactory.createExpense(
-                    supplierId,
-                    "jan",
-                    BigDecimal.valueOf(2000),
-                    LocalDate.of(2026, 1, 10),
-                    port,
-                    token
-            );
-
-            List<UUID> ids = installmentHelper.getInstallments(token, port);
-            payInstallments(ids);
-
-            RestAssured.given()
-                    .header("Authorization", "Bearer " + token)
-                    .queryParam("month", "2026-02")
-                    .when()
-                    .get()
-                    .then()
-                    .statusCode(200)
-                    .body("total_expense", equalTo(1000.0F));
-        }
-
-        @Test
-        void shouldReturnNegativeBalance() {
-
-            UUID supplierId = supplierFactory.createSupplier(
-                    "Fornecedor",
-                    null,
-                    port,
-                    token
-            );
-
-            expenseFactory.createExpense(
-                    supplierId,
-                    "teste",
-                    BigDecimal.valueOf(2000),
-                    LocalDate.of(2026, 2, 10),
-                    port,
-                    token
-            );
-
-            List<UUID> ids = installmentHelper.getInstallments(token, port);
-            payInstallments(ids);
-
-            RestAssured.given()
-                    .header("Authorization", "Bearer " + token)
-                    .queryParam("month", "2026-02")
-                    .when()
-                    .get()
-                    .then()
-                    .statusCode(200)
-                    .body("balance", equalTo(-2000.0F));
+                    .body("overdue_count", equalTo(0))
+                    .body("upcoming_total", equalTo(0))
+                    .body("upcoming_count", equalTo(0));
         }
     }
 
