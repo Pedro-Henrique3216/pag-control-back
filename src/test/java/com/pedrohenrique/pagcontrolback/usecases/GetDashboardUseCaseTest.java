@@ -2,6 +2,8 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.DashboardResponseDto;
+import com.pedrohenrique.pagcontrolback.dtos.response.MonthSummaryDto;
+import com.pedrohenrique.pagcontrolback.repositories.IReportRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import org.junit.jupiter.api.Nested;
@@ -14,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +31,9 @@ class GetDashboardUseCaseTest {
 
     @Mock
     private InstallmentRepository installmentRepository;
+
+    @Mock
+    private IReportRepository reportRepository;
 
     @InjectMocks
     private GetDashboardUseCase getDashboardUseCase;
@@ -52,6 +58,9 @@ class GetDashboardUseCaseTest {
                 .thenReturn(0);
 
         when(installmentRepository.sumByCategory(any(), any(), any()))
+                .thenReturn(List.of());
+
+        when(reportRepository.findMonthlySummaryByUserId(any(), any(), any()))
                 .thenReturn(List.of());
     }
 
@@ -105,6 +114,29 @@ class GetDashboardUseCaseTest {
         }
 
         @Test
+        void shouldReturnMonthlySummary() {
+            UUID userId = UUID.randomUUID();
+            YearMonth month = YearMonth.of(2026, 2);
+
+            mockDefaults();
+
+            List<MonthSummaryDto> summary = List.of(
+                    new MonthSummaryDto(YearMonth.of(2026, 1), BigDecimal.valueOf(1000), BigDecimal.valueOf(500)),
+                    new MonthSummaryDto(YearMonth.of(2026, 2), BigDecimal.valueOf(2000), BigDecimal.valueOf(1000))
+            );
+
+            when(reportRepository.findMonthlySummaryByUserId(any(), any(), any()))
+                    .thenReturn(summary);
+
+            DashboardResponseDto response =
+                    getDashboardUseCase.execute(userId, month);
+
+            assertEquals(2, response.monthsSummary().size());
+            assertEquals(new BigDecimal("1000"), response.monthsSummary().get(0).income());
+            assertEquals(new BigDecimal("500"), response.monthsSummary().get(0).expense());
+        }
+
+        @Test
         void shouldCalculateNegativeBalance() {
             UUID userId = UUID.randomUUID();
             YearMonth month = YearMonth.of(2026, 2);
@@ -121,26 +153,6 @@ class GetDashboardUseCaseTest {
                     getDashboardUseCase.execute(userId, month);
 
             assertEquals(BigDecimal.valueOf(-500), response.balance());
-        }
-
-        @Test
-        void shouldReturnUpcomingValuesCorrectly() {
-            UUID userId = UUID.randomUUID();
-            YearMonth month = YearMonth.of(2026, 2);
-
-            mockDefaults();
-
-            when(installmentRepository.sumUpcomingByUser(any(), any()))
-                    .thenReturn(BigDecimal.valueOf(500));
-
-            when(installmentRepository.countUpcomingByUser(any(), any()))
-                    .thenReturn(3);
-
-            DashboardResponseDto response =
-                    getDashboardUseCase.execute(userId, month);
-
-            assertEquals(BigDecimal.valueOf(500), response.upcomingTotal());
-            assertEquals(3, response.upcomingCount());
         }
 
         @Test
@@ -192,6 +204,9 @@ class GetDashboardUseCaseTest {
             when(installmentRepository.sumByCategory(any(), any(), any()))
                     .thenReturn(null);
 
+            when(reportRepository.findMonthlySummaryByUserId(any(), any(), any()))
+                    .thenReturn(new ArrayList<>());
+
             DashboardResponseDto response =
                     getDashboardUseCase.execute(userId, month);
 
@@ -203,14 +218,11 @@ class GetDashboardUseCaseTest {
             assertEquals(BigDecimal.ZERO, response.upcomingTotal());
             assertEquals(0, response.upcomingCount());
             assertEquals(0, response.expensesByCategory().size());
+            assertEquals(0, response.monthsSummary().size());
         }
-    }
-
-    @Nested
-    class Validation {
 
         @Test
-        void shouldCallRepositoriesWithCorrectDates() {
+        void shouldCallRepositoriesCorrectly() {
             UUID userId = UUID.randomUUID();
             YearMonth month = YearMonth.of(2026, 2);
 
@@ -230,39 +242,19 @@ class GetDashboardUseCaseTest {
                     eq(LocalDate.of(2026, 2, 28))
             );
 
-            verify(installmentRepository).sumByCategory(
-                    eq(userId),
-                    eq(LocalDate.of(2026, 2, 1)),
-                    eq(LocalDate.of(2026, 2, 28))
-            );
-        }
-
-        @Test
-        void shouldCallOverdueMethods() {
-            UUID userId = UUID.randomUUID();
-            YearMonth month = YearMonth.of(2026, 2);
-
-            mockDefaults();
-
-            getDashboardUseCase.execute(userId, month);
-
             verify(installmentRepository).sumOverdueByUser(userId);
             verify(installmentRepository).countOverdueByUser(userId);
-        }
-
-        @Test
-        void shouldCallUpcomingMethodsWithCorrectDate() {
-            UUID userId = UUID.randomUUID();
-            YearMonth month = YearMonth.of(2026, 2);
-
-            mockDefaults();
-
-            getDashboardUseCase.execute(userId, month);
 
             LocalDate expectedDate = LocalDate.now().plusDays(7);
 
             verify(installmentRepository).sumUpcomingByUser(eq(userId), eq(expectedDate));
             verify(installmentRepository).countUpcomingByUser(eq(userId), eq(expectedDate));
+
+            verify(reportRepository).findMonthlySummaryByUserId(
+                    eq(userId),
+                    any(LocalDate.class),
+                    any(LocalDate.class)
+            );
         }
     }
 }
