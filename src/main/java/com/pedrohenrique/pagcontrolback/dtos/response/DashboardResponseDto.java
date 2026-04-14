@@ -20,6 +20,8 @@ public record DashboardResponseDto(
         @JsonProperty("upcoming_count")
         Integer upcomingCount,
         @JsonProperty("expenses_by_category")
-        List<CategorySummaryDto> expensesByCategory
+        List<CategorySummaryDto> expensesByCategory,
+        @JsonProperty("months_summary")
+        List<MonthSummaryDto> monthsSummary
 ) {
 }

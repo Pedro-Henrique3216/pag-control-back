@@ -2,6 +2,8 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.DashboardResponseDto;
+import com.pedrohenrique.pagcontrolback.dtos.response.MonthSummaryDto;
+import com.pedrohenrique.pagcontrolback.repositories.IReportRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
 import org.springframework.stereotype.Service;
@@ -19,10 +21,12 @@ public class GetDashboardUseCase {
 
     private final IncomeRepository incomeRepository;
     private final InstallmentRepository installmentRepository;
+    private final IReportRepository reportRepository;
 
-    public GetDashboardUseCase(IncomeRepository incomeRepository, InstallmentRepository installmentRepository) {
+    public GetDashboardUseCase(IncomeRepository incomeRepository, InstallmentRepository installmentRepository, IReportRepository reportRepository) {
         this.incomeRepository = incomeRepository;
         this.installmentRepository = installmentRepository;
+        this.reportRepository = reportRepository;
     }
 
     public DashboardResponseDto execute(UUID userId, YearMonth month) {
@@ -62,6 +66,10 @@ public class GetDashboardUseCase {
             byCategory = new ArrayList<>();
         }
 
+        LocalDate currentDate = LocalDate.now();
+        LocalDate sixMonthsAgo = currentDate.minusMonths(6);
+        List<MonthSummaryDto> monthlySummary = reportRepository.findMonthlySummaryByUserId(userId, sixMonthsAgo, currentDate);
+
         return new DashboardResponseDto(
                 totalIncome,
                 totalExpense,
@@ -70,7 +78,9 @@ public class GetDashboardUseCase {
                 overdueCount,
                 upcomingTotal,
                 upcomingCount,
-                byCategory);
+                byCategory,
+                monthlySummary
+        );
 
     }
 
