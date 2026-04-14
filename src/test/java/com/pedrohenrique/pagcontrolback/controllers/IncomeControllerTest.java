@@ -164,7 +164,7 @@ class IncomeControllerTest {
                         .when()
                         .post()
                         .then()
-                        .statusCode(403);
+                        .statusCode(401);
             }
         }
     }

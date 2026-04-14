@@ -156,7 +156,7 @@ class CategoryControllerTest {
             }
 
             @Test
-            void shouldReturn403WhenUserNotAuthenticated() {
+            void shouldReturn401WhenUserNotAuthenticated() {
 
                 CategoryRequestDto body = new CategoryRequestDto(
                         "food",
@@ -169,7 +169,7 @@ class CategoryControllerTest {
                         .when()
                         .post()
                         .then()
-                        .statusCode(403);
+                        .statusCode(401);
             }
         }
     }
