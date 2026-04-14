@@ -59,7 +59,7 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         FROM Installment i
         WHERE i.expense.user.id = :userId
         AND i.status = 'UNPAID'
-        AND i.dueDate >= :futureDate
+        AND i.dueDate BETWEEN CURRENT_DATE AND :futureDate
     """)
     BigDecimal sumUpcomingByUser(UUID userId, LocalDate futureDate);
 
@@ -68,7 +68,7 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         FROM Installment i
         WHERE i.expense.user.id = :userId
         AND i.status = 'UNPAID'
-        AND i.dueDate >= :futureDate
+        AND i.dueDate BETWEEN CURRENT_DATE AND :futureDate
     """)
     Integer countUpcomingByUser(UUID userId, LocalDate futureDate);
 }
