@@ -125,7 +125,7 @@ public class GlobalExceptionHandler {
             InvalidTokenException.class
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedExceptio(RuntimeException ex){
+    public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedException(RuntimeException ex){
         logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
     }
