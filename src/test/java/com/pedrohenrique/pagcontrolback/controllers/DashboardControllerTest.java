@@ -130,7 +130,10 @@ class DashboardControllerTest {
                     .body("overdue_count", equalTo(0))
                     .body("upcoming_total", equalTo(0))
                     .body("upcoming_count", equalTo(0))
-                    .body("expenses_by_category.size()", equalTo(2));
+                    .body("expenses_by_category.size()", equalTo(2))
+                    .body("months_summary.size()", greaterThanOrEqualTo(1))
+                    .body("months_summary[0].income", equalTo(3000.0F))
+                    .body("months_summary[0].expense", equalTo(2250.0F));
         }
 
         @Test
@@ -211,6 +214,92 @@ class DashboardControllerTest {
                     .body("upcoming_total", equalTo(0))
                     .body("upcoming_count", equalTo(0));
         }
+
+        @Test
+        void shouldReturnEmptyMonthlySummaryWhenNoData() {
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", "2026-02")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("months_summary.size()", equalTo(0));
+        }
+
+        @Test
+        void shouldReturnCorrectMonthlySummaryAcrossMonths() {
+
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(1000),
+                    "jan",
+                    LocalDate.of(2026, 1, 10),
+                    port,
+                    token
+            );
+
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(2000),
+                    "fev",
+                    LocalDate.of(2026, 2, 10),
+                    port,
+                    token
+            );
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", "2026-02")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("months_summary.size()", greaterThanOrEqualTo(2));
+        }
+
+        @Test
+        void shouldReturnZeroValuesInMonthlySummary() {
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", "2026-04")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("months_summary", notNullValue());
+        }
+
+        @Test
+        void shouldReturnMonthlySummaryOrderedByDate() {
+
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(1000),
+                    "jan",
+                    LocalDate.of(2026, 1, 10),
+                    port,
+                    token
+            );
+
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(2000),
+                    "fev",
+                    LocalDate.of(2026, 2, 10),
+                    port,
+                    token
+            );
+
+            RestAssured.given()
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", "2026-02")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("months_summary[0].month", equalTo("2026-01"))
+                    .body("months_summary[1].month", equalTo("2026-02"));
+
+        }
     }
 
     @Nested
@@ -229,14 +318,14 @@ class DashboardControllerTest {
         }
 
         @Test
-        void shouldReturn403WhenNoToken() {
+        void shouldReturn401WhenNoToken() {
 
             RestAssured.given()
                     .queryParam("month", "2026-02")
                     .when()
                     .get()
                     .then()
-                    .statusCode(403);
+                    .statusCode(401);
         }
     }
 
