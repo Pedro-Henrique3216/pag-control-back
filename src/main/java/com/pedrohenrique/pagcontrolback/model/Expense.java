@@ -191,10 +191,11 @@ public class Expense {
                 value = value.add(remainder);
             }
 
+
             Installment installment = new Installment(
                     value,
                     expenseDate.plusDays(dueInDays),
-                    entry.getValue()
+                    entry.getValue() == null || entry.getValue().isBlank() ? null : entry.getValue()
             );
 
             this.addInstallment(installment);
