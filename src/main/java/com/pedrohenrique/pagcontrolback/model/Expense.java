@@ -218,11 +218,12 @@ public class Expense {
             );
         }
 
-        String barcode = null;
-
-        if (barcodeByDueInDays != null && !barcodeByDueInDays.isEmpty()) {
-            barcode = barcodeByDueInDays.values().iterator().next();
-        }
+        String barcode = barcodeByDueInDays == null
+                ? null
+                : barcodeByDueInDays.values().stream()
+                  .filter(v -> v != null && !v.isBlank())
+                  .findFirst()
+                  .orElse(null);
 
         Installment installment = new Installment(total, expenseDate, barcode);
 
