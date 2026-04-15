@@ -149,6 +149,17 @@ public class Expense {
         installment.setExpense(this);
     }
 
+    public void generateInstallments(
+            BigDecimal total,
+            Map<Integer, String> barcodeByDueInDays
+    ) {
+        if (paymentType == PaymentType.CREDIT || paymentType == PaymentType.BILL) {
+            generateMultipleInstallments(total, barcodeByDueInDays);
+        } else {
+            generateSingleInstallment(total, barcodeByDueInDays);
+        }
+    }
+
     private void generateMultipleInstallments(
             BigDecimal total,
             Map<Integer, String> barcodeByDueInDays
@@ -187,17 +198,6 @@ public class Expense {
             );
 
             this.addInstallment(installment);
-        }
-    }
-
-    public void generateInstallments(
-            BigDecimal total,
-            Map<Integer, String> barcodeByDueInDays
-    ) {
-        if (paymentType == PaymentType.CREDIT || paymentType == PaymentType.BILL) {
-            generateMultipleInstallments(total, barcodeByDueInDays);
-        } else {
-            generateSingleInstallment(total, barcodeByDueInDays);
         }
     }
 
