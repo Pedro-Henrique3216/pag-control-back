@@ -622,5 +622,58 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         );
     }
 
+    @Test
+    void shouldThrowCreateExpenseCommandRequiredExceptionWhenCommandIsNull(){
+        assertThrows(CreateExpenseCommandRequiredException.class, () -> useCase.execute(null));
+    }
+
+    @Test
+     void shouldThrowInvalidAmountExceptionWhenTotalAmountIsZeroOrNegative(){
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                UUID.randomUUID(),
+                LocalDate.now(),
+                Map.of(30, ""),
+                BigDecimal.ZERO,
+                null,
+                UUID.randomUUID()
+        );
+
+        assertThrows(InvalidAmountException.class, () -> useCase.execute(command));
+    }
+
+    @Test
+     void shouldThrowUserIdRequiredExceptionWhenUserIdIsNull(){
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                UUID.randomUUID(),
+                LocalDate.now(),
+                Map.of(30, ""),
+                BigDecimal.valueOf(100),
+                null,
+                null
+        );
+
+        assertThrows(UserIdRequiredException.class, () -> useCase.execute(command));
+    }
+
+    @Test
+     void shouldThrowSupplierRequiredExceptionWhenSupplierIdIsNull(){
+        CreateExpenseCommand command = new CreateExpenseCommand(
+                "INV123",
+                PaymentType.CREDIT,
+                null,
+                LocalDate.now(),
+                Map.of(30, ""),
+                BigDecimal.valueOf(100),
+                null,
+                UUID.randomUUID()
+        );
+
+        assertThrows(SupplierRequiredException.class, () -> useCase.execute(command));
+    }
+
 
 }
