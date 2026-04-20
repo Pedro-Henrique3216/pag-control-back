@@ -137,7 +137,7 @@ public class Expense {
     }
 
     public void assignCategory(Category category) {
-        if(category.getCategoryType() != CategoryType.EXPENSE) {
+        if(category.getCategoryType() != TransactionType.EXPENSE) {
             throw new CategoryTypeInvalidException("Category must be EXPENSE");
         }
         this.category = category;

@@ -1,6 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
-public enum CategoryType {
+public enum TransactionType {
     EXPENSE,
     INCOME
 }

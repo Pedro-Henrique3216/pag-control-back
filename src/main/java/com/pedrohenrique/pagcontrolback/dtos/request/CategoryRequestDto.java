@@ -1,7 +1,7 @@
 package com.pedrohenrique.pagcontrolback.dtos.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pedrohenrique.pagcontrolback.model.CategoryType;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,6 +10,6 @@ public record CategoryRequestDto(
         String name,
         @NotNull(message = "Category type is required.")
         @JsonProperty(value = "category_type")
-        CategoryType categoryType
+        TransactionType categoryType
 ) {
 }

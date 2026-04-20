@@ -74,7 +74,7 @@ public class Income {
     }
 
     public void assignCategory(Category category) {
-        if(category.getCategoryType() != CategoryType.INCOME){
+        if(category.getCategoryType() != TransactionType.INCOME){
             throw new CategoryTypeInvalidException("Category type must be INCOME");
         }
         this.category = category;

@@ -26,7 +26,7 @@ public class Category {
     private String name;
     @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
-    private CategoryType categoryType;
+    private TransactionType categoryType;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -37,7 +37,7 @@ public class Category {
 
     public Category() {}
 
-    public Category(String name, CategoryType categoryType, User user) {
+    public Category(String name, TransactionType categoryType, User user) {
         this.name = normalizeName(name);
         validateCategoryType(categoryType);
         this.categoryType = categoryType;
@@ -50,7 +50,7 @@ public class Category {
         }
     }
 
-    private void validateCategoryType(CategoryType categoryType) {
+    private void validateCategoryType(TransactionType categoryType) {
         if (categoryType == null) {
             throw new CategoryTypeInvalidException("Category type cannot be null");
         }
@@ -73,7 +73,7 @@ public class Category {
         return user;
     }
 
-    public CategoryType getCategoryType() {
+    public TransactionType getCategoryType() {
         return categoryType;
     }
 
