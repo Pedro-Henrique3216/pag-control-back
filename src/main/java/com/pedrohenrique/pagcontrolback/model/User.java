@@ -28,14 +28,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "person_type")
     private PersonType personType;
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
-    private Set<Expense> expenses = new HashSet<>();
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "user")
+    private Set<Category> categories =  new HashSet<>();
+    @OneToMany(mappedBy = "user")
     private Set<Supplier> suppliers = new HashSet<>();
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
-    private Set<Category> categories = new HashSet<>();
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.REMOVE)
-    private Set<Income> incomes = new HashSet<>();
 
     public User(
             String name,
@@ -103,20 +99,12 @@ public class User {
         return personType;
     }
 
-    public Set<Expense> getExpenses() {
-        return expenses;
-    }
-
     public Set<Supplier> getSuppliers() {
         return suppliers;
     }
 
     public Set<Category> getCategories() {
         return categories;
-    }
-
-    public Set<Income> getIncomes() {
-        return incomes;
     }
 
     public void setPassword(String password) {
