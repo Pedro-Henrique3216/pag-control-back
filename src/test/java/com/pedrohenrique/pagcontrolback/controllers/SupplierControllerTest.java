@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
+import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
 import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
@@ -30,7 +31,7 @@ class SupplierControllerTest {
     private int port;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner cleaner;
 
     @Autowired
     private SupplierRepository supplierRepository;
@@ -49,7 +50,7 @@ class SupplierControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/suppliers";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authFactory.createUser(
                 "teste",

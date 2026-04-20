@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
+import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
 import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
@@ -27,13 +28,13 @@ class CategoryControllerTest {
     private int port;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private AuthTestFactory authTestFactory;
 
     @Autowired
     private CategoryFactory categoryFactory;
+
+    @Autowired
+    private DatabaseCleaner cleaner;
 
     private String token;
 
@@ -43,7 +44,7 @@ class CategoryControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/categories";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authTestFactory.createUser(
                 "John Doe",

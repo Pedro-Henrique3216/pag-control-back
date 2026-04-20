@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.IncomeRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
+import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,7 @@ class IncomeControllerTest {
     private int port;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner cleaner;
 
     @Autowired
     private AuthTestFactory authTestFactory;
@@ -45,7 +46,7 @@ class IncomeControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/incomes";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authTestFactory.createUser(
                 "teste",

@@ -44,7 +44,7 @@ class DashboardControllerTest {
     private CategoryFactory categoryFactory;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner cleaner;
 
     private String token;
 
@@ -54,7 +54,7 @@ class DashboardControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/dashboard";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authTestFactory.createUser(
                 "teste",

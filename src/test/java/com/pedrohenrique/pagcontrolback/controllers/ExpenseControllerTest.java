@@ -2,10 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
-import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
-import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
-import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
-import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
+import com.pedrohenrique.pagcontrolback.helpers.*;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -36,7 +33,7 @@ class ExpenseControllerTest {
     private int port;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner cleaner;
 
     @Autowired
     private ExpenseFactory expenseFactory;
@@ -59,7 +56,7 @@ class ExpenseControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/expenses";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authTestFactory.createUser(
                 "teste",

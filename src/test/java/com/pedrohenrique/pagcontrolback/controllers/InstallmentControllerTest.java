@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
+import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
 import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
 import com.pedrohenrique.pagcontrolback.helpers.SupplierFactory;
 import com.pedrohenrique.pagcontrolback.model.Installment;
@@ -32,7 +33,7 @@ class InstallmentControllerTest {
     private int port;
 
     @Autowired
-    private UserRepository userRepository;
+    private DatabaseCleaner cleaner;
 
     @Autowired
     private InstallmentRepository installmentRepository;
@@ -55,7 +56,7 @@ class InstallmentControllerTest {
         RestAssured.port = port;
         RestAssured.basePath = "/api/installments";
 
-        userRepository.deleteAll();
+        cleaner.clearDatabase();
 
         authFactory.createUser(
                 "teste",
