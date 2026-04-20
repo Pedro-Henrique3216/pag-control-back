@@ -11,15 +11,15 @@ class CategoryTest {
 
     @Test
     void shouldCreateCategorySuccessfully() {
-        Category category = new Category("Food", CategoryType.EXPENSE, new User());
+        Category category = new Category("Food", TransactionType.EXPENSE, new User());
 
         assertEquals("food", category.getName());
-        assertEquals(CategoryType.EXPENSE, category.getCategoryType());
+        assertEquals(TransactionType.EXPENSE, category.getCategoryType());
     }
 
     @Test
     void shouldNormalizeName() {
-        Category category = new Category("   Food   ", CategoryType.EXPENSE, new User());
+        Category category = new Category("   Food   ", TransactionType.EXPENSE, new User());
 
         assertEquals("food", category.getName());
     }
@@ -27,22 +27,22 @@ class CategoryTest {
     @Test
     void shouldThrowExceptionWhenNameIsNull() {
         assertThrows(CategoryNameInvalidException.class, () -> {
-            new Category(null, CategoryType.EXPENSE, new User());
+            new Category(null, TransactionType.EXPENSE, new User());
         });
     }
 
     @Test
     void shouldThrowExceptionWhenNameIsEmpty() {
         assertThrows(CategoryNameInvalidException.class, () -> {
-            new Category("   ", CategoryType.EXPENSE, new User());
+            new Category("   ", TransactionType.EXPENSE, new User());
         });
     }
 
     @Test
     void shouldReturnCorrectCategoryType() {
-        Category category = new Category("salary", CategoryType.INCOME, new User());
+        Category category = new Category("salary", TransactionType.INCOME, new User());
 
-        assertEquals(CategoryType.INCOME, category.getCategoryType());
+        assertEquals(TransactionType.INCOME, category.getCategoryType());
     }
 
     @Test

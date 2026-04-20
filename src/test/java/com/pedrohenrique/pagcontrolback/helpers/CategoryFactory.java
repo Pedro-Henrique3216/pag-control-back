@@ -1,7 +1,7 @@
 package com.pedrohenrique.pagcontrolback.helpers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
-import com.pedrohenrique.pagcontrolback.model.CategoryType;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ public class CategoryFactory {
     ) {
         CategoryRequestDto dto = new CategoryRequestDto(
                 "Teste",
-                CategoryType.EXPENSE
+                TransactionType.EXPENSE
         );
         String id =  RestAssured
                 .given()
@@ -39,7 +39,7 @@ public class CategoryFactory {
     ) {
         CategoryRequestDto dto = new CategoryRequestDto(
                 "Teste",
-                CategoryType.INCOME
+                TransactionType.INCOME
         );
         String id =  RestAssured
                 .given()

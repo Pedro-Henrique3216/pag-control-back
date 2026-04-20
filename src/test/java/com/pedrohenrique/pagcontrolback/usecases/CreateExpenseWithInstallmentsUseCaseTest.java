@@ -74,7 +74,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var category =  new Category(
                 "teste",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 user
         );
 
@@ -585,7 +585,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         var category =  new Category(
                 "teste",
-                CategoryType.INCOME,
+                TransactionType.INCOME,
                 user
         );
 

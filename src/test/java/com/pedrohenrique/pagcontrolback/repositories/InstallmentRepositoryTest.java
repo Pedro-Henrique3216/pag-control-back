@@ -81,7 +81,7 @@ class InstallmentRepositoryTest {
     void shouldGroupByCategory() {
         User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
 
-        Category category = categoryRepository.save(new Category("Food", CategoryType.EXPENSE, user));
+        Category category = categoryRepository.save(new Category("Food", TransactionType.EXPENSE, user));
 
         Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
 

@@ -6,7 +6,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.CreateCategoryCommandRequired
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
-import com.pedrohenrique.pagcontrolback.model.CategoryType;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -45,7 +45,7 @@ class CreateCategoryUseCaseTest {
 
         CreateCategoryCommand command = new CreateCategoryCommand(
                 "food",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 null
         );
 
@@ -60,7 +60,7 @@ class CreateCategoryUseCaseTest {
         UUID userId = UUID.randomUUID();
         CreateCategoryCommand command = new CreateCategoryCommand(
                 "food",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 userId
         );
 
@@ -77,7 +77,7 @@ class CreateCategoryUseCaseTest {
         UUID userId = UUID.randomUUID();
         CreateCategoryCommand command = new CreateCategoryCommand(
                 "food",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 userId
         );
 
@@ -97,7 +97,7 @@ class CreateCategoryUseCaseTest {
         UUID userId = UUID.randomUUID();
         CreateCategoryCommand command = new CreateCategoryCommand(
                 "food",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 userId
         );
 
@@ -105,7 +105,7 @@ class CreateCategoryUseCaseTest {
 
         Category category = new Category(
                 "food",
-                CategoryType.EXPENSE,
+                TransactionType.EXPENSE,
                 user
         );
 

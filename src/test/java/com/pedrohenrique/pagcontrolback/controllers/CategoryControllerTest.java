@@ -3,7 +3,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
-import com.pedrohenrique.pagcontrolback.model.CategoryType;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -72,7 +72,7 @@ class CategoryControllerTest {
 
                 CategoryRequestDto body = new CategoryRequestDto(
                         "food",
-                        CategoryType.EXPENSE
+                        TransactionType.EXPENSE
                 );
 
                 given()
@@ -97,7 +97,7 @@ class CategoryControllerTest {
 
                 CategoryRequestDto body = new CategoryRequestDto(
                         "",
-                        CategoryType.EXPENSE
+                        TransactionType.EXPENSE
                 );
 
                 given()
@@ -133,7 +133,7 @@ class CategoryControllerTest {
 
                 CategoryRequestDto body = new CategoryRequestDto(
                         "food",
-                        CategoryType.EXPENSE
+                        TransactionType.EXPENSE
                 );
 
                 given()
@@ -160,7 +160,7 @@ class CategoryControllerTest {
 
                 CategoryRequestDto body = new CategoryRequestDto(
                         "food",
-                        CategoryType.EXPENSE
+                        TransactionType.EXPENSE
                 );
 
                 given()

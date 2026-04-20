@@ -5,10 +5,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.CategoryNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateIncomeCommandRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
-import com.pedrohenrique.pagcontrolback.model.Category;
-import com.pedrohenrique.pagcontrolback.model.CategoryType;
-import com.pedrohenrique.pagcontrolback.model.Income;
-import com.pedrohenrique.pagcontrolback.model.User;
+import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -56,7 +53,7 @@ class CreateIncomeUseCaseTest {
             UUID categoryId = UUID.randomUUID();
 
             User user = new User();
-            Category category = new Category("teste", CategoryType.INCOME, user);
+            Category category = new Category("teste", TransactionType.INCOME, user);
 
             CreateIncomeCommand command = createCommand(userId, categoryId);
 
