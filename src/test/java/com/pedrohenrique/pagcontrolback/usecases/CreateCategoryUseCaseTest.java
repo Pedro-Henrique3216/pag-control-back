@@ -35,9 +35,9 @@ class CreateCategoryUseCaseTest {
     @Test
     void shouldThrowExceptionWhenCategoryIsNull() {
 
-        assertThrows(CreateCategoryCommandRequiredException.class, () -> {
-            createCategoryUseCase.execute(null);
-        });
+        assertThrows(CreateCategoryCommandRequiredException.class, () ->
+            createCategoryUseCase.execute(null)
+        );
     }
 
     @Test
@@ -49,9 +49,9 @@ class CreateCategoryUseCaseTest {
                 null
         );
 
-        assertThrows(UserRequiredException.class, () -> {
-            createCategoryUseCase.execute(command);
-        });
+        assertThrows(UserRequiredException.class, () ->
+            createCategoryUseCase.execute(command)
+        );
     }
 
     @Test
@@ -66,9 +66,9 @@ class CreateCategoryUseCaseTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> {
-            createCategoryUseCase.execute(command);
-        });
+        assertThrows(UserNotFoundException.class, () ->
+            createCategoryUseCase.execute(command)
+        );
     }
 
     @Test
@@ -86,9 +86,9 @@ class CreateCategoryUseCaseTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId("food", command.userId())).thenReturn(true);
 
-        assertThrows(CategoryAlreadyExistsException.class, () -> {
-            createCategoryUseCase.execute(command);
-        });
+        assertThrows(CategoryAlreadyExistsException.class, () ->
+            createCategoryUseCase.execute(command)
+        );
     }
 
     @Test

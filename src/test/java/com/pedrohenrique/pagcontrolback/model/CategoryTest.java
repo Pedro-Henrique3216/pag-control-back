@@ -26,16 +26,16 @@ class CategoryTest {
 
     @Test
     void shouldThrowExceptionWhenNameIsNull() {
-        assertThrows(CategoryNameInvalidException.class, () -> {
-            new Category(null, TransactionType.EXPENSE, new User());
-        });
+        assertThrows(CategoryNameInvalidException.class, () ->
+            new Category(null, TransactionType.EXPENSE, new User())
+        );
     }
 
     @Test
     void shouldThrowExceptionWhenNameIsEmpty() {
-        assertThrows(CategoryNameInvalidException.class, () -> {
-            new Category("   ", TransactionType.EXPENSE, new User());
-        });
+        assertThrows(CategoryNameInvalidException.class, () ->
+            new Category("   ", TransactionType.EXPENSE, new User())
+        );
     }
 
     @Test
@@ -47,9 +47,9 @@ class CategoryTest {
 
     @Test
     void shouldThrowExceptionWhenCategoryTypeIsNull() {
-        assertThrows(CategoryTypeInvalidException.class, () -> {
-            new Category("Food", null, new User());
-        });
+        assertThrows(CategoryTypeInvalidException.class, () ->
+            new Category("Food", null, new User())
+        );
     }
 
 }
