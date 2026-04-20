@@ -4,7 +4,6 @@ import com.pedrohenrique.pagcontrolback.dtos.request.IncomeRequestDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.CategoryFactory;
 import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
