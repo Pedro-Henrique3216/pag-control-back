@@ -31,7 +31,7 @@ public class UserController {
         this.authenticateUserUseCase = authenticateUserUseCase;
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/sign-up")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto, UriComponentsBuilder uriBuilder) {
         CreateUserCommand command = new CreateUserCommand(
                 userRequestDto.name(),
