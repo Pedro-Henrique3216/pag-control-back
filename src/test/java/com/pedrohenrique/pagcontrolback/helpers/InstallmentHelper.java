@@ -30,7 +30,7 @@ public class InstallmentHelper {
                 .given()
                 .header("Authorization", "Bearer " + token)
                 .when()
-                .get("http://localhost:" + port + "/api/installments/" + id + "/pay")
+                .patch("http://localhost:" + port + "/api/installments/" + id + "/pay")
                 .then()
                 .statusCode(200);
     }

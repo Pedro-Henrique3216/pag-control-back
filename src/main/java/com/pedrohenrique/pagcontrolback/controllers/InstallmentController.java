@@ -68,7 +68,7 @@ public class InstallmentController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{installmentId}/pay")
+    @PatchMapping("/{installmentId}/pay")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Void> payInstallment(
             @AuthenticationPrincipal UserPrincipal user,

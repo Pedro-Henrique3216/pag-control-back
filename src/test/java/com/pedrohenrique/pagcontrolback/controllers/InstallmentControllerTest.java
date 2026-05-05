@@ -209,7 +209,7 @@ class InstallmentControllerTest {
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .when()
-                        .get("/{id}/pay", installment.getInstallmentId())
+                        .patch("/{id}/pay", installment.getInstallmentId())
                         .then()
                         .statusCode(200);
 
