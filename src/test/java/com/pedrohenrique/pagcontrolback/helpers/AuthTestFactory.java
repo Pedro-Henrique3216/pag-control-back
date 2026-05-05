@@ -32,7 +32,7 @@ public class AuthTestFactory {
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
-                .post("http://localhost:" + port + "/api/users/signin")
+                .post("http://localhost:" + port + "/api/users/sign-up")
                 .then()
                 .statusCode(201)
                 .extract()

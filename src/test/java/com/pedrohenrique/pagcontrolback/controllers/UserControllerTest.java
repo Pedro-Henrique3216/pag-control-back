@@ -51,7 +51,7 @@ class UserControllerTest {
                         .contentType("application/json")
                         .body(request)
                         .when()
-                        .post("/signin")
+                        .post("/sign-up")
                         .then()
                         .statusCode(201)
                         .extract()
@@ -81,7 +81,7 @@ class UserControllerTest {
                         .contentType("application/json")
                         .body(request)
                         .when()
-                        .post("/signin")
+                        .post("/sign-up")
                         .then()
                         .statusCode(400)
                         .extract()
@@ -122,7 +122,7 @@ class UserControllerTest {
                         .contentType("application/json")
                         .body(user)
                         .when()
-                        .post("/signin")
+                        .post("/sign-up")
                         .then()
                         .statusCode(201);
 
@@ -177,12 +177,11 @@ class UserControllerTest {
                         PersonType.PJ
                 );
 
-                // cria usuário
                 RestAssured.given()
                         .contentType("application/json")
                         .body(user)
                         .when()
-                        .post("/signin")
+                        .post("/sign-up")
                         .then()
                         .statusCode(201);
 
