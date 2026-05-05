@@ -11,6 +11,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -43,15 +44,15 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
             }
 
             if (query.month() != null) {
+
+                YearMonth yearMonth = query.month();
+                LocalDate start = yearMonth.atDay(1);
+                LocalDate end = yearMonth.atEndOfMonth();
                 predicates.add(
-                        builder.equal(
-                                builder.function(
-                                        "to_char",
-                                        String.class,
-                                        installment.get("dueDate"),
-                                        builder.literal("YYYY-MM")
-                                ),
-                                query.month().toString()
+                        builder.between(
+                                installment.get("dueDate"),
+                                start,
+                                end
                         )
                 );
             }
