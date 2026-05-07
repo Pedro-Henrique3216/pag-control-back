@@ -1,5 +1,8 @@
 package com.pedrohenrique.pagcontrolback.config.security;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
+import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,9 +19,11 @@ import java.util.UUID;
 public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
+    private final UserRepository userRepository;
 
-    public SecurityFilter(TokenService tokenService) {
+    public SecurityFilter(TokenService tokenService,  UserRepository userRepository) {
         this.tokenService = tokenService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -35,6 +40,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
                 UUID userId = tokenService.getUserId(token);
 
+                userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
+
                 UserPrincipal userPrincipal = new UserPrincipal(userId);
 
                 UsernamePasswordAuthenticationToken authentication =
@@ -49,9 +56,10 @@ public class SecurityFilter extends OncePerRequestFilter {
                             .getContext()
                             .setAuthentication(authentication);
                 }
-        } catch (Exception e) {
+        } catch (UserNotFoundException | JWTVerificationException e) {
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
