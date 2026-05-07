@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.InstallmentUpdateDto;
+import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
 import com.pedrohenrique.pagcontrolback.helpers.AuthTestFactory;
 import com.pedrohenrique.pagcontrolback.helpers.DatabaseCleaner;
 import com.pedrohenrique.pagcontrolback.helpers.ExpenseFactory;
@@ -227,7 +228,7 @@ class InstallmentControllerTest {
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
                         .when()
-                        .get("/{id}/pay", UUID.randomUUID())
+                        .patch("/{id}/pay", UUID.randomUUID())
                         .then()
                         .statusCode(404);
             }
@@ -252,7 +253,7 @@ class InstallmentControllerTest {
                 RestAssured.given()
                         .header("Authorization", "Bearer " + otherToken)
                         .when()
-                        .get("/{id}/pay", installment.getInstallmentId())
+                        .patch("/{id}/pay", installment.getInstallmentId())
                         .then()
                         .statusCode(403);
             }
@@ -270,7 +271,18 @@ class InstallmentControllerTest {
 
                 factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
 
-                Installment installment = installmentRepository.findAll().get(0);
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+                System.out.println(response.jsonPath().getObject("[0]", InstallmentResponseDto.class));
+                System.out.println(response.asString());
+                InstallmentResponseDto installment = response.jsonPath().getObject("[0]", InstallmentResponseDto.class);
 
                 InstallmentUpdateDto dto = new InstallmentUpdateDto(
                         BigDecimal.valueOf(500),
@@ -283,11 +295,11 @@ class InstallmentControllerTest {
                         .contentType("application/json")
                         .body(dto)
                         .when()
-                        .put("/{id}", installment.getInstallmentId())
+                        .put("/{id}", installment.id())
                         .then()
                         .statusCode(200);
 
-                Installment updated = installmentRepository.findById(installment.getInstallmentId()).orElseThrow();
+                Installment updated = installmentRepository.findById(installment.id()).orElseThrow();
 
                 assertEquals(500, updated.getAmount().doubleValue());
             }
