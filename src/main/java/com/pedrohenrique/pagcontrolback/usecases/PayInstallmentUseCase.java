@@ -5,9 +5,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Installment;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
