@@ -4,7 +4,6 @@ import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateSupplierCommandRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
@@ -32,8 +31,7 @@ public class CreateSupplierUseCase {
             throw new UserIdRequiredException("User ID cannot be null.");
         }
 
-        User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
+        User user = userRepository.getReferenceById(command.userId());
 
         Supplier supplier = new Supplier(
                 command.name(),

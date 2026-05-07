@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateCategoryCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryAlreadyExistsException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateCategoryCommandRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
@@ -30,8 +29,7 @@ public class CreateCategoryUseCase {
             throw new UserRequiredException("User ID cannot be null.");
         }
 
-        var user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
+        var user = userRepository.getReferenceById(command.userId());
 
         if(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId(command.name(), command.userId())) {
             throw new CategoryAlreadyExistsException("Category with the same name already exists");

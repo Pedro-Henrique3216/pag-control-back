@@ -52,8 +52,7 @@ public class CreateExpenseWithInstallmentsUseCase {
             throw new SupplierRequiredException("Supplier ID is required.");
         }
 
-        User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + command.userId()));
+        User user = userRepository.getReferenceById(command.userId());
 
         Supplier supplier = supplierRepository.findById(command.supplierId())
                         .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + command.supplierId()));

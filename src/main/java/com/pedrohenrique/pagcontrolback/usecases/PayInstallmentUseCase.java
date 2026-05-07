@@ -1,6 +1,9 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
-import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
@@ -12,12 +15,9 @@ import java.util.UUID;
 @Service
 public class PayInstallmentUseCase {
 
-    private final UserRepository userRepository;
-
     private final InstallmentRepository installmentRepository;
 
-    public PayInstallmentUseCase(UserRepository userRepository, InstallmentRepository installmentRepository) {
-        this.userRepository = userRepository;
+    public PayInstallmentUseCase(InstallmentRepository installmentRepository) {
         this.installmentRepository = installmentRepository;
     }
 
@@ -31,13 +31,10 @@ public class PayInstallmentUseCase {
             throw new InstallmentRequiredException("Installment ID is required");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
         Installment installment = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new InstallmentNotFoundException("Installment not found"));
 
-        if (!installment.getExpense().getUser().getId().equals(user.getId())) {
+        if (!installment.getExpense().getUser().getId().equals(userId)) {
             throw new InstallmentAccessDeniedException("Installment does not belong to the user");
         }
 

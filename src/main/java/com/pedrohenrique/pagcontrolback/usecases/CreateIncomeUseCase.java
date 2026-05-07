@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateIncomeCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateIncomeCommandRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
 import com.pedrohenrique.pagcontrolback.model.Income;
@@ -35,8 +34,7 @@ public class CreateIncomeUseCase {
             throw new UserRequiredException("User ID cannot be null.");
         }
 
-        User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
+        User user = userRepository.getReferenceById(command.userId());
 
         Income income = new Income(
                 command.amount(),

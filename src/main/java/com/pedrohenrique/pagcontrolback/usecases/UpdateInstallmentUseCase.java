@@ -1,21 +1,20 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.UpdateInstallmentCommand;
-import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Installment;
-import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UpdateInstallmentUseCase {
 
-    private final UserRepository userRepository;
     private final InstallmentRepository installmentRepository;
 
-    public UpdateInstallmentUseCase(UserRepository userRepository, InstallmentRepository installmentRepository) {
-        this.userRepository = userRepository;
+    public UpdateInstallmentUseCase(InstallmentRepository installmentRepository) {
         this.installmentRepository = installmentRepository;
     }
 
@@ -29,13 +28,10 @@ public class UpdateInstallmentUseCase {
             throw new InstallmentRequiredException("Installment ID is required");
         }
 
-        User user = userRepository.findById(command.userId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + command.userId()));
-
         Installment existingInstallment = installmentRepository.findById(command.installmentId())
                 .orElseThrow(() -> new InstallmentNotFoundException("Installment not found with ID: " + command.installmentId()));
 
-        if(!existingInstallment.getExpense().getUser().equals(user)){
+        if(!existingInstallment.getExpense().getUser().getId().equals(command.userId())){
             throw new InstallmentAccessDeniedException("User does not have permission to update installment");
         }
 
