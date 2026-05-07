@@ -69,9 +69,7 @@ class CreateSupplierUseCaseTest {
 
     @Test
     void shouldThrowCreateSupplierCommandRequiredExceptionWhenSupplierIsNull(){
-        CreateSupplierCommandRequiredException exception = assertThrows(CreateSupplierCommandRequiredException.class, () -> {
-            createSupplierUseCase.execute(null);
-        });
+        CreateSupplierCommandRequiredException exception = assertThrows(CreateSupplierCommandRequiredException.class, () -> createSupplierUseCase.execute(null));
 
         verify(supplierRepository, never()).save(any(Supplier.class));
 
@@ -87,9 +85,7 @@ class CreateSupplierUseCaseTest {
                 null
         );
 
-        UserIdRequiredException exception = assertThrows(UserIdRequiredException.class, () -> {
-            createSupplierUseCase.execute(command);
-        });
+        UserIdRequiredException exception = assertThrows(UserIdRequiredException.class, () -> createSupplierUseCase.execute(command));
 
         verify(supplierRepository, never()).save(any(Supplier.class));
 
@@ -110,9 +106,7 @@ class CreateSupplierUseCaseTest {
                 .thenReturn(new User());
         when(supplierRepository.existsSupplierByCnpjAndUser_Id(anyString(), any())).thenReturn(true);
 
-        SupplierAlreadyExistsWithCnpjException exception = assertThrows(SupplierAlreadyExistsWithCnpjException.class, () -> {
-            createSupplierUseCase.execute(command);
-        });
+        SupplierAlreadyExistsWithCnpjException exception = assertThrows(SupplierAlreadyExistsWithCnpjException.class, () -> createSupplierUseCase.execute(command));
 
         verify(supplierRepository, never()).save(any(Supplier.class));
 

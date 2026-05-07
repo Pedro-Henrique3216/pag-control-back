@@ -87,9 +87,7 @@ class UpdateInstallmentUseCaseTest {
                 null
         );
 
-        assertThrows(UserRequiredException.class, () -> {
-            updateInstallmentUseCase.execute(command);
-        });
+        assertThrows(UserRequiredException.class, () -> updateInstallmentUseCase.execute(command));
     }
 
     @Test
@@ -103,9 +101,7 @@ class UpdateInstallmentUseCaseTest {
                 null
         );
 
-        assertThrows(InstallmentRequiredException.class, () -> {
-            updateInstallmentUseCase.execute(command);
-        });
+        assertThrows(InstallmentRequiredException.class, () -> updateInstallmentUseCase.execute(command));
     }
 
     @Test
@@ -132,9 +128,7 @@ class UpdateInstallmentUseCaseTest {
 
         when(installmentRepository.findById(any())).thenReturn(Optional.empty());
 
-        assertThrows(InstallmentNotFoundException.class, () -> {
-            updateInstallmentUseCase.execute(command);
-        });
+        assertThrows(InstallmentNotFoundException.class, () -> updateInstallmentUseCase.execute(command));
     }
 
     @Test
@@ -188,9 +182,7 @@ class UpdateInstallmentUseCaseTest {
 
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
-        assertThrows(InstallmentAccessDeniedException.class, () -> {
-            updateInstallmentUseCase.execute(command);
-        });
+        assertThrows(InstallmentAccessDeniedException.class, () -> updateInstallmentUseCase.execute(command));
     }
 
 }
