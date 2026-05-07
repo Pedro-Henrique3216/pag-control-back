@@ -1,10 +1,12 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.UpdateInstallmentCommand;
-import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
+import com.pedrohenrique.pagcontrolback.exceptions.InstallmentRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,9 +28,6 @@ class UpdateInstallmentUseCaseTest {
 
     @Mock
     private InstallmentRepository installmentRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @InjectMocks
     private UpdateInstallmentUseCase updateInstallmentUseCase;
@@ -70,7 +69,6 @@ class UpdateInstallmentUseCaseTest {
                 UUID.randomUUID()
         );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
         updateInstallmentUseCase.execute(command);
@@ -111,24 +109,6 @@ class UpdateInstallmentUseCaseTest {
     }
 
     @Test
-    void shouldThrowUserNotFoundExceptionWhenUserDoesNotExist(){
-
-        UpdateInstallmentCommand command = new UpdateInstallmentCommand(
-                null,
-                null,
-                null,
-                UUID.randomUUID(),
-                UUID.randomUUID()
-        );
-
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-
-        assertThrows(UserNotFoundException.class, () -> {
-            updateInstallmentUseCase.execute(command);
-        });
-    }
-
-    @Test
     void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist(){
 
         User user = new User(
@@ -150,7 +130,6 @@ class UpdateInstallmentUseCaseTest {
                 UUID.randomUUID()
         );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(InstallmentNotFoundException.class, () -> {
@@ -207,7 +186,6 @@ class UpdateInstallmentUseCaseTest {
                UUID.randomUUID()
        );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user2));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
         assertThrows(InstallmentAccessDeniedException.class, () -> {

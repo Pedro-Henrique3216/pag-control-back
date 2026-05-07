@@ -2,11 +2,9 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,15 +17,13 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PayInstallmentUseCaseTest {
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private InstallmentRepository installmentRepository;
@@ -73,10 +69,9 @@ class PayInstallmentUseCaseTest {
 
         installment2.setExpense(expense);
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
-        payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID());
+        payInstallmentUseCase.execute(user.getId(), UUID.randomUUID());
 
         verify(installmentRepository, times(1)).save(installment);
 
@@ -91,15 +86,6 @@ class PayInstallmentUseCaseTest {
         );
     }
 
-    @Test
-    void shouldThrowUserNotFoundExceptionWhenUserDoesNotExist(){
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID())
-        );
-    }
 
     @Test
     void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist(){
@@ -112,7 +98,6 @@ class PayInstallmentUseCaseTest {
                 PersonType.PF
         );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
         when(installmentRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(
@@ -162,7 +147,6 @@ class PayInstallmentUseCaseTest {
         installment.setExpense(expense);
 
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user2));
         when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
 
         assertThrows(

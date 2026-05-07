@@ -3,9 +3,11 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateIncomeCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateIncomeCommandRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
-import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.model.Category;
+import com.pedrohenrique.pagcontrolback.model.Income;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
+import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.IncomeRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -57,7 +59,8 @@ class CreateIncomeUseCaseTest {
 
             CreateIncomeCommand command = createCommand(userId, categoryId);
 
-            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            when(userRepository.getReferenceById(userId))
+                    .thenReturn(user);
             when(categoryRepository.findCategoryByIdAndUserId(categoryId, userId))
                     .thenReturn(Optional.of(category));
 
@@ -80,8 +83,8 @@ class CreateIncomeUseCaseTest {
 
             CreateIncomeCommand command = createCommand(userId, null);
 
-            when(userRepository.findById(userId))
-                    .thenReturn(Optional.of(new User()));
+            when(userRepository.getReferenceById(userId))
+                    .thenReturn(new User());
 
             ArgumentCaptor<Income> captor = ArgumentCaptor.forClass(Income.class);
 
@@ -121,21 +124,6 @@ class CreateIncomeUseCaseTest {
         }
 
         @Test
-        void shouldThrowUserNotFoundExceptionWhenUserNotFound() {
-
-            UUID userId = UUID.randomUUID();
-            CreateIncomeCommand command = createCommand(userId, null);
-
-            when(userRepository.findById(userId))
-                    .thenReturn(Optional.empty());
-
-            assertThrows(UserNotFoundException.class,
-                    () -> createIncomeUseCase.execute(command));
-
-            verify(incomeRepository, never()).save(any());
-        }
-
-        @Test
         void shouldThrowCategoryNotFoundExceptionWhenCategoryNotFound() {
 
             UUID userId = UUID.randomUUID();
@@ -143,8 +131,8 @@ class CreateIncomeUseCaseTest {
 
             CreateIncomeCommand command = createCommand(userId, categoryId);
 
-            when(userRepository.findById(userId))
-                    .thenReturn(Optional.of(new User()));
+            when(userRepository.getReferenceById(userId))
+                    .thenReturn(new User());
 
             when(categoryRepository.findCategoryByIdAndUserId(categoryId, userId))
                     .thenReturn(Optional.empty());

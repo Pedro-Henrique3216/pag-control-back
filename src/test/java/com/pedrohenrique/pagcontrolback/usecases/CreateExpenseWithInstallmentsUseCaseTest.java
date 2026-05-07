@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 
@@ -96,8 +96,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -108,40 +108,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         useCase.execute(command);
 
         verify(expenseRepository, times(1)).save(expense);
-    }
-
-    @Test
-    void whenUserNotFound_thenThrowUserNotFoundException(){
-        var userId = UUID.randomUUID();
-
-        var supplierId = UUID.randomUUID();
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
-
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
-
-
-        assertThrows(UserNotFoundException.class,
-                () -> useCase.execute(command));
-
-        verify(expenseRepository, never()).save(any());
     }
 
     @Test
@@ -179,8 +145,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -225,8 +191,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.empty());
@@ -276,8 +242,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -335,8 +301,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -385,8 +351,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -441,8 +407,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -492,8 +458,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -546,8 +512,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));
@@ -607,8 +573,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
 
         when(supplierRepository.findById(supplierId))
                 .thenReturn(Optional.of(supplier));

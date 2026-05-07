@@ -1,7 +1,9 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateSupplierCommand;
-import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.exceptions.CreateSupplierCommandRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.SupplierAlreadyExistsWithCnpjException;
+import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
@@ -13,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,7 +49,8 @@ class CreateSupplierUseCaseTest {
                 PersonType.PJ
         );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(any()))
+                .thenReturn(user);
         when(supplierRepository.save(any(Supplier.class))).thenReturn(supplier);
 
         CreateSupplierCommand command = new CreateSupplierCommand(
@@ -95,27 +97,6 @@ class CreateSupplierUseCaseTest {
     }
 
     @Test
-    void shouldThrowUserNotFoundExceptionWhenUserDoesNotExist(){
-        UUID userId = UUID.randomUUID();
-        CreateSupplierCommand command = new CreateSupplierCommand(
-                "Supplier Name",
-                null,
-                userId
-        );
-
-
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
-            createSupplierUseCase.execute(command);
-        });
-
-        verify(supplierRepository, never()).save(any(Supplier.class));
-
-        assertEquals("User not found with ID: " + userId, exception.getMessage());
-    }
-
-    @Test
     void shouldThrowSupplierAlreadyExistsWithCnpjExceptionWhenCnpjAlreadyExistsForUser(){
         UUID userId = UUID.randomUUID();
 
@@ -125,7 +106,8 @@ class CreateSupplierUseCaseTest {
                 userId
         );
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+        when(userRepository.getReferenceById(any()))
+                .thenReturn(new User());
         when(supplierRepository.existsSupplierByCnpjAndUser_Id(anyString(), any())).thenReturn(true);
 
         SupplierAlreadyExistsWithCnpjException exception = assertThrows(SupplierAlreadyExistsWithCnpjException.class, () -> {

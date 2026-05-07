@@ -4,14 +4,12 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.exceptions.FutureMonthNotAllowedException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.model.Expense;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepositoryCustom;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,9 +29,6 @@ class ListExpensesUseCaseTest {
 
     @Mock
     private ExpenseRepositoryCustom expenseRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private SupplierRepository supplierRepository;
@@ -58,26 +53,6 @@ class ListExpensesUseCaseTest {
     }
 
     @Test
-    void shouldThrowUserNotFoundException_whenUserDoesNotExist(){
-        UUID userId = UUID.randomUUID();
-
-        var query = new ListExpensesQuery(
-                null,
-                null,
-                null
-        );
-
-        when(userRepository.existsById(userId)).thenReturn(false);
-
-        var exception = assertThrows(
-                UserNotFoundException.class,
-                () -> listExpensesUseCase.execute(query, userId)
-        );
-
-        assertEquals("User not found.", exception.getMessage());
-    }
-
-    @Test
     void shouldThrowSupplierNotFoundException_whenSupplierIdInQueryDoesNotExist(){
         UUID userId = UUID.randomUUID();
         UUID supplierId = UUID.randomUUID();
@@ -88,7 +63,6 @@ class ListExpensesUseCaseTest {
                 null
         );
 
-        when(userRepository.existsById(userId)).thenReturn(true);
         when(supplierRepository.existsById(supplierId)).thenReturn(false);
 
         var exception = assertThrows(
@@ -109,8 +83,6 @@ class ListExpensesUseCaseTest {
                 null,
                 null
         );
-
-        when(userRepository.existsById(userId)).thenReturn(true);
 
         when(expenseRepository.search(query, userId))
                 .thenReturn(List.of());
@@ -146,8 +118,6 @@ class ListExpensesUseCaseTest {
                 supplier
         );
 
-        when(userRepository.existsById(userId)).thenReturn(true);
-
         when(expenseRepository.search(query, userId))
                 .thenReturn(List.of(expense));
 
@@ -169,8 +139,6 @@ class ListExpensesUseCaseTest {
                 null
         );
 
-        when(userRepository.existsById(userId)).thenReturn(true);
-
         listExpensesUseCase.execute(query, userId);
 
         verify(expenseRepository).search(query, userId);
@@ -186,8 +154,6 @@ class ListExpensesUseCaseTest {
                 null,
                 null
         );
-
-        when(userRepository.existsById(userId)).thenReturn(true);
 
         assertThrows(
                 FutureMonthNotAllowedException.class,

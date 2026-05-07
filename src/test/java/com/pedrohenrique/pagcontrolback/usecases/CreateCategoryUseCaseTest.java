@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateCategoryCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryAlreadyExistsException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateCategoryCommandRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
 import com.pedrohenrique.pagcontrolback.model.TransactionType;
@@ -16,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,22 +52,6 @@ class CreateCategoryUseCaseTest {
         );
     }
 
-    @Test
-    void shouldThrowExceptionWhenUserNotFound() {
-
-        UUID userId = UUID.randomUUID();
-        CreateCategoryCommand command = new CreateCategoryCommand(
-                "food",
-                TransactionType.EXPENSE,
-                userId
-        );
-
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(UserNotFoundException.class, () ->
-            createCategoryUseCase.execute(command)
-        );
-    }
 
     @Test
     void shouldThrowExceptionWhenCategoryAlreadyExists() {
@@ -83,7 +65,7 @@ class CreateCategoryUseCaseTest {
 
         User user = new User();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
         when(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId("food", command.userId())).thenReturn(true);
 
         assertThrows(CategoryAlreadyExistsException.class, () ->
@@ -109,7 +91,7 @@ class CreateCategoryUseCaseTest {
                 user
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.getReferenceById(userId)).thenReturn(user);
         when(categoryRepository.existsCategoryByNameIgnoreCaseAndUserId("food", userId)).thenReturn(false);
         when(categoryRepository.save(category)).thenReturn(category);
 
