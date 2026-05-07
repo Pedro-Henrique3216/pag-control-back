@@ -89,16 +89,7 @@ class PayInstallmentUseCaseTest {
 
     @Test
     void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist(){
-        User user = new User(
-                "John Doe",
-                null,
-                "testePaidInstallment@gmail.com",
-                "password123",
-                "1234567890",
-                PersonType.PF
-        );
-
-        when(installmentRepository.findById(any())).thenReturn(Optional.empty());
+                when(installmentRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThrows(
                 InstallmentNotFoundException.class,
