@@ -21,6 +21,9 @@ public class ReportRepository implements IReportRepository {
 
     public List<MonthSummaryDto> findMonthlySummaryByUserId(UUID userId, LocalDate startDate, LocalDate endDate){
 
+        startDate = startDate.withDayOfMonth(1);
+        endDate = endDate.withDayOfMonth(endDate.lengthOfMonth());
+
         Query query = em.createNativeQuery(
                 """
                
