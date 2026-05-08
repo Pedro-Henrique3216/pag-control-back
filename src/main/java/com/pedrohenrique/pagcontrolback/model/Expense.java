@@ -17,6 +17,8 @@ public class Expense {
     private UUID id;
     @Column(length = 100, name = "invoice_number")
     private String invoiceNumber;
+    @Column(length = 100, nullable = false)
+    private String description;
     @Column(name = "payment_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentType paymentType;
@@ -38,18 +40,19 @@ public class Expense {
 
     public Expense() {}
 
-    public Expense(String invoiceNumber, PaymentType paymentType, LocalDate expenseDate, User user, Supplier supplier) {
-        validateExpanseDate(expenseDate);
+    public Expense(String invoiceNumber, String description, PaymentType paymentType, LocalDate expenseDate, User user) {
+        validateExpenseDate(expenseDate);
         validatePaymentType(paymentType);
+        validateDescription(description);
         this.invoiceNumber = invoiceNumber;
+        this.description = description;
         this.createdAt = LocalDate.now();
         this.paymentType = paymentType;
         this.expenseDate = expenseDate;
         setUser(user);
-        this.supplier = supplier;
     }
 
-    private void validateExpanseDate(LocalDate expenseDate) {
+    private void validateExpenseDate(LocalDate expenseDate) {
         if (expenseDate == null) {
             throw new ExpenseDateRequiredException("Expense date is required.");
         }
@@ -59,25 +62,31 @@ public class Expense {
         }
     }
 
+    private void validateDescription(String description) {
+        if (description == null || description.isBlank()) {
+            throw new DescriptionRequiredException("Description is required.");
+        }
+    }
+
     private void validatePaymentType(PaymentType paymentType) {
         if (paymentType == null) {
             throw new PaymentTypeRequiredException("Payment type is required.");
         }
     }
 
-    private void validateInstallments(PaymentType paymentType, Installment installment) {
+    private void validateInstallments(Installment installment) {
 
         if (installment == null) {
             throw new InstallmentRequiredException("Installment cannot be null.");
         }
 
-        if (paymentType == PaymentType.DEBIT || paymentType == PaymentType.CASH || paymentType == PaymentType.PIX) {
+        if (this.paymentType == PaymentType.DEBIT || this.paymentType == PaymentType.CASH || this.paymentType == PaymentType.PIX) {
             if (!this.installments.isEmpty()) {
-                throw new MultipleInstallmentsNotAllowedForPaymentTypeException("Payment type " + paymentType + " allows only one installment");
+                throw new MultipleInstallmentsNotAllowedForPaymentTypeException("Payment type " + this.paymentType + " allows only one installment");
             }
 
             if (!installment.getDueDate().equals(this.expenseDate)) {
-                throw new InvalidInstallmentDueDateForPaymentTypeException("For payment type "+ paymentType +
+                throw new InvalidInstallmentDueDateForPaymentTypeException("For payment type "+ this.paymentType +
                         ", the installment due date must be the same as the expense date");
             }
 
@@ -124,19 +133,28 @@ public class Expense {
         return category;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setUser(User user) {
-        try {
-            this.user = Objects.requireNonNull(user);
-        } catch (NullPointerException e) {
+        if (user == null) {
             throw new UserRequiredException("User cannot be null");
         }
+        this.user = user;
     }
 
     public void setSupplier(Supplier supplier) {
+        if (supplier == null) {
+            throw new SupplierRequiredException("Supplier cannot be null");
+        }
         this.supplier = supplier;
     }
 
     public void assignCategory(Category category) {
+        if (category == null) {
+            throw new CategoryRequiredException("Category cannot be null");
+        }
         if(category.getCategoryType() != TransactionType.EXPENSE) {
             throw new CategoryTypeInvalidException("Category must be EXPENSE");
         }
@@ -144,7 +162,7 @@ public class Expense {
     }
 
     public void addInstallment(Installment installment) {
-        validateInstallments(paymentType, installment);
+        validateInstallments(installment);
         installments.add(installment);
         installment.setExpense(this);
     }
@@ -153,7 +171,7 @@ public class Expense {
             BigDecimal total,
             Map<Integer, String> barcodeByDueInDays
     ) {
-        if (paymentType == PaymentType.CREDIT || paymentType == PaymentType.BILL) {
+        if (this.paymentType == PaymentType.CREDIT || this.paymentType == PaymentType.BILL) {
             generateMultipleInstallments(total, barcodeByDueInDays);
         } else {
             generateSingleInstallment(total, barcodeByDueInDays);
