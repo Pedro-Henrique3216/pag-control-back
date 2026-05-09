@@ -12,8 +12,9 @@ public class ExpenseMapper {
         return new ExpenseResponseDto(
                 expense.getId(),
                 expense.getInvoiceNumber(),
+                expense.getDescription(),
                 expense.getPaymentType(),
-                expense.getSupplier().getId(),
+                expense.getSupplier() == null ? null : expense.getSupplier().getId(),
                 expense.getExpenseDate(),
                 expense.getInstallments()
                         .stream()
