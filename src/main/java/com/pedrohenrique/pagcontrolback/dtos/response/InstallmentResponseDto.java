@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record InstallmentResponseDto(
         UUID id,
+        String description,
         BigDecimal amount,
         @JsonProperty("due_date")
         LocalDate dueDate,
