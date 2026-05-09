@@ -12,6 +12,7 @@ public record ExpenseResponseDto(
         UUID id,
         @JsonProperty("invoice_number")
         String invoiceNumber,
+        String description,
         @JsonProperty("payment_type")
         PaymentType paymentType,
         @JsonProperty("supplier_id")
