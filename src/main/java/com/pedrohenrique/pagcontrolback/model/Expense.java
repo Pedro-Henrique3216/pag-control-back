@@ -245,6 +245,7 @@ public class Expense {
                   .orElse(null);
 
         Installment installment = new Installment(total, expenseDate, barcode);
+        installment.markAsPaid();
 
         this.addInstallment(installment);
     }
