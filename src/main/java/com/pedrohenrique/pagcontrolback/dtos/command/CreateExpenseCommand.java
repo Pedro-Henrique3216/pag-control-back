@@ -9,12 +9,12 @@ import java.util.UUID;
 
 public record CreateExpenseCommand(
         String invoiceNumber,
+        String description,
         PaymentType paymentType,
         UUID supplierId,
         LocalDate date,
         Map<Integer, String> barcodeByDueInDays,
         BigDecimal totalAmount,
-        UUID categoryId,
-        UUID userId
+        UUID categoryId
 ) {
 }

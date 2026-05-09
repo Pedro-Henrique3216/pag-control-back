@@ -10,9 +10,11 @@ import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 public class CreateExpenseWithInstallmentsUseCase {
@@ -34,7 +36,8 @@ public class CreateExpenseWithInstallmentsUseCase {
         this.categoryRepository = categoryRepository;
     }
 
-    public Expense execute(CreateExpenseCommand command) {
+    @Transactional
+    public Expense execute(UUID authenticatedUserId, CreateExpenseCommand command) {
 
         if (command == null) {
             throw new CreateExpenseCommandRequiredException("Create expense command is required");
@@ -44,29 +47,28 @@ public class CreateExpenseWithInstallmentsUseCase {
             throw new InvalidAmountException("Total amount must be greater than zero.");
         }
 
-        if (command.userId() == null) {
+        if (authenticatedUserId == null) {
             throw new UserIdRequiredException("User ID is required.");
         }
 
-        if (command.supplierId() == null) {
-            throw new SupplierRequiredException("Supplier ID is required.");
-        }
-
-        User user = userRepository.getReferenceById(command.userId());
-
-        Supplier supplier = supplierRepository.findById(command.supplierId())
-                        .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + command.supplierId()));
+        User user = userRepository.getReferenceById(authenticatedUserId);
 
         Expense expense = new Expense(
                 command.invoiceNumber(),
+                command.description(),
                 command.paymentType(),
                 command.date(),
-                user,
-                supplier
+                user
         );
 
+        if (command.supplierId() != null) {
+            Supplier supplier = supplierRepository.findById(command.supplierId())
+                    .orElseThrow(() -> new SupplierNotFoundException("Supplier not found with id: " + command.supplierId()));
+            expense.setSupplier(supplier);
+        }
+
         if(command.categoryId() != null) {
-            Category category = categoryRepository.findCategoryByIdAndUserId(command.categoryId(), command.userId())
+            Category category = categoryRepository.findCategoryByIdAndUserId(command.categoryId(), authenticatedUserId)
                     .orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + command.categoryId()));
             expense.assignCategory(category);
         }

@@ -34,8 +34,7 @@ public class ExpenseController {
         this.listExpensesUseCase = listExpensesUseCase;
     }
 
-    @PostMapping()
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping
     public ResponseEntity<ExpenseResponseDto> createExpenseWithInstallments(
             @Valid @RequestBody ExpenseRequestDto expenseRequestDto,
             UriComponentsBuilder uriBuilder,
@@ -44,16 +43,17 @@ public class ExpenseController {
 
         CreateExpenseCommand command = new CreateExpenseCommand(
                 expenseRequestDto.invoiceNumber(),
+                expenseRequestDto.description(),
                 expenseRequestDto.paymentType(),
                 expenseRequestDto.supplierId(),
                 expenseRequestDto.date(),
                 expenseRequestDto.barcodeByDueInDays(),
                 expenseRequestDto.totalAmount(),
-                expenseRequestDto.categoryId(),
-                user.getId()
+                expenseRequestDto.categoryId()
         );
 
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(
+                user.getId(),
                 command
         );
 
