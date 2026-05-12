@@ -89,6 +89,8 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
                 );
             }
 
+            criteria.orderBy(builder.asc(installment.get("dueDate")));
+
             criteria.where(predicates.toArray(new Predicate[0]));
 
             return em.createQuery(criteria).getResultList();
