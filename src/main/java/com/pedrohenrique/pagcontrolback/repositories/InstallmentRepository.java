@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public interface InstallmentRepository extends JpaRepository<Installment, UUID>
@@ -71,4 +72,16 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         AND i.dueDate BETWEEN CURRENT_DATE AND :futureDate
     """)
     Integer countUpcomingByUser(UUID userId, LocalDate futureDate);
+
+    @Query("""
+        SELECT DISTINCT
+           YEAR(i.dueDate),
+           MONTH(i.dueDate)
+        FROM Installment i
+        WHERE i.expense.user.id = :userId
+        AND i.status = 'UNPAID'
+        AND i.dueDate < CURRENT_DATE
+        ORDER BY YEAR(i.dueDate), MONTH(i.dueDate)
+   """)
+    List<Object[]> findOverdueMonthsByUser(UUID userId);
 }
