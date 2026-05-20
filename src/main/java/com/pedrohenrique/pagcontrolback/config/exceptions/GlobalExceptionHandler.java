@@ -50,6 +50,7 @@ public class GlobalExceptionHandler {
             CreateIncomeCommandRequiredException.class,
             CategoryRequiredException.class,
             DescriptionRequiredException.class,
+            InvalidInstallmentFilterException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
