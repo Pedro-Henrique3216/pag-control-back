@@ -61,6 +61,7 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
                 predicates.add(
                         builder.equal(installment.get("status"), query.status())
                 );
+                if (query.status() == InstallmentStatus.UNPAID) predicates.add(builder.greaterThanOrEqualTo(installment.get("dueDate"), LocalDate.now()));
             }
 
             if (query.overdue() != null && query.overdue()) {
