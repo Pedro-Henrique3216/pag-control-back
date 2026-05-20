@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ListInstallmentQuery;
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidInstallmentFilterException;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserIdRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Installment;
@@ -33,6 +34,10 @@ public class ListInstallmentsUseCase {
 
         if(query.supplierId() != null && !supplierRepository.existsById(query.supplierId())){
             throw new SupplierNotFoundException("Supplier not found");
+        }
+
+        if (query.status() != null && Boolean.TRUE.equals(query.overdue())) {
+            throw new InvalidInstallmentFilterException("Cannot use status and overdue filters together.");
         }
 
         return installmentRepositoryCustom.search(query, userId);
