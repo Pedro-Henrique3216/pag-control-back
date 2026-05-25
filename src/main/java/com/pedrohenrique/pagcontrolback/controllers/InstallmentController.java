@@ -8,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.InstallmentResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.InstallmentMapper;
 import com.pedrohenrique.pagcontrolback.model.Installment;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
+import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import com.pedrohenrique.pagcontrolback.usecases.ListInstallmentsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListOverdueMonthsUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.PayInstallmentUseCase;
@@ -49,22 +50,31 @@ public class InstallmentController {
             @AuthenticationPrincipal UserPrincipal user,
 
             @RequestParam(required = false)
+            String search,
+
+            @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM")
             YearMonth month,
 
             @RequestParam(required = false, name = "supplier_id")
             UUID supplierId,
 
+            @RequestParam(required = false, name = "category_id")
+            UUID categoryId,
+
             @RequestParam(required = false)
             InstallmentStatus status,
 
-            @RequestParam(required = false)
+            @RequestParam(required = false, defaultValue = "false")
             Boolean overdue,
 
-            @RequestParam(required = false, name = "due_in_next_days")
-            Boolean dueInNext7Days
+            @RequestParam(required = false, name = "due_in_next_days", defaultValue = "false")
+            Boolean dueInNext7Days,
+
+            @RequestParam(required = false, name = "payment_method")
+            PaymentType paymentType
     ) {
-        ListInstallmentQuery query = new ListInstallmentQuery(month, supplierId, status, overdue, dueInNext7Days);
+        ListInstallmentQuery query = new ListInstallmentQuery(search, month, supplierId, status, overdue, dueInNext7Days, paymentType, categoryId);
         List<Installment> installments = listInstallmentsUseCase.execute(user.getId(), query);
         List<InstallmentResponseDto> response = installments.stream()
                 .map(InstallmentMapper::fromDomain)

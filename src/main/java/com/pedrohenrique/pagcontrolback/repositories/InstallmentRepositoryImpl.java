@@ -37,6 +37,19 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
                     builder.equal(installment.get("expense").get("user").get("id"), userId)
             );
 
+            if(query.search() != null){
+                predicates.add(builder.or(
+                        builder.like(
+                                builder.lower(installment.get("expense").get("description")),
+                                "%" + query.search().toLowerCase() + "%"
+                        ),
+                        builder.like(
+                                builder.lower(installment.get("expense").get("invoiceNumber")),
+                                "%" + query.search().toLowerCase() + "%"
+                        )
+                ));
+            }
+
             if (query.supplierId() != null) {
                 predicates.add(
                         builder.equal(installment.get("expense").get("supplier").get("id"), query.supplierId())
@@ -73,8 +86,6 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
                 );
             }
 
-
-
             if (query.dueInNext7Days() != null && query.dueInNext7Days()) {
                 LocalDate now = LocalDate.now();
                 LocalDate next7 = now.plusDays(7);
@@ -87,6 +98,18 @@ public class InstallmentRepositoryImpl implements InstallmentRepositoryCustom{
                                 ),
                                 builder.equal(installment.get("status"), InstallmentStatus.UNPAID)
                         )
+                );
+            }
+
+            if (query.paymentType() != null) {
+                predicates.add(
+                        builder.equal(installment.get("expense").get("paymentType"), query.paymentType())
+                );
+            }
+
+            if (query.categoryId() != null) {
+                predicates.add(
+                        builder.equal(installment.get("expense").get("category").get("id"), query.categoryId())
                 );
             }
 
