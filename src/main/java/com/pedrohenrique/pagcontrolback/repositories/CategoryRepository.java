@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.repositories;
 
 import com.pedrohenrique.pagcontrolback.model.Category;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     Optional<Category> findCategoryByIdAndUserId(UUID id, UUID userId);
 
     List<Category> findCategoriesByUserId(UUID userId);
+
+    List<Category> findCategoryByUserIdAndCategoryType(UUID userId, TransactionType categoryType);
 }

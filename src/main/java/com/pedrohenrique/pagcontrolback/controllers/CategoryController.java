@@ -6,6 +6,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
 import com.pedrohenrique.pagcontrolback.model.Category;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCategoryUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListCategoryUseCase;
 import jakarta.validation.Valid;
@@ -47,8 +48,11 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDto>> getAllCategories(@AuthenticationPrincipal UserPrincipal user) {
-        List<CategoryResponseDto> categories = listCategoryUseCase.execute(user.getId())
+    public ResponseEntity<List<CategoryResponseDto>> getAllCategories(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) TransactionType type
+    ) {
+        List<CategoryResponseDto> categories = listCategoryUseCase.execute(user.getId(), type)
                 .stream()
                 .map(CategoryMapper::fromDomain)
                 .collect(Collectors.toList());
