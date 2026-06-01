@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
@@ -17,8 +18,12 @@ public class Installment {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "installment_id")
     private UUID installmentId;
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amount;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    )
+    private Money amount;
     @Column(nullable = false, name = "due_date")
     private LocalDate dueDate;
     @Column(length = 60)
@@ -39,8 +44,8 @@ public class Installment {
     public Installment() {
     }
 
-    public Installment(BigDecimal amount, LocalDate dueDate, String barcode, Expense expense, Integer installmentNumber, Integer totalInstallments) {
-        validateInstallment(amount, dueDate, installmentNumber, totalInstallments);
+    public Installment(Money amount, LocalDate dueDate, String barcode, Expense expense, Integer installmentNumber, Integer totalInstallments) {
+        validateInstallment(dueDate, installmentNumber, totalInstallments);
         this.amount = amount;
         this.dueDate = dueDate;
         this.barcode = barcode;
@@ -51,13 +56,10 @@ public class Installment {
     }
 
     private void validateInstallment(
-            BigDecimal amount,
             LocalDate dueDate,
             Integer installmentNumber,
             Integer totalInstallments
     ) {
-        validateAmount(amount);
-
         if (dueDate == null) {
             throw new InstallmentDueDateRequiredException(
                     "Installment due date is required."
@@ -95,17 +97,11 @@ public class Installment {
         }
     }
 
-    private void validateAmount(BigDecimal amount){
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidInstallmentAmountException("Installment amount must be greater than zero.");
-        }
-    }
-
     public UUID getInstallmentId() {
         return installmentId;
     }
 
-    public BigDecimal getAmount() {
+    public Money getAmount() {
         return amount;
     }
 
@@ -150,8 +146,7 @@ public class Installment {
             throw new InstallmentAlreadyPaidException("Cannot update a paid installment.");
         }
         if(amount != null) {
-            validateAmount(amount);
-            this.amount = amount;
+            this.amount = new Money(amount);
         }
 
         if(dueDate != null) {

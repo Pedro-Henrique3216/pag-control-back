@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryTypeInvalidException;
 import com.pedrohenrique.pagcontrolback.exceptions.InvalidAmountException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
@@ -18,8 +19,12 @@ public class Income {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(precision = 19, scale = 2, nullable = false)
-    private BigDecimal amount;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    )
+    private Money amount;
     @Column(length = 100, nullable = false)
     private String description;
     private LocalDate date;
@@ -36,10 +41,7 @@ public class Income {
 
     public Income() {}
 
-    public Income(BigDecimal amount, String description, LocalDate date, User user) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidAmountException("Amount must be greater than zero");
-        }
+    public Income(Money amount, String description, LocalDate date, User user) {
         this.amount = amount;
         this.description = description;
         this.date = date;
@@ -51,7 +53,7 @@ public class Income {
         return id;
     }
 
-    public BigDecimal getAmount() {
+    public Money getAmount() {
         return amount;
     }
 

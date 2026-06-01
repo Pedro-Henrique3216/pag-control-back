@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
@@ -30,8 +31,12 @@ public class Expense {
     private LocalDateTime createdAt;
     @Column(nullable = false, name = "expense_date")
     private LocalDate expenseDate;
-    @Column(name = "total_amount", precision = 19, scale = 2, nullable = false)
-    private BigDecimal totalAmount;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
+    )
+    private Money totalAmount;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -45,11 +50,10 @@ public class Expense {
 
     public Expense() {}
 
-    public Expense(String invoiceNumber, String description, PaymentType paymentType, LocalDate expenseDate, User user, BigDecimal totalAmount) {
+    public Expense(String invoiceNumber, String description, PaymentType paymentType, LocalDate expenseDate, User user, Money totalAmount) {
         validateExpenseDate(expenseDate);
         validatePaymentType(paymentType);
         validateDescription(description);
-        validateTotalAmount(totalAmount);
         this.invoiceNumber = invoiceNumber;
         this.description = description;
         this.createdAt = LocalDateTime.now();
@@ -66,12 +70,6 @@ public class Expense {
 
         if (expenseDate.isAfter(LocalDate.now())) {
             throw new ExpenseDateInTheFutureException("Expense date cannot be in the future.");
-        }
-    }
-
-    private void validateTotalAmount(BigDecimal totalAmount) {
-        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidAmountException("Total amount must be greater than zero.");
         }
     }
 
@@ -150,6 +148,10 @@ public class Expense {
         return description;
     }
 
+    public Money getTotalAmount() {
+        return totalAmount;
+    }
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
@@ -214,8 +216,8 @@ public class Expense {
 
         int count = barcodeByDueInDays.size();
 
-        BigDecimal baseAmount = totalAmount.divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
-        BigDecimal remainder = totalAmount.subtract(baseAmount.multiply(BigDecimal.valueOf(count)));
+        Money baseAmount = totalAmount.divide(count);
+        Money remainder = totalAmount.subtract(baseAmount.multiply(count));
 
         int index = 0;
 
@@ -229,7 +231,7 @@ public class Expense {
 
             index++;
 
-            BigDecimal value = baseAmount;
+            Money value = baseAmount;
 
             if (index == count) {
                 value = value.add(remainder);
