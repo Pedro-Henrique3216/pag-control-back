@@ -5,6 +5,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.CategoryTypeInvalidException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -34,14 +35,22 @@ public class Category {
     private Set<Expense> expenses = new HashSet<>();
     @OneToMany(mappedBy = "category")
     private Set<Income> incomes = new HashSet<>();
+    @Column(nullable = false, name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    private Boolean active;
 
     public Category() {}
 
     public Category(String name, TransactionType categoryType, User user) {
-        this.name = normalizeName(name);
+        validateName(name);
+        this.name = name;
         validateCategoryType(categoryType);
         this.categoryType = categoryType;
         setUser(user);
+        this.createdAt = LocalDateTime.now();
+        this.active = true;
     }
 
     private void validateName(String name) {
@@ -54,11 +63,6 @@ public class Category {
         if (categoryType == null) {
             throw new CategoryTypeInvalidException("Category type cannot be null");
         }
-    }
-
-    private String normalizeName(String name) {
-        validateName(name);
-        return name.trim().toLowerCase();
     }
 
     public UUID getId() {
@@ -83,6 +87,17 @@ public class Category {
 
     public Set<Income> getIncomes() {
         return incomes;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    public Boolean getActive() {
+        return active;
     }
 
     public void setUser(User user) {
