@@ -6,6 +6,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.utils.ValidateCnpj;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -21,10 +22,15 @@ public class Supplier {
     private String name;
     private String cnpj;
     @OneToMany(mappedBy = "supplier")
-    private Set<Expense> expanses = new HashSet<>();
+    private Set<Expense> expenses = new HashSet<>();
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    @Column(nullable = false, name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    private Boolean active;
 
     public Supplier() {}
 
@@ -34,6 +40,8 @@ public class Supplier {
         this.name = name;
         setCnpj(cnpj);
         setUser(user);
+        this.createdAt = LocalDateTime.now();
+        this.active = true;
     }
 
     private void validateName(String name) {
@@ -54,12 +62,24 @@ public class Supplier {
         return cnpj;
     }
 
-    public Set<Expense> getExpanses() {
-        return expanses;
+    public Set<Expense> getExpenses() {
+        return expenses;
     }
 
     public User getUser() {
         return user;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public Boolean getActive() {
+        return active;
     }
 
     public void setUser(User user) {
