@@ -1,8 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
-import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAlreadyPaidException;
-import com.pedrohenrique.pagcontrolback.exceptions.InstallmentDueDateRequiredException;
-import com.pedrohenrique.pagcontrolback.exceptions.InvalidInstallmentAmountException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -33,22 +31,67 @@ public class Installment {
     @ManyToOne(optional = false)
     @JoinColumn(name = "expense_id")
     private Expense expense;
+    @Column(name = "installment_number", nullable = false)
+    private Integer installmentNumber;
+    @Column(name = "total_installments", nullable = false)
+    private Integer totalInstallments;
 
     public Installment() {
     }
 
-    public Installment(BigDecimal amount, LocalDate dueDate, String barcode) {
-        validateInstallment(amount, dueDate);
+    public Installment(BigDecimal amount, LocalDate dueDate, String barcode, Expense expense, Integer installmentNumber, Integer totalInstallments) {
+        validateInstallment(amount, dueDate, installmentNumber, totalInstallments);
         this.amount = amount;
         this.dueDate = dueDate;
         this.barcode = barcode;
         this.status = InstallmentStatus.UNPAID;
+        this.expense = expense;
+        this.installmentNumber = installmentNumber;
+        this.totalInstallments = totalInstallments;
     }
 
-    private void validateInstallment(BigDecimal amount, LocalDate dueDate){
+    private void validateInstallment(
+            BigDecimal amount,
+            LocalDate dueDate,
+            Integer installmentNumber,
+            Integer totalInstallments
+    ) {
         validateAmount(amount);
+
         if (dueDate == null) {
-            throw new InstallmentDueDateRequiredException("Installment due date is required");
+            throw new InstallmentDueDateRequiredException(
+                    "Installment due date is required."
+            );
+        }
+
+        if (installmentNumber == null) {
+            throw new InvalidInstallmentNumberException(
+                    "Installment number is required."
+            );
+        }
+
+        if (totalInstallments == null) {
+            throw new InvalidTotalInstallmentsException(
+                    "Total installments is required."
+            );
+        }
+
+        if (installmentNumber <= 0) {
+            throw new InvalidInstallmentNumberException(
+                    "Installment number must be greater than zero."
+            );
+        }
+
+        if (totalInstallments <= 0) {
+            throw new InvalidTotalInstallmentsException(
+                    "Total installments must be greater than zero."
+            );
+        }
+
+        if (installmentNumber > totalInstallments) {
+            throw new InvalidInstallmentNumberException(
+                    "Installment number cannot be greater than total installments."
+            );
         }
     }
 
@@ -86,11 +129,12 @@ public class Installment {
         return expense;
     }
 
-    public void setExpense(Expense expense) {
-        this.expense = expense;
-        if(expense.getPaymentType() == PaymentType.CASH || expense.getPaymentType() == PaymentType.DEBIT) {
-            markAsPaid();
-        }
+    public Integer getInstallmentNumber() {
+        return installmentNumber;
+    }
+
+    public Integer getTotalInstallments() {
+        return totalInstallments;
     }
 
     public void markAsPaid() {
