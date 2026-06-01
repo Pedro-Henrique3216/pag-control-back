@@ -2,11 +2,9 @@ package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryTypeInvalidException;
-import com.pedrohenrique.pagcontrolback.exceptions.InvalidAmountException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
