@@ -1,5 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Email;
+import com.pedrohenrique.pagcontrolback.ValueObjects.Phone;
 import com.pedrohenrique.pagcontrolback.exceptions.UserDomainException;
 import jakarta.persistence.*;
 
@@ -20,12 +22,20 @@ public class User {
     private String name;
     @Column(length = 150, name = "fantasy_name")
     private String fantasyName;
-    @Column(unique = true, nullable = false, length = 100)
-    private String email;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "email", unique = true, nullable = false, length = 100)
+    )
+    private Email email;
     @Column(nullable = false)
     private String password;
-    @Column(nullable = false, length = 15)
-    private String phone;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column =  @Column(nullable = false, length = 15)
+    )
+    private Phone phone;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "person_type")
     private PersonType personType;
@@ -46,12 +56,12 @@ public class User {
             String phone,
             PersonType personType
     ) {
-        validateUser(name, fantasyName, email, password, phone, personType);
+        validateUser(name, fantasyName, password,  personType);
         this.name = name;
         this.fantasyName = fantasyName;
-        this.email = email.toLowerCase().trim();
+        this.email = new Email(email);
         this.password = password;
-        this.phone = normalizePhone(phone);
+        this.phone = new Phone(phone);
         this.personType = personType;
         this.createdAt = LocalDateTime.now();
     }
@@ -73,42 +83,20 @@ public class User {
         }
     }
 
-    private void validateUser(String name, String fantasyName, String email, String password, String phone, PersonType personType) {
+    private void validateUser(String name, String fantasyName, String password, PersonType personType) {
         if (name == null || name.trim().isEmpty()) {
             throw new UserDomainException("Name cannot be null or empty");
-        }
-
-        if (email == null || email.trim().isEmpty()) {
-            throw new UserDomainException("Email cannot be null or empty");
-        }
-
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new UserDomainException("Email format is invalid");
         }
 
         if (password == null || password.trim().isEmpty()) {
             throw new UserDomainException("Password cannot be null or empty");
         }
 
-
         if (password.length() < 8) {
             throw new UserDomainException("Password must be at least 8 characters");
         }
 
-        if (phone == null || phone.trim().isEmpty()) {
-            throw new UserDomainException("Phone cannot be null or empty");
-        }
-
-        phone = normalizePhone(phone);
-        if (phone.length() != 11) {
-            throw new UserDomainException("Phone must be 11 digits");
-        }
-
         validatePersonType(personType, fantasyName);
-    }
-
-    private String normalizePhone(String phone) {
-        return phone.replaceAll("[^\\d]", "");
     }
 
     public UUID getId() {
@@ -123,7 +111,7 @@ public class User {
         return fantasyName;
     }
 
-    public String getEmail() {
+    public Email getEmail() {
         return email;
     }
 
@@ -131,7 +119,7 @@ public class User {
         return password;
     }
 
-    public String getPhone() {
+    public Phone getPhone() {
         return phone;
     }
 
