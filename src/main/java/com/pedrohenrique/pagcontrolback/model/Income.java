@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,6 +29,10 @@ public class Income {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+    @Column(nullable = false, name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public Income() {}
 
@@ -39,6 +44,7 @@ public class Income {
         this.description = description;
         this.date = date;
         setUser(user);
+        this.createdAt = LocalDateTime.now();
     }
 
     public UUID getId() {
@@ -63,6 +69,14 @@ public class Income {
 
     public Category getCategory() {
         return category;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public void setUser(User user) {
