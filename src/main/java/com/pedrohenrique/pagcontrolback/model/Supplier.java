@@ -1,9 +1,8 @@
 package com.pedrohenrique.pagcontrolback.model;
 
-import com.pedrohenrique.pagcontrolback.exceptions.InvalidSupplierCnpjException;
+import com.pedrohenrique.pagcontrolback.ValueObjects.Cnpj;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNameRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
-import com.pedrohenrique.pagcontrolback.utils.ValidateCnpj;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -20,7 +19,12 @@ public class Supplier {
     private UUID id;
     @Column(nullable = false, length = 100)
     private String name;
-    private String cnpj;
+    @Embedded
+    @AttributeOverride(
+            name = "value",
+            column = @Column(name = "cnpj", unique = true, length = 14)
+    )
+    private Cnpj cnpj;
     @OneToMany(mappedBy = "supplier")
     private Set<Expense> expenses = new HashSet<>();
     @ManyToOne
@@ -59,7 +63,7 @@ public class Supplier {
     }
 
     public String getCnpj() {
-        return cnpj;
+        return cnpj.value();
     }
 
     public Set<Expense> getExpenses() {
@@ -95,14 +99,7 @@ public class Supplier {
             return;
         }
 
-        cnpj = cnpj.replaceAll("\\D", "");
-
-        if (!ValidateCnpj.isValidCnpj(cnpj)) {
-            throw new InvalidSupplierCnpjException("Invalid CNPJ format.");
-        }
-
-
-        this.cnpj = cnpj;
+        this.cnpj = new Cnpj(cnpj);
     }
 
     @Override
