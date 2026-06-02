@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateIncomeCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.CategoryNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreateIncomeCommandRequiredException;
@@ -37,7 +38,7 @@ public class CreateIncomeUseCase {
         User user = userRepository.getReferenceById(command.userId());
 
         Income income = new Income(
-                command.amount(),
+                new Money(command.amount()),
                 command.description(),
                 command.date(),
                 user
