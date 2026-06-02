@@ -88,15 +88,15 @@ public class User {
             throw new UserDomainException("Name cannot be null or empty");
         }
 
+        validatePassword(password);
+
+        validatePersonType(personType, fantasyName);
+    }
+
+    private void validatePassword(String password) {
         if (password == null || password.trim().isEmpty()) {
             throw new UserDomainException("Password cannot be null or empty");
         }
-
-        if (password.length() < 8) {
-            throw new UserDomainException("Password must be at least 8 characters");
-        }
-
-        validatePersonType(personType, fantasyName);
     }
 
     public UUID getId() {
@@ -144,6 +144,7 @@ public class User {
     }
 
     public void setPassword(String password) {
+        validatePassword(password);
         this.password = password;
     }
 
