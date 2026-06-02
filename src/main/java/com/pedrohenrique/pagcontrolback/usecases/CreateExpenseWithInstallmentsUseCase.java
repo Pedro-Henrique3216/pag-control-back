@@ -14,7 +14,6 @@ import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
