@@ -45,7 +45,7 @@ public class Installment {
     }
 
     public Installment(Money amount, LocalDate dueDate, String barcode, Expense expense, Integer installmentNumber, Integer totalInstallments) {
-        validateInstallment(dueDate, installmentNumber, totalInstallments);
+        validateInstallment(amount, dueDate, installmentNumber, totalInstallments);
         this.amount = amount;
         this.dueDate = dueDate;
         this.barcode = barcode;
@@ -56,10 +56,16 @@ public class Installment {
     }
 
     private void validateInstallment(
+            Money amount,
             LocalDate dueDate,
             Integer installmentNumber,
             Integer totalInstallments
     ) {
+        if (amount == null) {
+            throw new InvalidInstallmentAmountException(
+                    "Installment amount is required."
+            );
+        }
         if (dueDate == null) {
             throw new InstallmentDueDateRequiredException(
                     "Installment due date is required."
