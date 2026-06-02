@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.Category;
@@ -43,10 +44,6 @@ public class CreateExpenseWithInstallmentsUseCase {
             throw new CreateExpenseCommandRequiredException("Create expense command is required");
         }
 
-        if (command.totalAmount() == null || command.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidAmountException("Total amount must be greater than zero.");
-        }
-
         if (authenticatedUserId == null) {
             throw new UserIdRequiredException("User ID is required.");
         }
@@ -58,7 +55,8 @@ public class CreateExpenseWithInstallmentsUseCase {
                 command.description(),
                 command.paymentType(),
                 command.date(),
-                user
+                user,
+                new Money(command.totalAmount())
         );
 
         if (command.supplierId() != null) {
@@ -74,7 +72,6 @@ public class CreateExpenseWithInstallmentsUseCase {
         }
 
         expense.generateInstallments(
-                command.totalAmount(),
                 command.barcodeByDueInDays()
         );
 
