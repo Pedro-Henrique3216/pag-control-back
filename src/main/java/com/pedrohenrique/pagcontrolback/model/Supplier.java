@@ -62,8 +62,8 @@ public class Supplier {
         return name;
     }
 
-    public String getCnpj() {
-        return cnpj.value();
+    public Cnpj getCnpj() {
+        return cnpj;
     }
 
     public Set<Expense> getExpenses() {
