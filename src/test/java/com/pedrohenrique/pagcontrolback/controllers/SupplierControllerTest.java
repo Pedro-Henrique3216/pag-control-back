@@ -144,7 +144,7 @@ class SupplierControllerTest {
 
                 List<String> errors = response.path("errors");
 
-                assertTrue(errors.contains("Invalid CNPJ format."));
+                assertTrue(errors.contains("Invalid CNPJ"));
             }
 
             @Test
