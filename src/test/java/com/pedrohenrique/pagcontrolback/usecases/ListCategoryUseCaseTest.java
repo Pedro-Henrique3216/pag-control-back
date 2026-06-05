@@ -2,7 +2,9 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.Category;
+import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,45 +16,114 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ListCategoryUseCaseTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
     @InjectMocks
     private ListCategoryUseCase listCategoryUseCase;
 
-    @Test
-    void shouldReturnCategoriesWhenUserHaveCategories(){
-        Category category = new Category();
-        Category category2 = new Category();
-        Category category3 = new Category();
+    @Nested
+    class ListAllCategoriesTests {
 
-        when(categoryRepository.findCategoriesByUserId(any())).thenReturn(List.of(category, category2, category3));
+        @Test
+        void shouldReturnCategoriesWhenUserHasCategories() {
 
-        List<Category> categories = listCategoryUseCase.execute(UUID.randomUUID());
+            Category category1 = new Category();
+            Category category2 = new Category();
+            Category category3 = new Category();
 
-        assertEquals(3, categories.size());
+            when(categoryRepository.findCategoriesByUserId(any()))
+                    .thenReturn(List.of(category1, category2, category3));
+
+            List<Category> categories = listCategoryUseCase.execute(
+                    UUID.randomUUID(),
+                    null
+            );
+
+            assertEquals(3, categories.size());
+
+            verify(categoryRepository, times(1))
+                    .findCategoriesByUserId(any());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenUserDoesNotHaveCategories() {
+
+            when(categoryRepository.findCategoriesByUserId(any()))
+                    .thenReturn(List.of());
+
+            List<Category> categories = listCategoryUseCase.execute(
+                    UUID.randomUUID(),
+                    null
+            );
+
+            assertTrue(categories.isEmpty());
+        }
     }
 
-    @Test
-    void shouldReturnListEmptyWhenUserDoesHaveCategories(){
-        when(categoryRepository.findCategoriesByUserId(any())).thenReturn(List.of());
+    @Nested
+    class ListByCategoryTypeTests {
 
-        List<Category> categories = listCategoryUseCase.execute(UUID.randomUUID());
+        @Test
+        void shouldReturnCategoriesFilteredByType() {
 
-        assertTrue(categories.isEmpty());
+            Category category1 = new Category();
+            Category category2 = new Category();
+
+            when(categoryRepository.findCategoryByUserIdAndCategoryType(
+                    any(),
+                    any()
+            )).thenReturn(List.of(category1, category2));
+
+            List<Category> categories = listCategoryUseCase.execute(
+                    UUID.randomUUID(),
+                    TransactionType.EXPENSE
+            );
+
+            assertEquals(2, categories.size());
+
+            verify(categoryRepository, times(1))
+                    .findCategoryByUserIdAndCategoryType(
+                            any(),
+                            eq(TransactionType.EXPENSE)
+                    );
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenNoCategoriesExistForType() {
+
+            when(categoryRepository.findCategoryByUserIdAndCategoryType(
+                    any(),
+                    any()
+            )).thenReturn(List.of());
+
+            List<Category> categories = listCategoryUseCase.execute(
+                    UUID.randomUUID(),
+                    TransactionType.INCOME
+            );
+
+            assertTrue(categories.isEmpty());
+        }
     }
 
-    @Test
-    void shouldThrowUserRequiredExceptionWhenUserIdIsNull(){
-       assertThrows(
-               UserRequiredException.class,
-               () -> listCategoryUseCase.execute(null)
-       );
-    }
+    @Nested
+    class ValidationTests {
 
+        @Test
+        void shouldThrowUserRequiredExceptionWhenUserIdIsNull() {
+
+            assertThrows(
+                    UserRequiredException.class,
+                    () -> listCategoryUseCase.execute(
+                            null,
+                            null
+                    )
+            );
+        }
+    }
 }
