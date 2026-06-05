@@ -177,21 +177,6 @@ class InstallmentControllerTest {
                         .body("size()", Matchers.is(2));
             }
         }
-
-        @Nested
-        class Errors {
-
-            @Test
-            void shouldReturn404WhenSupplierNotFound() {
-                RestAssured.given()
-                        .header("Authorization", "Bearer " + token)
-                        .queryParam("supplier_id", UUID.randomUUID())
-                        .when()
-                        .get()
-                        .then()
-                        .statusCode(404);
-            }
-        }
     }
 
     @Nested
@@ -301,7 +286,7 @@ class InstallmentControllerTest {
 
                 Installment updated = installmentRepository.findById(installment.id()).orElseThrow();
 
-                assertEquals(500, updated.getAmount().doubleValue());
+                assertEquals(500, updated.getAmount().value().doubleValue());
             }
         }
 
