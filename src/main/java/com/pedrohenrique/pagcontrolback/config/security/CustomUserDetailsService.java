@@ -17,9 +17,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername (String email) {
+    public UserDetails loadUserByUsername(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("User not found with this email and password"));
 
         return new UserPrincipal(
                 user.getId(),
@@ -27,6 +27,4 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getPassword()
         );
     }
-
-
 }
