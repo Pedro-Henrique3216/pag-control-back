@@ -39,7 +39,7 @@ public class CreateSupplierUseCase {
                 user
         );
 
-        if(supplier.getCnpj() != null && supplierRepository.existsSupplierByCnpjAndUser_Id(supplier.getCnpj(), command.userId())) {
+        if(supplier.getCnpj() != null && supplierRepository.existsSupplierByCnpjAndUser_Id(supplier.getCnpj().value(), command.userId())) {
             throw new SupplierAlreadyExistsWithCnpjException("Supplier with this CNPJ already exists for this user.");
         }
 
