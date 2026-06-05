@@ -1,10 +1,12 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentAccessDeniedException;
 import com.pedrohenrique.pagcontrolback.exceptions.InstallmentNotFoundException;
 import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import com.pedrohenrique.pagcontrolback.model.*;
 import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,122 +33,127 @@ class PayInstallmentUseCaseTest {
     @InjectMocks
     private PayInstallmentUseCase payInstallmentUseCase;
 
-    @Test
-    void shouldMarkInstallmentAsPaidWhenUserAndInstallmentAreValid(){
+    private User createUser() {
 
         User user = new User(
                 "John Doe",
                 null,
-                "testePaidInstallment@gmail.com",
+                "teste@gmail.com",
                 "password123",
-                "1234567890",
+                "11999999999",
                 PersonType.PF
         );
 
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(
+                user,
+                "id",
+                UUID.randomUUID()
+        );
+
+        return user;
+    }
+
+    private Installment createInstallment(User user) {
 
         Expense expense = new Expense(
+                "INV-001",
                 "Test Expense",
                 PaymentType.CREDIT,
                 LocalDate.now(),
                 user,
-                new Supplier()
+                null
         );
 
-        Installment installment = new Installment(
-                BigDecimal.valueOf(200),
+        return new Installment(
+                Money.of(BigDecimal.valueOf(200)),
                 LocalDate.now().plusDays(10),
-                "12345678901234567890123456789012345678901234"
-        );
-
-        installment.setExpense(expense);
-
-        Installment installment2 = new Installment(
-                BigDecimal.valueOf(200),
-                LocalDate.now().plusDays(20),
-                "12345678901234567890123456789012345678901234"
-        );
-
-        installment2.setExpense(expense);
-
-        when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
-
-        payInstallmentUseCase.execute(user.getId(), UUID.randomUUID());
-
-        verify(installmentRepository, times(1)).save(installment);
-
-        assertEquals(InstallmentStatus.PAID, installment.getStatus());
-    }
-
-    @Test
-    void shouldThrowUserRequiredExceptionWhenUserIdIsNull(){
-        assertThrows(
-                UserRequiredException.class,
-                () -> payInstallmentUseCase.execute(null, UUID.randomUUID())
+                "12345678901234567890123456789012345678901234",
+                expense,
+                1,
+                1
         );
     }
 
+    @Nested
+    class SuccessTests {
 
-    @Test
-    void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist(){
-                when(installmentRepository.findById(any())).thenReturn(Optional.empty());
+        @Test
+        void shouldMarkInstallmentAsPaidWhenUserAndInstallmentAreValid() {
 
-        assertThrows(
-                InstallmentNotFoundException.class,
-                () -> payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID())
-        );
+            User user = createUser();
+
+            Installment installment = createInstallment(user);
+
+            when(installmentRepository.findById(any()))
+                    .thenReturn(Optional.of(installment));
+
+            payInstallmentUseCase.execute(
+                    user.getId(),
+                    UUID.randomUUID()
+            );
+
+            verify(installmentRepository, times(1))
+                    .save(installment);
+
+            assertEquals(
+                    InstallmentStatus.PAID,
+                    installment.getStatus()
+            );
+        }
     }
 
-    @Test
-    void shouldThrowInstallmentAccessDaniedExceptionWhenInstallmentDoesNotBelongToUser(){
-        User user = new User(
-                "John Doe",
-                null,
-                "testePaidInstallment@gmail.com",
-                "password123",
-                "1234567890",
-                PersonType.PF
-        );
+    @Nested
+    class ValidationTests {
 
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        @Test
+        void shouldThrowUserRequiredExceptionWhenUserIdIsNull() {
 
-        User user2 = new User(
-                "John Doe",
-                null,
-                "testePaidInstallment@gmail.com",
-                "password123",
-                "1234567890",
-                PersonType.PF
-        );
+            assertThrows(
+                    UserRequiredException.class,
+                    () -> payInstallmentUseCase.execute(
+                            null,
+                            UUID.randomUUID()
+                    )
+            );
+        }
 
-        ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
+        @Test
+        void shouldThrowInstallmentNotFoundExceptionWhenInstallmentDoesNotExist() {
 
-        Expense expense = new Expense(
-                "Test Expense",
-                PaymentType.CREDIT,
-                LocalDate.now(),
-                user,
-                new Supplier()
-        );
+            when(installmentRepository.findById(any()))
+                    .thenReturn(Optional.empty());
 
-        Installment installment = new Installment(
-                BigDecimal.valueOf(200),
-                LocalDate.now().plusDays(10),
-                "12345678901234567890123456789012345678901234"
-        );
+            assertThrows(
+                    InstallmentNotFoundException.class,
+                    () -> payInstallmentUseCase.execute(
+                            UUID.randomUUID(),
+                            UUID.randomUUID()
+                    )
+            );
+        }
 
-        installment.setExpense(expense);
+        @Test
+        void shouldThrowInstallmentAccessDeniedExceptionWhenInstallmentDoesNotBelongToUser() {
 
+            User installmentOwner = createUser();
 
-        when(installmentRepository.findById(any())).thenReturn(Optional.of(installment));
+            User anotherUser = createUser();
 
-        assertThrows(
-                InstallmentAccessDeniedException.class,
-                () -> payInstallmentUseCase.execute(UUID.randomUUID(), UUID.randomUUID())
-        );
+            Installment installment = createInstallment(installmentOwner);
 
-        verify(installmentRepository, never()).save(installment);
+            when(installmentRepository.findById(any()))
+                    .thenReturn(Optional.of(installment));
 
+            assertThrows(
+                    InstallmentAccessDeniedException.class,
+                    () -> payInstallmentUseCase.execute(
+                            anotherUser.getId(),
+                            UUID.randomUUID()
+                    )
+            );
+
+            verify(installmentRepository, never())
+                    .save(any());
+        }
     }
-
 }
