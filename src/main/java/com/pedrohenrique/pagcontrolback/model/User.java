@@ -25,7 +25,7 @@ public class User {
     @Embedded
     @AttributeOverride(
             name = "value",
-            column = @Column(name = "email", unique = true, nullable = false, length = 100)
+            column = @Column(name = "email", unique = true, nullable = false, length = 150)
     )
     private Email email;
     @Column(nullable = false)
@@ -33,7 +33,7 @@ public class User {
     @Embedded
     @AttributeOverride(
             name = "value",
-            column =  @Column(nullable = false, length = 15)
+            column =  @Column(name = "phone", nullable = false, length = 15)
     )
     private Phone phone;
     @Enumerated(EnumType.STRING)
@@ -56,7 +56,7 @@ public class User {
             String phone,
             PersonType personType
     ) {
-        validateUser(name, fantasyName, password,  personType);
+        validateUser(name, fantasyName, password, personType);
         this.name = name;
         this.fantasyName = fantasyName;
         this.email = new Email(email);
