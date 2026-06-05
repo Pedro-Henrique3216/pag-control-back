@@ -73,7 +73,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            UserNotFoundException.class,
             SupplierNotFoundException.class,
             InstallmentNotFoundException.class,
             CategoryNotFoundException.class,
@@ -125,7 +124,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             BadCredentialsException.class,
-            InvalidTokenException.class
+            InvalidTokenException.class,
+            UserNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedException(RuntimeException ex){
