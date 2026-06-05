@@ -1,103 +1,376 @@
 package com.pedrohenrique.pagcontrolback.model;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExpenseTest {
 
-    @Test
-    void whenExpenseDateIsNull_thenThrowExpenseDateRequiredException(){
-        Exception exception = assertThrows(ExpenseDateRequiredException.class, () -> {
-            new Expense("INV123", PaymentType.CASH, null, new User(), new Supplier());
-        });
-        String expectedMessage = "Expense date is required.";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+    private Expense createExpense(PaymentType paymentType) {
+        return new Expense(
+                "INV123",
+                "Compra mercado",
+                paymentType,
+                LocalDate.now(),
+                new User(),
+                Money.of(BigDecimal.valueOf(100))
+        );
     }
 
-    @Test
-    void whenExpenseDateIsInFuture_thenThrowExpenseDateInTheFutureException(){
-        Exception exception = assertThrows(ExpenseDateInTheFutureException.class, () -> {
-            new Expense("INV123", PaymentType.CASH, LocalDate.now().plusDays(1), new User(), new Supplier());
-        });
-        String expectedMessage = "Expense date cannot be in the future.";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+    private Installment createInstallment(
+            Expense expense,
+            LocalDate dueDate
+    ) {
+        return new Installment(
+                Money.of(BigDecimal.valueOf(100)),
+                dueDate,
+                null,
+                expense,
+                1,
+                1
+        );
     }
 
-    @Test
-    void whenAddNullInstallment_thenThrowInstallmentRequiredException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
-        Exception exception = assertThrows(InstallmentRequiredException.class, () -> {
-            expense.addInstallment(null);
-        });
-        String expectedMessage = "Installment cannot be null.";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+    @Nested
+    class ConstructorTests {
+
+        @Test
+        void shouldThrowWhenExpenseDateIsNull() {
+            assertThrows(
+                    ExpenseDateRequiredException.class,
+                    () -> new Expense(
+                            "INV123",
+                            "Compra",
+                            PaymentType.CASH,
+                            null,
+                            new User(),
+                            Money.of(BigDecimal.valueOf(100))
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenExpenseDateIsFuture() {
+            assertThrows(
+                    ExpenseDateInTheFutureException.class,
+                    () -> new Expense(
+                            "INV123",
+                            "Compra",
+                            PaymentType.CASH,
+                            LocalDate.now().plusDays(1),
+                            new User(),
+                            Money.of(BigDecimal.valueOf(100))
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDescriptionIsNull() {
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> new Expense(
+                            "INV123",
+                            null,
+                            PaymentType.CASH,
+                            LocalDate.now(),
+                            new User(),
+                            Money.of(BigDecimal.valueOf(100))
+                    )
+            );
+        }
     }
 
-    @Test
-    void whenPaymentTypeIsCashAndAddMoreThanOneInstallment_thenThrowMultipleInstallmentsNotAllowedForPaymentTypeException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
-        Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now(), null);
-        Installment installment2 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(60), null);
-        expense.addInstallment(installment);
-        Exception exception = assertThrows(MultipleInstallmentsNotAllowedForPaymentTypeException.class, () -> {
+    @Nested
+    class AddInstallmentTests {
+
+        @Test
+        void shouldThrowWhenInstallmentIsNull() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            assertThrows(
+                    InstallmentRequiredException.class,
+                    () -> expense.addInstallment(null)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCashHasMoreThanOneInstallment() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Installment installment1 =
+                    createInstallment(expense, LocalDate.now());
+
+            Installment installment2 =
+                    new Installment(
+                            Money.of(BigDecimal.valueOf(100)),
+                            LocalDate.now(),
+                            null,
+                            expense,
+                            2,
+                            2
+                    );
+
+            expense.addInstallment(installment1);
+
+            assertThrows(
+                    MultipleInstallmentsNotAllowedForPaymentTypeException.class,
+                    () -> expense.addInstallment(installment2)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCashDueDateDiffersFromExpenseDate() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Installment installment =
+                    createInstallment(
+                            expense,
+                            LocalDate.now().plusDays(30)
+                    );
+
+            assertThrows(
+                    InvalidInstallmentDueDateForPaymentTypeException.class,
+                    () -> expense.addInstallment(installment)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDueDateBeforeExpenseDate() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            Installment installment =
+                    createInstallment(
+                            expense,
+                            LocalDate.now().minusDays(1)
+                    );
+
+            assertThrows(
+                    InstallmentDueDateBeforeExpenseDateException.class,
+                    () -> expense.addInstallment(installment)
+            );
+        }
+
+        @Test
+        void shouldAddInstallmentForCash() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Installment installment =
+                    createInstallment(expense, LocalDate.now());
+
+            expense.addInstallment(installment);
+
+            assertEquals(1, expense.getInstallments().size());
+        }
+
+        @Test
+        void shouldAllowMultipleInstallmentsForCredit() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            Installment installment1 =
+                    new Installment(
+                            Money.of(BigDecimal.valueOf(50)),
+                            LocalDate.now().plusDays(30),
+                            null,
+                            expense,
+                            1,
+                            2
+                    );
+
+            Installment installment2 =
+                    new Installment(
+                            Money.of(BigDecimal.valueOf(50)),
+                            LocalDate.now().plusDays(60),
+                            null,
+                            expense,
+                            2,
+                            2
+                    );
+
+            expense.addInstallment(installment1);
             expense.addInstallment(installment2);
-        });
-        String expectedMessage = "Payment type " + PaymentType.CASH + " allows only one installment";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
+
+            assertEquals(2, expense.getInstallments().size());
+        }
     }
 
-    @Test
-    void whenPaymentTypeIsCashAndInstallmentDueDateIsDifferentFromExpenseDate_thenThrowInvalidInstallmentDueDateForPaymentTypeException(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
-        Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(30), null);
-        Exception exception = assertThrows(InvalidInstallmentDueDateForPaymentTypeException.class, () -> {
-            expense.addInstallment(installment);
-        });
-        String expectedMessage = "For payment type "+ PaymentType.CASH + ", the installment due date must be the same as the expense date";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
-    }
+    @Nested
+    class GenerateInstallmentsTests {
 
-    @Test
-    void whenInstallmentDueDateIsBeforeExpenseDate_thenThrowInstallmentDueDateBeforeExpenseDateException(){
-        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now(), new User(), new Supplier());
-        Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().minusDays(1), null);
-        Exception exception = assertThrows(InstallmentDueDateBeforeExpenseDateException.class, () -> {
-            expense.addInstallment(installment);
-        });
-        String expectedMessage = "Installment due date cannot be before the expense date.";
-        String actualMessage = exception.getMessage();
-        assertTrue(actualMessage.contains(expectedMessage));
-    }
+        @Test
+        void shouldGenerateSingleInstallmentForCash() {
+            Expense expense = createExpense(
+                    PaymentType.CASH
+            );
 
-    @Test
-    void whenPaymentTypeIsCashAndInstallmentIsValid_thenAddInstallment(){
-        Expense expense = new Expense("INV123", PaymentType.CASH, LocalDate.now(), new User(), new Supplier());
-        Installment installment = new Installment(BigDecimal.valueOf(100.00), LocalDate.now(), null);
-        expense.addInstallment(installment);
-        assertEquals(1, expense.getInstallments().size());
-        assertEquals(installment, expense.getInstallments().get(0));
-    }
+            expense.generateInstallments(null);
 
-    @Test
-    void whenPaymentTypeIsCredit_thenAllowMultipleInstallments(){
-        Expense expense = new Expense("INV123", PaymentType.CREDIT, LocalDate.now(), new User(), new Supplier());
-        Installment installment1 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(30), null);
-        Installment installment2 = new Installment(BigDecimal.valueOf(100.00), LocalDate.now().plusDays(60), null);
-        expense.addInstallment(installment1);
-        expense.addInstallment(installment2);
-        assertEquals(2, expense.getInstallments().size());
-        assertEquals(installment1, expense.getInstallments().get(0));
-        assertEquals(installment2, expense.getInstallments().get(1));
-    }
+            assertEquals(1, expense.getInstallments().size());
 
+            Installment installment = expense.getInstallments().get(0);
+
+            assertEquals(Money.of(BigDecimal.valueOf(100)), installment.getAmount());
+            assertEquals(InstallmentStatus.PAID, installment.getStatus());
+            assertEquals(1, installment.getInstallmentNumber());
+            assertEquals(1, installment.getTotalInstallments());
+        }
+
+        @Test
+        void shouldGenerateThreeInstallmentsForCredit() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, null);
+            installments.put(60, null);
+            installments.put(90, null);
+
+            expense.generateInstallments(installments);
+
+            assertEquals(3, expense.getInstallments().size());
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(0).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(1).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.34)),
+                    expense.getInstallments().get(2).getAmount()
+            );
+        }
+
+        @Test
+        void shouldDistributeRemainderToLastInstallment() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, null);
+            installments.put(60, null);
+            installments.put(90, null);
+
+            expense.generateInstallments(installments);
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(0).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(1).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.34)),
+                    expense.getInstallments().get(2).getAmount()
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCreditInstallmentsAreNotProvided() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            assertThrows(
+                    InstallmentsRequiredForPaymentTypeException.class,
+                    () -> expense.generateInstallments(null)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDueInDaysIsZeroForCredit() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(0, null);
+
+
+            assertThrows(
+                    InvalidInstallmentDueInDaysException.class,
+                    () -> expense.generateInstallments(installments)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDueInDaysIsNegative() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(-30, null);
+
+            assertThrows(
+                    InvalidInstallmentDueInDaysException.class,
+                    () -> expense.generateInstallments(installments)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenGeneratingInstallmentsTwice() {
+            Expense expense = createExpense(
+                    PaymentType.CREDIT
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, null);
+
+            expense.generateInstallments(installments);
+
+            assertThrows(
+                    InstallmentsAlreadyGeneratedException.class,
+                    () -> expense.generateInstallments(installments)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCashReceivesMoreThanOneInstallment() {
+            Expense expense = createExpense(
+                    PaymentType.CASH
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(0, null);
+            installments.put(30, null);
+
+            assertThrows(
+                    MultipleInstallmentsNotAllowedForPaymentTypeException.class,
+                    () -> expense.generateInstallments(installments)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCashInstallmentIsNotZeroDays() {
+            Expense expense = createExpense(
+                    PaymentType.CASH
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, null);
+
+            assertThrows(
+                    InvalidInstallmentDueInDaysException.class,
+                    () -> expense.generateInstallments(installments)
+            );
+        }
+    }
 }
