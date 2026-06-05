@@ -41,7 +41,7 @@ class UserControllerTest {
                 UserRequestDto request = new UserRequestDto(
                         "John Doe",
                         "JD Supplies",
-                        "testeCreate@gmail.com",
+                        "testeCreateSuccess@gmail.com",
                         "12345678Ab@",
                         "(11)92222-3333",
                         PersonType.PJ
@@ -96,6 +96,40 @@ class UserControllerTest {
                 ));
                 assertTrue(errors.contains("Phone not valid"));
             }
+
+            @Test
+            void shouldReturn400WhenUserAlreadyExists() {
+
+                UserRequestDto request = new UserRequestDto(
+                        "John Doe",
+                        "JD Supplies",
+                        "testeCreate@gmail.com",
+                        "12345678Ab@",
+                        "(11)92222-3333",
+                        PersonType.PJ
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(request)
+                        .when()
+                        .post("/sign-up")
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .response();
+
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(request)
+                        .when()
+                        .post("/sign-up")
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+            }
         }
     }
 
@@ -117,7 +151,6 @@ class UserControllerTest {
                         PersonType.PJ
                 );
 
-                // cria usuário
                 RestAssured.given()
                         .contentType("application/json")
                         .body(user)
