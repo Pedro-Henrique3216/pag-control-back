@@ -7,6 +7,7 @@ import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
 import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,8 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 class CreateExpenseWithInstallmentsUseCaseTest {
@@ -42,604 +43,226 @@ class CreateExpenseWithInstallmentsUseCaseTest {
     @InjectMocks
     private CreateExpenseWithInstallmentsUseCase useCase;
 
-    @Test
-    void whenInstallmentIntervalsAreProvided_thenCreateExpenseWithInstallments(){
-
-        var userId = UUID.randomUUID();
-
-        var user = new User(
+    private User createUser() {
+        return new User(
                 "John Doe",
                 null,
                 "teste@gmail.com",
-                "password123",
-                "12345678900",
+                "$2a$10$abcdefghijklmnopqrstuv",
+                "11999999999",
                 PersonType.PF
         );
+    }
 
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
+    private Supplier createSupplier(User user) {
+        return new Supplier(
                 "Supplier Inc.",
                 null,
-                new User()
-        );
-
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CREDIT,
-                LocalDate.now(),
-                user,
-                supplier
-        );
-
-        var category =  new Category(
-                "teste",
-                TransactionType.EXPENSE,
                 user
         );
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                UUID.randomUUID(),
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
-                .thenReturn(Optional.of(category));
-
-        useCase.execute(command);
-
-        verify(expenseRepository, times(1)).save(expense);
     }
 
-    @Test
-    void whenInstallmentIntervalsAreEmpty_thenThrowInstallmentsRequiredForPaymentTypeException(){
+    @Nested
+    class SuccessTests {
 
-        var userId = UUID.randomUUID();
+        @Test
+        void shouldCreateExpenseWithInstallmentsSuccessfully() {
 
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID supplierId = UUID.randomUUID();
+            UUID categoryId = UUID.randomUUID();
 
-        var supplierId = UUID.randomUUID();
+            User user = createUser();
 
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
+            Supplier supplier = createSupplier(user);
 
-        var amount = new BigDecimal("300.00");
+            Category category = new Category(
+                    "Alimentação",
+                    TransactionType.EXPENSE,
+                    user
+            );
 
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                null,
-                amount,
-                null,
-                userId
-        );
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, null);
+            installments.put(60, null);
+            installments.put(90, "123456789");
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
+            CreateExpenseCommand command = new CreateExpenseCommand(
+                    "INV123",
+                    "Conta do mercado",
+                    PaymentType.CREDIT,
+                    supplierId,
+                    LocalDate.now(),
+                    installments,
+                    new BigDecimal("300.00"),
+                    categoryId
+            );
 
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
 
+            when(supplierRepository.findById(supplierId))
+                    .thenReturn(Optional.of(supplier));
 
-        assertThrows(InstallmentsRequiredForPaymentTypeException.class,
-                () -> useCase.execute(command));
+            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
+                    .thenReturn(Optional.of(category));
 
-        verify(expenseRepository, never()).save(any());
+            useCase.execute(authenticatedUserId, command);
+
+            verify(expenseRepository, times(1))
+                    .save(any(Expense.class));
+        }
     }
 
-    @Test
-    void whenSupplierNotFound_thenThrowSupplierNotFoundException(){
-        var userId = UUID.randomUUID();
+    @Nested
+    class ValidationTests {
 
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
+        @Test
+        void shouldThrowWhenCommandIsNull() {
 
-        var supplierId = UUID.randomUUID();
+            assertThrows(
+                    CreateExpenseCommandRequiredException.class,
+                    () -> useCase.execute(UUID.randomUUID(), null)
+            );
+        }
 
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
+        @Test
+        void shouldThrowWhenAuthenticatedUserIdIsNull() {
 
-        var amount = new BigDecimal("300.00");
+            CreateExpenseCommand command = new CreateExpenseCommand(
+                    "INV123",
+                    "Descrição",
+                    PaymentType.CREDIT,
+                    UUID.randomUUID(),
+                    LocalDate.now(),
+                    Map.of(30, ""),
+                    BigDecimal.valueOf(100),
+                    null
+            );
 
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.empty());
-
-        assertThrows(SupplierNotFoundException.class,
-                () -> useCase.execute(command));
-
-        verify(expenseRepository, never()).save(any());
+            assertThrows(
+                    UserIdRequiredException.class,
+                    () -> useCase.execute(null, command)
+            );
+        }
     }
 
-    @Test
-    void whenPaymentTypeIsCashAndMoreThanOneInstallmentProvided_thenThrowMultipleInstallmentsNotAllowedException(){
-        var userId = UUID.randomUUID();
+    @Nested
+    class SupplierTests {
 
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
+        @Test
+        void shouldThrowWhenSupplierNotFound() {
 
-        var supplierId = UUID.randomUUID();
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID supplierId = UUID.randomUUID();
 
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
+            User user = createUser();
 
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
+            CreateExpenseCommand command = new CreateExpenseCommand(
+                    "INV123",
+                    "Descrição",
+                    PaymentType.CREDIT,
+                    supplierId,
+                    LocalDate.now(),
+                    Map.of(30, ""),
+                    BigDecimal.valueOf(100),
+                    null
+            );
 
-        var amount = new BigDecimal("300.00");
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
 
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CASH,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
+            when(supplierRepository.findById(supplierId))
+                    .thenReturn(Optional.empty());
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-
-        assertThrows(MultipleInstallmentsNotAllowedForPaymentTypeException.class, () ->
-                useCase.execute(command)
-        );
-
-        verify(expenseRepository, never()).save(any());
+            assertThrows(
+                    SupplierNotFoundException.class,
+                    () -> useCase.execute(authenticatedUserId, command)
+            );
+        }
     }
 
-    @Test
-    void whenPaymentTypeIsCash_thenCreateSingleInstallment(){
-        var userId = UUID.randomUUID();
+    @Nested
+    class CategoryTests {
 
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
+        @Test
+        void shouldThrowWhenCategoryNotFound() {
 
-        var supplierId = UUID.randomUUID();
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID supplierId = UUID.randomUUID();
+            UUID categoryId = UUID.randomUUID();
 
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
+            User user = createUser();
 
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CASH,
-                LocalDate.now(),
-                user,
-                supplier
-        );
+            Supplier supplier = createSupplier(user);
 
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(0, "123456789123");
+            CreateExpenseCommand command = new CreateExpenseCommand(
+                    "INV123",
+                    "Descrição",
+                    PaymentType.CREDIT,
+                    supplierId,
+                    LocalDate.now(),
+                    Map.of(30, ""),
+                    BigDecimal.valueOf(100),
+                    categoryId
+            );
 
-        var amount = new BigDecimal("300.00");
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
 
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CASH,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
+            when(supplierRepository.findById(supplierId))
+                    .thenReturn(Optional.of(supplier));
 
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
+            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
+                    .thenReturn(Optional.empty());
 
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
+            assertThrows(
+                    CategoryNotFoundException.class,
+                    () -> useCase.execute(authenticatedUserId, command)
+            );
+        }
 
+        @Test
+        void shouldThrowWhenCategoryTypeIsInvalid() {
 
-        useCase.execute(command);
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID supplierId = UUID.randomUUID();
+            UUID categoryId = UUID.randomUUID();
 
-        verify(expenseRepository, times(1)).save(expense);
+            User user = createUser();
+
+            Supplier supplier = createSupplier(user);
+
+            Category category = new Category(
+                    "Salário",
+                    TransactionType.INCOME,
+                    user
+            );
+
+            CreateExpenseCommand command = new CreateExpenseCommand(
+                    "INV123",
+                    "Descrição",
+                    PaymentType.CREDIT,
+                    supplierId,
+                    LocalDate.now(),
+                    Map.of(30, ""),
+                    BigDecimal.valueOf(100),
+                    categoryId
+            );
+
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
+
+            when(supplierRepository.findById(supplierId))
+                    .thenReturn(Optional.of(supplier));
+
+            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
+                    .thenReturn(Optional.of(category));
+
+            assertThrows(
+                    CategoryTypeInvalidException.class,
+                    () -> useCase.execute(authenticatedUserId, command)
+            );
+        }
     }
-
-    @Test
-    void whenInstallmentDueInDaysIsInvalid_thenThrowInvalidInstallmentDueInDaysException() {
-
-        var userId = UUID.randomUUID();
-
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
-
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(-5, null);
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CASH,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-
-        assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(command)
-        );
-
-        verify(expenseRepository, never()).save(any());
-    }
-
-    @Test
-    void whenPaymentTypeIsCashAndBarcodeMapIsNull_thenCreateSingleInstallment() {
-        var userId = UUID.randomUUID();
-
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
-
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
-
-        var expense = new Expense(
-                "INV123",
-                PaymentType.CASH,
-                LocalDate.now(),
-                user,
-                supplier
-        );
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CASH,
-                supplierId,
-                LocalDate.now(),
-                null,
-                amount,
-                null,
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-        when(expenseRepository.save(expense))
-                .thenReturn(expense);
-
-        useCase.execute(command);
-
-        verify(expenseRepository, times(1)).save(expense);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenBarcodeInstallmentDueInDaysIsNotZero(){
-        var userId = UUID.randomUUID();
-
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
-
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(1, "123456789123");
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CASH,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                null,
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-
-
-        assertThrows(InvalidInstallmentDueInDaysException.class, () ->
-                useCase.execute(command)
-        );
-
-    }
-
-    @Test
-    void shouldThrowCategoryNotFoundExceptionWhenCategoryDoesNotExist(){
-        var userId = UUID.randomUUID();
-
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
-
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
-
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                UUID.randomUUID(),
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                CategoryNotFoundException.class,
-                () -> useCase.execute(command)
-        );
-
-    }
-
-    @Test
-    void shouldThrowCategoryTypeInvalidExceptionWhenCategoryIsNotExpenseType(){
-        var userId = UUID.randomUUID();
-
-        var user = new User(
-                "John Doe",
-                null,
-                "teste@gmail.com",
-                "password123",
-                "12345678900",
-                PersonType.PF
-        );
-
-        var supplierId = UUID.randomUUID();
-
-        var supplier = new Supplier(
-                "Supplier Inc.",
-                null,
-                new User()
-        );
-
-        var category =  new Category(
-                "teste",
-                TransactionType.INCOME,
-                user
-        );
-
-        Map<Integer, String> installmentBarcodesWithDueInDays = new HashMap<>();
-        installmentBarcodesWithDueInDays.put(30, null);
-        installmentBarcodesWithDueInDays.put(60, null);
-        installmentBarcodesWithDueInDays.put(90, "123456789123");
-
-        var amount = new BigDecimal("300.00");
-
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                supplierId,
-                LocalDate.now(),
-                installmentBarcodesWithDueInDays,
-                amount,
-                UUID.randomUUID(),
-                userId
-        );
-
-        when(userRepository.getReferenceById(userId))
-                .thenReturn(user);
-
-        when(supplierRepository.findById(supplierId))
-                .thenReturn(Optional.of(supplier));
-
-        when(categoryRepository.findCategoryByIdAndUserId(any(), any()))
-                .thenReturn(Optional.of(category));
-
-        assertThrows(
-                CategoryTypeInvalidException.class,
-                () -> useCase.execute(command)
-        );
-    }
-
-    @Test
-    void shouldThrowCreateExpenseCommandRequiredExceptionWhenCommandIsNull(){
-        assertThrows(CreateExpenseCommandRequiredException.class, () -> useCase.execute(null));
-    }
-
-    @Test
-     void shouldThrowInvalidAmountExceptionWhenTotalAmountIsZeroOrNegative(){
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                UUID.randomUUID(),
-                LocalDate.now(),
-                Map.of(30, ""),
-                BigDecimal.ZERO,
-                null,
-                UUID.randomUUID()
-        );
-
-        assertThrows(InvalidAmountException.class, () -> useCase.execute(command));
-    }
-
-    @Test
-     void shouldThrowUserIdRequiredExceptionWhenUserIdIsNull(){
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                UUID.randomUUID(),
-                LocalDate.now(),
-                Map.of(30, ""),
-                BigDecimal.valueOf(100),
-                null,
-                null
-        );
-
-        assertThrows(UserIdRequiredException.class, () -> useCase.execute(command));
-    }
-
-    @Test
-     void shouldThrowSupplierRequiredExceptionWhenSupplierIdIsNull(){
-        CreateExpenseCommand command = new CreateExpenseCommand(
-                "INV123",
-                PaymentType.CREDIT,
-                null,
-                LocalDate.now(),
-                Map.of(30, ""),
-                BigDecimal.valueOf(100),
-                null,
-                UUID.randomUUID()
-        );
-
-        assertThrows(SupplierRequiredException.class, () -> useCase.execute(command));
-    }
-
-
 }
