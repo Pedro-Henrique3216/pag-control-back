@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Password;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException;
 import com.pedrohenrique.pagcontrolback.model.User;
@@ -24,11 +25,13 @@ public class CreateUserUseCase {
             throw new EmailAlreadyInUseException("Email already exists");
         }
 
+        Password password = new Password(command.password());
+
         User user = new User(
                 command.name(),
                 command.fantasyName(),
                 command.email(),
-                passwordEncoder.encode(command.password()),
+                passwordEncoder.encode(password.value()),
                 command.phone(),
                 command.personType()
         );
