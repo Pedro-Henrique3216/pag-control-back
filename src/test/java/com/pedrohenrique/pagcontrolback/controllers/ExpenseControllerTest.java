@@ -92,6 +92,7 @@ class ExpenseControllerTest {
 
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
+                        "Teste",
                         PaymentType.CREDIT,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
@@ -135,9 +136,14 @@ class ExpenseControllerTest {
             void shouldReturn400WhenRequestIsInvalid() {
 
                 ExpenseRequestDto dto = new ExpenseRequestDto(
-                        null, null, supplierId,
+                        null,
+                        "Teste",
+                        null,
+                        supplierId,
                         LocalDate.of(2026, 2, 2),
-                        null, null, null
+                        null,
+                        null,
+                        null
                 );
 
                 var response = RestAssured
@@ -160,12 +166,47 @@ class ExpenseControllerTest {
             }
 
             @Test
+            void shouldReturn400WhenDescriptionIsNull() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        null,
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>() {{
+                            put(30, "1234567890123456");
+                        }},
+                        BigDecimal.valueOf(400.00),
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertNotNull(errors);
+                assertTrue(errors.contains("Description is required"));
+            }
+
+            @Test
             void shouldReturn404WhenSupplierNotFound() {
 
                 UUID randomSupplierId = UUID.randomUUID();
 
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
+                        "Teste",
                         PaymentType.CREDIT,
                         randomSupplierId,
                         LocalDate.of(2026, 2, 2),
@@ -198,6 +239,7 @@ class ExpenseControllerTest {
 
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
+                        "Teste",
                         PaymentType.CREDIT,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
@@ -230,6 +272,7 @@ class ExpenseControllerTest {
 
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
+                        "Teste",
                         PaymentType.CREDIT,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
