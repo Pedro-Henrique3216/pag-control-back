@@ -45,7 +45,7 @@ public class Category {
 
     public Category(String name, TransactionType categoryType, User user) {
         validateName(name);
-        this.name = name;
+        this.name = name.toLowerCase().trim();
         validateCategoryType(categoryType);
         this.categoryType = categoryType;
         setUser(user);
