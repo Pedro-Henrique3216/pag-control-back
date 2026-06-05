@@ -73,7 +73,7 @@ class CreateIncomeUseCaseTest {
             Income saved = captor.getValue();
 
             assertEquals("Salary", saved.getDescription());
-            assertEquals(BigDecimal.valueOf(1000.00), saved.getAmount());
+            assertEquals(BigDecimal.valueOf(1000.00).floatValue(), saved.getAmount().value().floatValue());
             assertEquals(category, saved.getCategory());
         }
 
@@ -96,7 +96,7 @@ class CreateIncomeUseCaseTest {
             Income saved = captor.getValue();
 
             assertEquals("Salary", saved.getDescription());
-            assertEquals(BigDecimal.valueOf(1000.00), saved.getAmount());
+            assertEquals(BigDecimal.valueOf(1000.00).floatValue(), saved.getAmount().value().floatValue());
         }
     }
 
