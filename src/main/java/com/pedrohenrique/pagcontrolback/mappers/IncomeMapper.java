@@ -8,7 +8,7 @@ public class IncomeMapper {
     public static IncomeResponseDto toDto(Income income) {
         return new IncomeResponseDto(
                 income.getId(),
-                income.getAmount(),
+                income.getAmount().value(),
                 income.getDescription(),
                 income.getDate(),
                 income.getCategory() != null ? income.getCategory().getId() : null

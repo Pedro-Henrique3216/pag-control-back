@@ -9,7 +9,7 @@ public class SupplierMapper {
         return new SupplierResponseDto(
                 supplier.getId(),
                 supplier.getName(),
-                supplier.getCnpj()
+                supplier.getCnpj() == null ? null : supplier.getCnpj().value()
         );
     }
 }

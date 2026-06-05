@@ -9,7 +9,7 @@ public class InstallmentMapper {
         return new InstallmentResponseDto(
                 installment.getInstallmentId(),
                 installment.getExpense().getDescription(),
-                installment.getAmount(),
+                installment.getAmount().value(),
                 installment.getDueDate(),
                 installment.getBarcode(),
                 installment.getStatus()
