@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface InstallmentRepository extends JpaRepository<Installment, UUID>
 {
     @Query("""
-        SELECT COALESCE(SUM(i.amount), 0)
+        SELECT COALESCE(SUM(i.amount.value), 0)
                         FROM Installment i
                         WHERE i.expense.user.id = :userId
                         AND i.status = 'PAID'
@@ -24,7 +24,7 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
     @Query("""
         SELECT new com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto(
             COALESCE(c.name, 'outros'),
-            SUM(i.amount)
+            SUM(i.amount.value)
         )
         FROM Installment i
         JOIN i.expense e
@@ -37,7 +37,7 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
     List<CategorySummaryDto> sumByCategory(UUID userId, LocalDate start, LocalDate end);
 
     @Query("""
-        SELECT COALESCE(SUM(i.amount), 0)
+        SELECT COALESCE(SUM(i.amount.value), 0)
         FROM Installment i
         WHERE i.expense.user.id = :userId
         AND i.status = 'UNPAID'
@@ -55,7 +55,7 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
     Integer countOverdueByUser(UUID userId);
 
     @Query("""
-        SELECT COALESCE(SUM(i.amount), 0)
+        SELECT COALESCE(SUM(i.amount.value), 0)
         FROM Installment i
         WHERE i.expense.user.id = :userId
         AND i.status = 'UNPAID'

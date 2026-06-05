@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface IncomeRepository extends JpaRepository<Income, UUID> {
 
     @Query("""
-        SELECT COALESCE(SUM(i.amount), 0)
+        SELECT COALESCE(SUM(i.amount.value), 0)
             FROM Income i
                 WHERE i.user.id = :userId
                     AND i.date
