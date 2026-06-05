@@ -30,8 +30,8 @@ class CreateUserUseCaseTest {
             "John Doe",
             "JD Supplies",
             "test@gmail.com",
-            "12345678",
-            "111-222-3333",
+            "12345678Aq#",
+            "11922223333",
             PersonType.PJ
     );
 
@@ -40,7 +40,7 @@ class CreateUserUseCaseTest {
             "JD Supplies",
             "test@gmail.com",
             "12345678",
-            "111-222-3333",
+            "11912345678",
             PersonType.PJ
     );
 
@@ -60,6 +60,7 @@ class CreateUserUseCaseTest {
 
         when(userRepository.existsUserByEmail(command.email())).thenReturn(false);
         when(userRepository.save(user)).thenReturn(user);
+        when(passwordEncoder.encode(command.password())).thenReturn("12345678");
 
         User createdUser = createUserUseCase.execute(command);
 
