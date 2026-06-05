@@ -1,8 +1,10 @@
 package com.pedrohenrique.pagcontrolback.repositories;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategorySummaryDto;
 import com.pedrohenrique.pagcontrolback.model.*;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -34,188 +36,426 @@ class InstallmentRepositoryTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @Test
-    @DisplayName("Should sum paid installments by date range")
-    void shouldSumPaidInstallments() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    private User createUser(
+            String email
+    ) {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
-
-        Expense expense = expenseRepository.save(
-                new Expense("teste", PaymentType.CASH, LocalDate.now(), user, supplier)
+        User user = new User(
+                "Pedro",
+                null,
+                email,
+                "123",
+                "11912345678",
+                PersonType.PF
         );
 
-        expense.generateInstallments(BigDecimal.valueOf(100), null);
-
-        Expense expense2 = expenseRepository.save(
-                new Expense("teste2", PaymentType.CASH, LocalDate.now(), user, supplier)
-        );
-
-        expense2.generateInstallments(BigDecimal.valueOf(200), null);
-
-        expenseRepository.saveAll(List.of(expense, expense2));
-
-        BigDecimal result = installmentRepository.sumPaidByUserIdAndDateBetween(
-                user.getId(),
-                LocalDate.now().withDayOfMonth(1),
-                LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
-        );
-
-        assertEquals(new BigDecimal("300").floatValue(), result.floatValue());
+        return userRepository.save(user);
     }
 
-    @Test
-    void shouldReturnZeroWhenNoPaidInstallments() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    private Supplier createSupplier(
+            User user,
+            String name
+    ) {
 
-        BigDecimal result = installmentRepository.sumPaidByUserIdAndDateBetween(
-                user.getId(),
-                LocalDate.now().withDayOfMonth(1),
-                LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
+        Supplier supplier = new Supplier(
+                name,
+                null,
+                user
         );
 
-        assertEquals(BigDecimal.ZERO, result);
+        return supplierRepository.save(supplier);
     }
 
-    @Test
-    void shouldGroupByCategory() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    private Category createCategory(
+            User user,
+            String name
+    ) {
 
-        Category category = categoryRepository.save(new Category("Food", TransactionType.EXPENSE, user));
-
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
-
-        Expense expense = new Expense("teste", PaymentType.CASH, LocalDate.now(), user, supplier);
-
-        expense.assignCategory(category);
-
-        expense.generateInstallments(BigDecimal.valueOf(100), null);
-
-        expenseRepository.save(expense);
-
-        List<CategorySummaryDto> result = installmentRepository.sumByCategory(
-                user.getId(),
-                LocalDate.now().withDayOfMonth(1),
-                LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
+        Category category = new Category(
+                name,
+                TransactionType.EXPENSE,
+                user
         );
 
-        assertEquals(1, result.size());
-        assertEquals("food", result.get(0).description());
-        assertEquals(new BigDecimal("100").floatValue(), result.get(0).total().floatValue());
+        return categoryRepository.save(category);
     }
 
-    @Test
-    void shouldReturnOutrosWhenCategoryIsNull() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    private Expense createExpense(
+            User user,
+            Supplier supplier,
+            Category category,
+            String description,
+            PaymentType paymentType,
+            LocalDate date,
+            BigDecimal amount,
+            Map<Integer, String> installments
+    ) {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
-
-        Expense expense = new Expense("teste", PaymentType.CASH, LocalDate.now(), user, supplier);
-
-        expense.generateInstallments(BigDecimal.valueOf(100), null);
-
-        expenseRepository.save(expense);
-
-        List<CategorySummaryDto> result = installmentRepository.sumByCategory(
-                user.getId(),
-                LocalDate.now().withDayOfMonth(1),
-                LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth())
+        Expense expense = new Expense(
+                "INV-" + System.nanoTime(),
+                description,
+                paymentType,
+                date,
+                user,
+                new Money(amount)
         );
 
-        assertEquals("outros", result.get(0).description());
+        expense.setSupplier(supplier);
+
+        if (category != null) {
+            expense.assignCategory(category);
+        }
+
+        expense.generateInstallments(installments);
+
+        return expenseRepository.save(expense);
     }
 
-    @Test
-    void shouldSumOverdue() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    @Nested
+    class SumPaidTests {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
+        @Test
+        @DisplayName("Should sum paid installments by date range")
+        void shouldSumPaidInstallments() {
 
-        Expense expense = new Expense("teste", PaymentType.BILL, LocalDate.now().minusDays(2), user, supplier);
+            User user = createUser("sum@test.com");
 
-        expense.generateInstallments(BigDecimal.valueOf(150), Map.of(1, ""));
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
 
-        Expense expense2 = new Expense("teste2", PaymentType.BILL, LocalDate.now().minusDays(20), user, supplier);
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.CASH,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(100),
+                    Map.of(0, "")
+            );
 
-        expense2.generateInstallments(BigDecimal.valueOf(200), Map.of(1, ""));
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste2",
+                    PaymentType.CASH,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(200),
+                    Map.of(0, "")
+            );
 
-        Expense expense3 = new Expense("teste3", PaymentType.BILL, LocalDate.now(), user, supplier);
+            BigDecimal result =
+                    installmentRepository.sumPaidByUserIdAndDateBetween(
+                            user.getId(),
+                            LocalDate.now().withDayOfMonth(1),
+                            LocalDate.now().withDayOfMonth(
+                                    LocalDate.now().lengthOfMonth()
+                            )
+                    );
 
-        expense3.generateInstallments(BigDecimal.valueOf(200), Map.of(1, ""));
+            assertEquals(
+                    new BigDecimal("300").floatValue(),
+                    result.floatValue()
+            );
+        }
 
-        expenseRepository.saveAll(List.of(expense, expense2, expense3));
+        @Test
+        @DisplayName("Should return zero when no paid installments")
+        void shouldReturnZeroWhenNoPaidInstallments() {
 
-        BigDecimal result = installmentRepository.sumOverdueByUser(user.getId());
+            User user = createUser("zero@test.com");
 
-        assertEquals(new BigDecimal("350").floatValue(), result.floatValue());
+            BigDecimal result =
+                    installmentRepository.sumPaidByUserIdAndDateBetween(
+                            user.getId(),
+                            LocalDate.now().withDayOfMonth(1),
+                            LocalDate.now().withDayOfMonth(
+                                    LocalDate.now().lengthOfMonth()
+                            )
+                    );
+
+            assertEquals(
+                    BigDecimal.ZERO.floatValue(),
+                    result.floatValue()
+            );
+        }
     }
 
-    @Test
-    void shouldCountOverdue() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    @Nested
+    class CategorySummaryTests {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
+        @Test
+        void shouldGroupByCategory() {
 
-        Expense expense = new Expense("teste", PaymentType.BILL, LocalDate.now().minusDays(2), user, supplier);
+            User user = createUser("category@test.com");
 
-        expense.generateInstallments(BigDecimal.valueOf(150), Map.of(1, ""));
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
 
-        Expense expense2 = new Expense("teste2", PaymentType.BILL, LocalDate.now().minusDays(20), user, supplier);
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
 
-        expense2.generateInstallments(BigDecimal.valueOf(200), Map.of(1, ""));
+            createExpense(
+                    user,
+                    supplier,
+                    category,
+                    "teste",
+                    PaymentType.CASH,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(100),
+                    Map.of(0, "")
+            );
 
-        Expense expense3 = new Expense("teste3", PaymentType.BILL, LocalDate.now(), user, supplier);
+            List<CategorySummaryDto> result =
+                    installmentRepository.sumByCategory(
+                            user.getId(),
+                            LocalDate.now().withDayOfMonth(1),
+                            LocalDate.now().withDayOfMonth(
+                                    LocalDate.now().lengthOfMonth()
+                            )
+                    );
 
-        expense3.generateInstallments(BigDecimal.valueOf(200), Map.of(1, ""));
+            assertEquals(1, result.size());
 
-        expenseRepository.saveAll(List.of(expense, expense2, expense3));
+            assertEquals(
+                    "food",
+                    result.get(0).description()
+            );
 
-        Integer result = installmentRepository.countOverdueByUser(user.getId());
+            assertEquals(
+                    new BigDecimal("100").floatValue(),
+                    result.get(0).total().floatValue()
+            );
+        }
 
-        assertEquals(2, result);
+        @Test
+        void shouldReturnOutrosWhenCategoryIsNull() {
+
+            User user = createUser("outros@test.com");
+
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
+
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.CASH,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(100),
+                    Map.of(0, "")
+            );
+
+            List<CategorySummaryDto> result =
+                    installmentRepository.sumByCategory(
+                            user.getId(),
+                            LocalDate.now().withDayOfMonth(1),
+                            LocalDate.now().withDayOfMonth(
+                                    LocalDate.now().lengthOfMonth()
+                            )
+                    );
+
+            assertEquals(
+                    "outros",
+                    result.get(0).description()
+            );
+        }
     }
 
-    @Test
-    void shouldSumUpcoming() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    @Nested
+    class OverdueTests {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
+        @Test
+        void shouldSumOverdue() {
 
-        Expense expense = new Expense("teste", PaymentType.CREDIT, LocalDate.now(), user, supplier);
+            User user = createUser("overdue@test.com");
 
-        expense.generateInstallments(BigDecimal.valueOf(200), Map.of(7, ""));
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
 
-        Expense expense2 = new Expense("teste2", PaymentType.CREDIT, LocalDate.now(), user, supplier);
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.BILL,
+                    LocalDate.now().minusDays(30),
+                    BigDecimal.valueOf(150),
+                    Map.of(1, "")
+            );
 
-        expense2.generateInstallments(BigDecimal.valueOf(250), Map.of(1, ""));
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste2",
+                    PaymentType.BILL,
+                    LocalDate.now().minusDays(30),
+                    BigDecimal.valueOf(200),
+                    Map.of(1, "")
+            );
 
-        expenseRepository.saveAll(List.of(expense, expense2));
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste3",
+                    PaymentType.BILL,
+                    LocalDate.now().minusDays(30),
+                    BigDecimal.valueOf(200),
+                    Map.of(30, "")
+            );
 
-        BigDecimal result = installmentRepository.sumUpcomingByUser(
-                user.getId(),
-                LocalDate.now().plusDays(7)
-        );
+            BigDecimal result =
+                    installmentRepository.sumOverdueByUser(
+                            user.getId()
+                    );
 
-        assertEquals(new BigDecimal("450").floatValue(), result.floatValue());
+            assertEquals(
+                    new BigDecimal("350").floatValue(),
+                    result.floatValue()
+            );
+        }
+
+        @Test
+        void shouldCountOverdue() {
+
+            User user = createUser("count-overdue@test.com");
+
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
+
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.BILL,
+                    LocalDate.now().minusDays(30),
+                    BigDecimal.valueOf(150),
+                    Map.of(1, "")
+            );
+
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste2",
+                    PaymentType.BILL,
+                    LocalDate.now().minusDays(30),
+                    BigDecimal.valueOf(200),
+                    Map.of(1, "")
+            );
+
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste3",
+                    PaymentType.BILL,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(200),
+                    Map.of(30, "")
+            );
+
+            Integer result =
+                    installmentRepository.countOverdueByUser(
+                            user.getId()
+                    );
+
+            assertEquals(2, result);
+        }
     }
 
-    @Test
-    void shouldCountUpcoming() {
-        User user = userRepository.save(new User("Pedro", null, "email@test.com", "123", "1112345678", PersonType.PF));
+    @Nested
+    class UpcomingTests {
 
-        Supplier supplier = supplierRepository.save(new Supplier("Supplier A", null, user));
+        @Test
+        void shouldSumUpcoming() {
 
-        Expense expense = new Expense("teste", PaymentType.CREDIT, LocalDate.now(), user, supplier);
+            User user = createUser("upcoming@test.com");
 
-        expense.generateInstallments(BigDecimal.valueOf(200), Map.of(7, ""));
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
 
-        expenseRepository.save(expense);
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.CREDIT,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(200),
+                    Map.of(7, "")
+            );
 
-        Integer result = installmentRepository.countUpcomingByUser(
-                user.getId(),
-                LocalDate.now().plusDays(7)
-        );
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste2",
+                    PaymentType.CREDIT,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(250),
+                    Map.of(1, "")
+            );
 
-        assertEquals(1, result);
+            BigDecimal result =
+                    installmentRepository.sumUpcomingByUser(
+                            user.getId(),
+                            LocalDate.now().plusDays(7)
+                    );
+
+            assertEquals(
+                    new BigDecimal("450").floatValue(),
+                    result.floatValue()
+            );
+        }
+
+        @Test
+        void shouldCountUpcoming() {
+
+            User user = createUser("count-upcoming@test.com");
+
+            Supplier supplier = createSupplier(
+                    user,
+                    "Supplier A"
+            );
+
+            createExpense(
+                    user,
+                    supplier,
+                    null,
+                    "teste",
+                    PaymentType.CREDIT,
+                    LocalDate.now(),
+                    BigDecimal.valueOf(200),
+                    Map.of(7, "")
+            );
+
+            Integer result =
+                    installmentRepository.countUpcomingByUser(
+                            user.getId(),
+                            LocalDate.now().plusDays(7)
+                    );
+
+            assertEquals(1, result);
+        }
     }
 }
