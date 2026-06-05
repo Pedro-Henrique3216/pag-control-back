@@ -24,6 +24,7 @@ public class ExpenseFactory {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
+                "Teste",
                 PaymentType.CASH,
                 supplierId,
                 date,
@@ -59,6 +60,7 @@ public class ExpenseFactory {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
+                "Teste",
                 PaymentType.CREDIT,
                 supplierId,
                 date,
@@ -98,6 +100,7 @@ public class ExpenseFactory {
 
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
+                "Teste",
                 PaymentType.CREDIT,
                 supplierId,
                 date,
