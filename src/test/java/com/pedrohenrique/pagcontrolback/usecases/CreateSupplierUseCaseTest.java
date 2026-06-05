@@ -45,7 +45,7 @@ class CreateSupplierUseCaseTest {
                 "JD Supplies",
                 "test@gmail.com",
                 "12345678",
-                "111-222-3333",
+                "11912345678",
                 PersonType.PJ
         );
 
