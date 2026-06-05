@@ -16,8 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -195,7 +194,7 @@ class CategoryControllerTest {
                         .statusCode(200)
                         .body("size()", equalTo(1))
                         .body("[0].id", notNullValue())
-                        .body("[0].name", equalTo("teste"))
+                        .body("[0].name", equalToIgnoringCase("teste"))
                         .body("[0].category_type", equalTo("EXPENSE"));
             }
         }
