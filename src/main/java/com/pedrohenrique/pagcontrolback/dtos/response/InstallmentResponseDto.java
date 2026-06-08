@@ -14,6 +14,10 @@ public record InstallmentResponseDto(
         @JsonProperty("due_date")
         LocalDate dueDate,
         String barcode,
-        InstallmentStatus status
+        InstallmentStatus status,
+        @JsonProperty("installment_number")
+        int installmentNumber,
+        @JsonProperty("total_installments")
+        int totalInstallments
 ) {
 }

@@ -12,7 +12,9 @@ public class InstallmentMapper {
                 installment.getAmount().value(),
                 installment.getDueDate(),
                 installment.getBarcode(),
-                installment.getStatus()
+                installment.getStatus(),
+                installment.getInstallmentNumber(),
+                installment.getTotalInstallments()
         );
     }
 }
