@@ -251,6 +251,57 @@ public class Expense {
         installments.add(installment);
     }
 
+    public void generateNextInstallment() {
+        if (!Boolean.TRUE.equals(this.recurring)) {
+            return;
+        }
+
+        if (installments.isEmpty()) {
+            return;
+        }
+
+        Installment lastInstallment = installments.get(installments.size() - 1);
+
+        LocalDate lastDueDate = lastInstallment.getDueDate();
+
+        if (lastDueDate.isAfter(LocalDate.now())) {
+            return;
+        }
+
+        LocalDate nextDueDate = calculateNextDueDate(lastDueDate);
+
+        if (recurrenceEndDate != null &&
+                nextDueDate.isAfter(recurrenceEndDate)) {
+            return;
+        }
+
+        Installment installment = new Installment(
+                lastInstallment.getAmount(),
+                nextDueDate,
+                null,
+                this,
+                installments.size() + 1,
+                installments.size() + 1
+        );
+        installments.add(installment);
+    }
+
+    private LocalDate calculateNextDueDate(LocalDate baseDate) {
+        return switch (this.recurrenceType) {
+            case DAILY ->
+                    baseDate.plusDays(recurrenceInterval);
+
+            case WEEKLY ->
+                    baseDate.plusWeeks(recurrenceInterval);
+
+            case MONTHLY ->
+                    baseDate.plusMonths(recurrenceInterval);
+
+            case YEARLY ->
+                    baseDate.plusYears(recurrenceInterval);
+        };
+    }
+
     public void generateInstallments(
             Map<Integer, String> barcodeByDueInDays
     ) {
