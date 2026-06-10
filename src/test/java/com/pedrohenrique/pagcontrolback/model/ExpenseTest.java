@@ -373,4 +373,212 @@ class ExpenseTest {
             );
         }
     }
+
+    @Nested
+    class RecurringExpenseTests {
+
+        @Test
+        void shouldCreateRecurringExpense() {
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Netflix",
+                    PaymentType.CREDIT,
+                    LocalDate.now(),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(50)),
+                    RecurrenceType.MONTHLY,
+                    1,
+                    null
+            );
+
+            assertTrue(expense.getRecurring());
+            assertEquals(
+                    RecurrenceType.MONTHLY,
+                    expense.getRecurrenceType()
+            );
+            assertEquals(
+                    1,
+                    expense.getRecurrenceInterval()
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceTypeIsNull() {
+
+            assertThrows(
+                    RecurrenceTypeRequiredException.class,
+                    () -> new Expense(
+                            "INV123",
+                            "Netflix",
+                            PaymentType.PIX,
+                            LocalDate.now(),
+                            new User(),
+                            Money.of(BigDecimal.valueOf(50)),
+                            null,
+                            1,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceIntervalIsNull() {
+
+            assertThrows(
+                    RecurrenceIntervalException.class,
+                    () -> new Expense(
+                            "INV123",
+                            "Netflix",
+                            PaymentType.PIX,
+                            LocalDate.now(),
+                            new User(),
+                            Money.of(BigDecimal.valueOf(50)),
+                            RecurrenceType.MONTHLY,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceIntervalIsLessThanOrEqualZero() {
+
+            assertThrows(
+                    RecurrenceIntervalException.class,
+                    () -> new Expense(
+                            "INV123",
+                            "Netflix",
+                            PaymentType.PIX,
+                            LocalDate.now(),
+                            new User(),
+                            Money.of(BigDecimal.valueOf(50)),
+                            RecurrenceType.MONTHLY,
+                            0,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldGenerateNextInstallmentForMonthlyRecurringExpense() {
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Netflix",
+                    PaymentType.PIX,
+                    LocalDate.now().minusMonths(1),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(50)),
+                    RecurrenceType.MONTHLY,
+                    1,
+                    null
+            );
+
+            Installment installment = new Installment(
+                    Money.of(BigDecimal.valueOf(50)),
+                    LocalDate.now().minusMonths(1),
+                    null,
+                    expense,
+                    1,
+                    1
+            );
+
+            expense.addInstallment(installment);
+
+            expense.generateNextInstallment();
+
+            assertEquals(2, expense.getInstallments().size());
+
+            Installment generatedInstallment =
+                    expense.getInstallments().get(1);
+
+            assertEquals(
+                    installment.getDueDate().plusMonths(1),
+                    generatedInstallment.getDueDate()
+            );
+        }
+
+        @Test
+        void shouldNotGenerateNextInstallmentWhenLastInstallmentIsFuture() {
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Netflix",
+                    PaymentType.BILL,
+                    LocalDate.now(),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(50)),
+                    RecurrenceType.MONTHLY,
+                    1,
+                    null
+            );
+
+            Installment installment = new Installment(
+                    Money.of(BigDecimal.valueOf(50)),
+                    LocalDate.now().plusMonths(1),
+                    null,
+                    expense,
+                    1,
+                    1
+            );
+
+            expense.addInstallment(installment);
+
+            expense.generateNextInstallment();
+
+            assertEquals(1, expense.getInstallments().size());
+        }
+
+        @Test
+        void shouldNotGenerateInstallmentWhenInstallmentsListIsEmpty() {
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Netflix",
+                    PaymentType.PIX,
+                    LocalDate.now(),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(50)),
+                    RecurrenceType.MONTHLY,
+                    1,
+                    null
+            );
+
+            expense.generateNextInstallment();
+
+            assertTrue(expense.getInstallments().isEmpty());
+        }
+
+        @Test
+        void shouldNotGenerateInstallmentWhenRecurrenceEndDateHasPassed() {
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Netflix",
+                    PaymentType.BILL,
+                    LocalDate.now().minusMonths(2),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(50)),
+                    RecurrenceType.MONTHLY,
+                    1,
+                    LocalDate.now().minusDays(1)
+            );
+
+            Installment installment = new Installment(
+                    Money.of(BigDecimal.valueOf(50)),
+                    LocalDate.now().minusMonths(1),
+                    null,
+                    expense,
+                    1,
+                    1
+            );
+
+            expense.addInstallment(installment);
+
+            expense.generateNextInstallment();
+
+            assertEquals(1, expense.getInstallments().size());
+        }
+    }
 }
