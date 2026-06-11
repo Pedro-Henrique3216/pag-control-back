@@ -45,6 +45,15 @@ public class Expense {
     private Category category;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    private Boolean recurring;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recurrence_type")
+    private RecurrenceType recurrenceType;
+    @Column(name = "recurrence_interval")
+    private Integer recurrenceInterval;
+    @Column(name = "recurrence_end_date")
+    private LocalDate recurrenceEndDate;
+    private Boolean active = true;
 
     public Expense() {}
 
@@ -59,6 +68,45 @@ public class Expense {
         this.expenseDate = expenseDate;
         this.totalAmount = totalAmount;
         setUser(user);
+        this.recurring = false;
+    }
+
+    public Expense(
+            String invoiceNumber,
+            String description,
+            PaymentType paymentType,
+            LocalDate expenseDate,
+            User user,
+            Money totalAmount,
+            RecurrenceType recurrenceType,
+            Integer recurrenceInterval,
+            LocalDate recurrenceEndDate
+    ) {
+        this(invoiceNumber, description, paymentType, expenseDate, user, totalAmount);
+        this.recurring = true;
+        validateRecurrence(recurrenceType, recurrenceInterval, recurrenceEndDate);
+        this.recurrenceType = recurrenceType;
+        this.recurrenceInterval = recurrenceInterval;
+        this.recurrenceEndDate = recurrenceEndDate;
+    }
+
+    private void validateRecurrence(RecurrenceType recurrenceType, Integer recurrenceInterval, LocalDate recurrenceEndDate) {
+        if (recurrenceType == null) {
+            throw new RecurrenceTypeRequiredException("Recurrence type is required for recurring expenses.");
+        }
+        if (recurrenceInterval == null) {
+            throw new RecurrenceIntervalException("Recurrence interval is required for recurring expenses.");
+        }
+
+        if (recurrenceInterval <= 0) {
+            throw new RecurrenceIntervalException("Recurrence interval must be greater than or equal to zero.");
+        }
+
+        if (recurrenceEndDate != null && recurrenceEndDate.isBefore(this.expenseDate)) {
+            throw new InvalidRecurrenceEndDateException(
+                    "Recurrence end date cannot be before expense date."
+            );
+        }
     }
 
     private void validateExpenseDate(LocalDate expenseDate) {
@@ -154,6 +202,26 @@ public class Expense {
         return updatedAt;
     }
 
+    public Boolean getRecurring() {
+        return recurring;
+    }
+
+    public RecurrenceType getRecurrenceType() {
+        return recurrenceType;
+    }
+
+    public Integer getRecurrenceInterval() {
+        return recurrenceInterval;
+    }
+
+    public LocalDate getRecurrenceEndDate() {
+        return recurrenceEndDate;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
     public void setUser(User user) {
         if (user == null) {
             throw new UserRequiredException("User cannot be null");
@@ -181,6 +249,57 @@ public class Expense {
     public void addInstallment(Installment installment) {
         validateInstallments(installment);
         installments.add(installment);
+    }
+
+    public void generateNextInstallment() {
+        if (!Boolean.TRUE.equals(this.recurring)) {
+            return;
+        }
+
+        if (installments.isEmpty()) {
+            return;
+        }
+
+        Installment lastInstallment = installments.get(installments.size() - 1);
+
+        LocalDate lastDueDate = lastInstallment.getDueDate();
+
+        if (lastDueDate.isAfter(LocalDate.now())) {
+            return;
+        }
+
+        LocalDate nextDueDate = calculateNextDueDate(lastDueDate);
+
+        if (recurrenceEndDate != null &&
+                nextDueDate.isAfter(recurrenceEndDate)) {
+            return;
+        }
+
+        Installment installment = new Installment(
+                lastInstallment.getAmount(),
+                nextDueDate,
+                null,
+                this,
+                installments.size() + 1,
+                installments.size() + 1
+        );
+        installments.add(installment);
+    }
+
+    private LocalDate calculateNextDueDate(LocalDate baseDate) {
+        return switch (this.recurrenceType) {
+            case DAILY ->
+                    baseDate.plusDays(recurrenceInterval);
+
+            case WEEKLY ->
+                    baseDate.plusWeeks(recurrenceInterval);
+
+            case MONTHLY ->
+                    baseDate.plusMonths(recurrenceInterval);
+
+            case YEARLY ->
+                    baseDate.plusYears(recurrenceInterval);
+        };
     }
 
     public void generateInstallments(
