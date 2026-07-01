@@ -47,6 +47,8 @@ public class User {
     private LocalDateTime  createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 
     public User(
             String name,
@@ -143,9 +145,17 @@ public class User {
         return updatedAt;
     }
 
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
     public void setPassword(String password) {
         validatePassword(password);
         this.password = password;
+    }
+
+    public void verifyEmail() {
+       emailVerified = true;
     }
 
     @Override
