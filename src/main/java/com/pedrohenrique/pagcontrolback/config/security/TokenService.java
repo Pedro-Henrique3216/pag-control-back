@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -32,6 +33,19 @@ public class TokenService {
             throw new TokenGenerationException("Error generating token", exception);
         }
     }
+
+    public String generateTokenToEmailConfirmation(UUID userId) {
+        try {
+            return JWT.create()
+                    .withClaim("id", userId.toString())
+                    .withIssuer("pagcontrol")
+                    .withExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS).atOffset(ZoneOffset.of("-03:00")).toInstant())
+                    .sign(Algorithm.HMAC256(secret));
+        } catch (JWTCreationException exception) {
+            throw new TokenGenerationException("Error generating token", exception);
+        }
+    }
+
 
     public UUID getUserId(String token) {
         try {
