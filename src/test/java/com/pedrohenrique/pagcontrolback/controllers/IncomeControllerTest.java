@@ -51,8 +51,7 @@ class IncomeControllerTest {
                 "teste",
                 "teste@gmail.com",
                 "Password123@",
-                "11912345678",
-                port
+                "11912345678"
         );
 
         authToken = authTestFactory.loginAndGetToken(

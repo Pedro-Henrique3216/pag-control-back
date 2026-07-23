@@ -56,8 +56,7 @@ class SupplierControllerTest {
                 "teste",
                 "teste@gmail.com",
                 "Password123@",
-                "11999999999",
-                port
+                "11999999999"
         );
 
         token = authFactory.loginAndGetToken(
@@ -259,8 +258,7 @@ class SupplierControllerTest {
                         "Other User",
                         "other@gmail.com",
                         "Password123@",
-                        "11912345678",
-                        port
+                        "11912345678"
                 );
 
                 String otherToken = authFactory.loginAndGetToken(

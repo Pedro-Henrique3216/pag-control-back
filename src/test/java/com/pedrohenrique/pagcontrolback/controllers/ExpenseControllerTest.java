@@ -61,8 +61,7 @@ class ExpenseControllerTest {
                 "teste",
                 "teste@gmail.com",
                 "Password123@",
-                "11999999999",
-                port
+                "11999999999"
         );
 
         token = authTestFactory.loginAndGetToken(
