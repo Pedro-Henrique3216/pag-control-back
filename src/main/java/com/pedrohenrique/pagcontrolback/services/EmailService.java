@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.services;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
@@ -16,6 +17,8 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+    @Value("${email.confirmation-url}")
+    private String confirmationUrl;
 
     public EmailService(
             JavaMailSender mailSender,
@@ -27,9 +30,9 @@ public class EmailService {
 
     @Retryable(
             retryFor = MessagingException.class,
-            maxAttempts = 3,
+            maxAttemptsExpression = "${email.retry.max-attempts}",
             backoff = @Backoff(
-                    delay = 2000,
+                    delayExpression = "${email.retry.delay}",
                     multiplier = 2
             )
     )
@@ -45,7 +48,7 @@ public class EmailService {
 
         context.setVariable(
                 "confirmationLink",
-                "http://localhost:8080/api/users/confirm?token=" + token
+                confirmationUrl + token
         );
 
         String html =
