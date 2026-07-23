@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.helpers;
 
-import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
