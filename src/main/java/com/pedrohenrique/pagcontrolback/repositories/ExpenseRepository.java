@@ -11,8 +11,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     @Query("""
             SELECT e FROM Expense e
-            WHERE e.isRecurring = true
-            AND e.isActive = true
+            WHERE e.recurring = true
+            AND e.active = true
     """)
     List<Expense> findAllActiveRecurringExpenses();
 }
