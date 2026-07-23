@@ -9,12 +9,10 @@ import com.pedrohenrique.pagcontrolback.mappers.UserMapper;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.AuthenticateUserUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.CreateUserUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.VerifyEmailUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -25,10 +23,12 @@ public class UserController {
 
     private final CreateUserUseCase createUserUseCase;
     private final AuthenticateUserUseCase authenticateUserUseCase;
+    private final VerifyEmailUseCase verifyEmailUseCase;
 
-    public UserController(CreateUserUseCase createUserUseCase, AuthenticateUserUseCase authenticateUserUseCase) {
+    public UserController(CreateUserUseCase createUserUseCase, AuthenticateUserUseCase authenticateUserUseCase, VerifyEmailUseCase verifyEmailUseCase) {
         this.createUserUseCase = createUserUseCase;
         this.authenticateUserUseCase = authenticateUserUseCase;
+        this.verifyEmailUseCase = verifyEmailUseCase;
     }
 
     @PostMapping("/sign-up")
@@ -44,11 +44,18 @@ public class UserController {
         User userSaved = createUserUseCase.execute(command);
         URI uri = uriBuilder.path("/users/{id}").buildAndExpand(userSaved.getId()).toUri();
         return ResponseEntity.created(uri).body(UserMapper.toResponse(userSaved));
+
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         String token = authenticateUserUseCase.execute(loginRequestDto.email(), loginRequestDto.password());
         return ResponseEntity.ok(new LoginResponseDto(token));
+    }
+
+    @GetMapping("/confirm")
+    public ResponseEntity<Void> confirm(@RequestParam(required = true) String token) {
+        verifyEmailUseCase.execute(token);
+        return ResponseEntity.ok().build();
     }
 }
