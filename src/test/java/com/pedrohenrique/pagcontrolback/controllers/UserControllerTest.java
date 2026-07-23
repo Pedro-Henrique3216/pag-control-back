@@ -3,12 +3,16 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.LoginRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
+import com.pedrohenrique.pagcontrolback.model.User;
+import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -21,6 +25,10 @@ class UserControllerTest {
 
     @LocalServerPort
     private int port;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -142,22 +150,18 @@ class UserControllerTest {
             @Test
             void shouldLoginSuccessfully() {
 
-                UserRequestDto user = new UserRequestDto(
+                User user = new User(
                         "John Doe",
                         "JD Supplies",
                         "testeLogin@gmail.com",
-                        "12345678Ab@",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
                         "(11)92222-3333",
                         PersonType.PJ
                 );
 
-                RestAssured.given()
-                        .contentType("application/json")
-                        .body(user)
-                        .when()
-                        .post("/sign-up")
-                        .then()
-                        .statusCode(201);
+                user.verifyEmail();
+
+                userRepository.save(user);
 
                 LoginRequestDto login = new LoginRequestDto(
                         "testeLogin@gmail.com",
@@ -201,22 +205,17 @@ class UserControllerTest {
             @Test
             void shouldReturn401WhenCredentialsAreInvalid() {
 
-                UserRequestDto user = new UserRequestDto(
+                User user = new User(
                         "John Doe",
                         "JD Supplies",
                         "testeError@gmail.com",
-                        "12345678Ab@",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
                         "(11)92222-3333",
                         PersonType.PJ
                 );
 
-                RestAssured.given()
-                        .contentType("application/json")
-                        .body(user)
-                        .when()
-                        .post("/sign-up")
-                        .then()
-                        .statusCode(201);
+                user.verifyEmail();
+                userRepository.save(user);
 
                 LoginRequestDto login = new LoginRequestDto(
                         "testeError@gmail.com",
@@ -230,6 +229,34 @@ class UserControllerTest {
                         .post("/login")
                         .then()
                         .statusCode(401);
+            }
+
+            @Test
+            void shouldReturn403WhenEmailIsNotVerified() {
+                User user = new User(
+                        "John Doe",
+                        "JD Supplies",
+                        "testeNotVerified@gmail.com",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
+                        "(11)92222-3333",
+                        PersonType.PJ
+                );
+
+                userRepository.save(user);
+
+                LoginRequestDto login = new LoginRequestDto(
+                        "testeNotVerified@gmail.com",
+                        "12345678Ab@"
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(login)
+                        .when()
+                        .post("/login")
+                        .then()
+                        .statusCode(403);
+
             }
         }
     }
