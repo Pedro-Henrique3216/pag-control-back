@@ -2,6 +2,18 @@ spring:
   application:
     name: pag-control-back
 
+  mail:
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    default-encoding: UTF-8
+
 server:
   port: 8080
   servlet:
@@ -26,7 +38,7 @@ management:
     health:
       show-details: always
 
-api:
-  security:
-    token:
-      secret: ${JWT_SECRET}
+email:
+  retry:
+    max-attempts: 3
+    delay: 10

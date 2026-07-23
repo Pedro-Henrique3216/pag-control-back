@@ -8,3 +8,21 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    show-sql: false
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
+server:
+  port: ${PORT:8080}
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET}
+
+email:
+  confirmation-url: ${CONFIRMATION_URL}
