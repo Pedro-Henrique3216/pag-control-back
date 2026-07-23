@@ -12,19 +12,25 @@ public class UserPrincipal implements UserDetails {
     private final UUID id;
     private String username;
     private String password;
+    private boolean isEmailVerified;
 
     public UserPrincipal(UUID id) {
         this.id = id;
     }
 
-    public UserPrincipal(UUID id, String username, String password) {
+    public UserPrincipal(UUID id, String username, String password, boolean isEmailVerified) {
         this.id = id;
         this.username = username;
         this.password = password;
+        this.isEmailVerified = isEmailVerified;
     }
 
     public UUID getId() {
         return this.id;
+    }
+
+    public boolean getEmailVerified() {
+        return isEmailVerified;
     }
 
     @Override

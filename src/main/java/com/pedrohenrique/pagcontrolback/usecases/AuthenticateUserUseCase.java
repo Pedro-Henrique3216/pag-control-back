@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.config.security.TokenService;
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
+import com.pedrohenrique.pagcontrolback.exceptions.EmailNotVerifiedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,7 +13,6 @@ public class AuthenticateUserUseCase {
 
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
-
 
     public AuthenticateUserUseCase(
             TokenService tokenService,
@@ -26,6 +26,10 @@ public class AuthenticateUserUseCase {
         UsernamePasswordAuthenticationToken usernamePassword  = new UsernamePasswordAuthenticationToken(email, password);
         Authentication authentication = authenticationManager.authenticate(usernamePassword);
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        boolean emailIsVerified = userPrincipal.getEmailVerified();
+        if (!emailIsVerified) {
+            throw new EmailNotVerifiedException("Invalid email verification code.");
+        }
         return tokenService.generateToken(userPrincipal.getUsername(), userPrincipal.getId());
     }
 }

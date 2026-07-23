@@ -118,9 +118,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
-    @ExceptionHandler(InstallmentAccessDeniedException.class)
+    @ExceptionHandler({
+            InstallmentAccessDeniedException.class,
+            EmailNotVerifiedException.class,
+    })
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(InstallmentAccessDeniedException ex){
+    public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(RuntimeException ex){
         logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
     }
