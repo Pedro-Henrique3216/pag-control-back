@@ -1,5 +1,6 @@
 package com.pedrohenrique.pagcontrolback.controllers;
 
+import com.pedrohenrique.pagcontrolback.config.security.TokenService;
 import com.pedrohenrique.pagcontrolback.dtos.request.LoginRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PersonType;
@@ -30,6 +31,8 @@ class UserControllerTest {
     private UserRepository userRepository;
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private TokenService tokenService;
 
     @BeforeEach
     void setUp() {
@@ -329,6 +332,56 @@ class UserControllerTest {
                         .post("/resend-confirmation")
                         .then()
                         .statusCode(200);
+            }
+        }
+    }
+
+    @Nested
+    class ConfirmEmail {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldConfirmEmailSuccessfully() {
+
+                User user = new User(
+                        "Pedro",
+                        null,
+                        "testeConfirmEmail@gmail.com",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
+                        "(11)99999-9999",
+                        PersonType.PF
+                );
+
+                userRepository.save(user);
+
+                String token = tokenService.generateTokenToEmailConfirmation(
+                        user.getId()
+                );
+
+                RestAssured.given()
+                        .queryParam("token", token)
+                        .when()
+                        .get("/confirm")
+                        .then()
+                        .statusCode(200);
+            }
+        }
+
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn400WhenTokenIsInvalid() {
+
+                RestAssured.given()
+                        .queryParam("token", "invalid-token")
+                        .when()
+                        .get("/confirm")
+                        .then()
+                        .statusCode(400);
             }
         }
     }
