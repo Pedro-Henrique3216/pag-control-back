@@ -2,7 +2,7 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Password;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
-import com.pedrohenrique.pagcontrolback.dtos.events.UserCreatedEvent;
+import com.pedrohenrique.pagcontrolback.dtos.events.ConfirmationEmailEvent;
 import com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
@@ -48,7 +48,7 @@ public class CreateUserUseCase {
 
         user = userRepository.save(user);
 
-       publisher.publishEvent(new UserCreatedEvent(
+       publisher.publishEvent(new ConfirmationEmailEvent(
                user.getId(),
                user.getName(),
                user.getEmail().value()
