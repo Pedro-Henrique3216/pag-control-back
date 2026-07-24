@@ -2,10 +2,13 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.config.security.TokenService;
 import com.pedrohenrique.pagcontrolback.exceptions.InvalidConfirmationTokenException;
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidTokenException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 public class VerifyEmailUseCase {
@@ -20,12 +23,22 @@ public class VerifyEmailUseCase {
 
     @Transactional
     public void execute(String token) {
-        var userId = tokenService.getUserId(token);
+
+        UUID userId;
+
+        try {
+            userId = tokenService.getUserId(token);
+        } catch (InvalidTokenException e){
+            throw new InvalidConfirmationTokenException("Invalid confirmation token");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new InvalidConfirmationTokenException("Invalid confirmation token"));
+
         if(user.isEmailVerified()){
             return;
         }
+
         user.verifyEmail();
     }
 }
