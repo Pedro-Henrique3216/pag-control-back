@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -257,6 +258,77 @@ class UserControllerTest {
                         .then()
                         .statusCode(403);
 
+            }
+        }
+    }
+
+    @Nested
+    class ResendConfirmation {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldResendConfirmationEmailSuccessfully() {
+
+                User user = new User(
+                        "Pedro",
+                        null,
+                        "pedro@gmail.com",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
+                        "(11)99999-9999",
+                        PersonType.PF
+                );
+
+                userRepository.save(user);
+
+                var body = Map.of(
+                        "email", "pedro@gmail.com"
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(body)
+                        .when()
+                        .post("/resend-confirmation")
+                        .then()
+                        .statusCode(200);
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn400WhenEmailIsInvalid() {
+
+                var body = Map.of(
+                        "email", "email-invalido"
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(body)
+                        .when()
+                        .post("/resend-confirmation")
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturn200WhenUserDoesNotExist() {
+
+                var body = Map.of(
+                        "email", "naoexiste@gmail.com"
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(body)
+                        .when()
+                        .post("/resend-confirmation")
+                        .then()
+                        .statusCode(200);
             }
         }
     }
