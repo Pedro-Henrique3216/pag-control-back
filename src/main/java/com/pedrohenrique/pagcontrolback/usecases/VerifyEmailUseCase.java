@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.config.security.TokenService;
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidConfirmationTokenException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -21,7 +22,7 @@ public class VerifyEmailUseCase {
     public void execute(String token) {
         var userId = tokenService.getUserId(token);
         User user = userRepository.findById(userId)
-                .orElseThrow();
+                .orElseThrow(() -> new InvalidConfirmationTokenException("Invalid confirmation token"));
         if(user.isEmailVerified()){
             return;
         }

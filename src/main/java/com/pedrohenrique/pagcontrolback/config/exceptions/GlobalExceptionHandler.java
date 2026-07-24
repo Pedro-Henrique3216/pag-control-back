@@ -54,6 +54,7 @@ public class GlobalExceptionHandler {
             RecurrenceTypeRequiredException.class,
             RecurrenceIntervalException.class,
             InvalidRecurrenceEndDateException.class,
+            InvalidConfirmationTokenException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
