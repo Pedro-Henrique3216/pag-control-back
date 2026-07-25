@@ -4,6 +4,7 @@ import com.pedrohenrique.pagcontrolback.ValueObjects.Email;
 import com.pedrohenrique.pagcontrolback.dtos.events.ConfirmationEmailEvent;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ public class ResendEmailConfirmationUseCase {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public void execute(String email) {
         Email emailObject = new Email(email);
 
