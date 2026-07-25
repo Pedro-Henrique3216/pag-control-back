@@ -343,7 +343,7 @@ class UserControllerTest {
         class Success {
 
             @Test
-            void shouldConfirmEmailSuccessfully() {
+            void shouldRedirectToSuccessPageWhenEmailIsConfirmed() {
 
                 User user = new User(
                         "Pedro",
@@ -361,11 +361,13 @@ class UserControllerTest {
                 );
 
                 RestAssured.given()
+                        .redirects().follow(false)
                         .queryParam("token", token)
                         .when()
                         .get("/confirm")
                         .then()
-                        .statusCode(200);
+                        .statusCode(302)
+                        .header("Location", "http://localhost:3000/email-confirmed");
             }
         }
 
@@ -374,14 +376,16 @@ class UserControllerTest {
         class Errors {
 
             @Test
-            void shouldReturn400WhenTokenIsInvalid() {
+            void shouldRedirectToInvalidPageWhenTokenIsInvalid() {
 
                 RestAssured.given()
+                        .redirects().follow(false)
                         .queryParam("token", "invalid-token")
                         .when()
                         .get("/confirm")
                         .then()
-                        .statusCode(400);
+                        .statusCode(302)
+                        .header("Location", "http://localhost:3000/email-invalid");
             }
         }
     }
