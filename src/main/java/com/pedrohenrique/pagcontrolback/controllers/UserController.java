@@ -6,6 +6,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ResendConfirmationEmailRequ
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.LoginResponseDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.UserResponseDto;
+import com.pedrohenrique.pagcontrolback.exceptions.InvalidConfirmationTokenException;
 import com.pedrohenrique.pagcontrolback.mappers.UserMapper;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.AuthenticateUserUseCase;
@@ -13,6 +14,8 @@ import com.pedrohenrique.pagcontrolback.usecases.CreateUserUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ResendEmailConfirmationUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.VerifyEmailUseCase;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,6 +30,8 @@ public class UserController {
     private final AuthenticateUserUseCase authenticateUserUseCase;
     private final VerifyEmailUseCase verifyEmailUseCase;
     private final ResendEmailConfirmationUseCase resendEmailConfirmationUseCase;
+    @Value("${frontend.base-url}")
+    private String frontendBaseUrl;
 
     public UserController(
             CreateUserUseCase createUserUseCase,
@@ -69,8 +74,19 @@ public class UserController {
     }
 
     @GetMapping("/confirm")
-    public ResponseEntity<Void> confirm(@RequestParam(required = true) String token) {
-        verifyEmailUseCase.execute(token);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> confirm(@RequestParam String token) {
+        try {
+            verifyEmailUseCase.execute(token);
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendBaseUrl + "/email-confirmed"))
+                    .build();
+
+        } catch (InvalidConfirmationTokenException e) {
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(frontendBaseUrl + "/email-invalid"))
+                    .build();
+        }
     }
 }
