@@ -152,6 +152,12 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(ResendConfirmationLimitException.class)
+    public ResponseEntity<HandleExceptionInternalDto> handleResendConfirmationLimitException(ResendConfirmationLimitException ex){
+        logger.error(ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.TOO_MANY_REQUESTS.value(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(TokenGenerationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<HandleExceptionInternalDto> handleTokenGeneration(TokenGenerationException ex) {
