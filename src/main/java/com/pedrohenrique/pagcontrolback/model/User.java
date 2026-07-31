@@ -151,6 +151,14 @@ public class User {
         return updatedAt;
     }
 
+    public LocalDateTime getLastConfirmationEmailSentAt() {
+        return lastConfirmationEmailSentAt;
+    }
+
+    public int getAttemptsConfirmationEmailSent() {
+        return attemptsConfirmationEmailSent;
+    }
+
     public boolean isEmailVerified() {
         return emailVerified;
     }
