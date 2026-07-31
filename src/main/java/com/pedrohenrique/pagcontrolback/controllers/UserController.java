@@ -6,7 +6,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ResendConfirmationEmailRequ
 import com.pedrohenrique.pagcontrolback.dtos.request.UserRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.LoginResponseDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.UserResponseDto;
-import com.pedrohenrique.pagcontrolback.exceptions.InvalidConfirmationTokenException;
+import com.pedrohenrique.pagcontrolback.exceptions.ExpiredTokenException;
 import com.pedrohenrique.pagcontrolback.mappers.UserMapper;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.usecases.AuthenticateUserUseCase;
@@ -82,10 +82,9 @@ public class UserController {
                     .location(URI.create(frontendBaseUrl + "/email-confirmed"))
                     .build();
 
-        } catch (InvalidConfirmationTokenException e) {
-
+        } catch (ExpiredTokenException e) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendBaseUrl + "/email-invalid"))
+                    .location(URI.create(frontendBaseUrl + "/email-expired"))
                     .build();
         }
     }
