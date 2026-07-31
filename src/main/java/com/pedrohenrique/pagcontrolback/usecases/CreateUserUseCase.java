@@ -2,9 +2,12 @@ package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Password;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateUserCommand;
+import com.pedrohenrique.pagcontrolback.dtos.events.ConfirmationEmailEvent;
 import com.pedrohenrique.pagcontrolback.exceptions.EmailAlreadyInUseException;
 import com.pedrohenrique.pagcontrolback.model.User;
 import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,12 +16,19 @@ public class CreateUserUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher publisher;
 
-    public CreateUserUseCase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public CreateUserUseCase(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            ApplicationEventPublisher publisher
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.publisher = publisher;
     }
 
+    @Transactional
     public User execute(CreateUserCommand command) {
 
         if(userRepository.existsUserByEmail((command.email()))) {
@@ -36,7 +46,15 @@ public class CreateUserUseCase {
                 command.personType()
         );
 
-        return userRepository.save(user);
+        user = userRepository.save(user);
+
+       publisher.publishEvent(new ConfirmationEmailEvent(
+               user.getId(),
+               user.getName(),
+               user.getEmail().value()
+       ));
+
+        return user;
     }
 
 }

@@ -62,8 +62,7 @@ class InstallmentControllerTest {
                 "teste",
                 "teste@gmail.com",
                 "Password123@",
-                "11999999999",
-                port
+                "11999999999"
         );
 
         token = authFactory.loginAndGetToken(
@@ -225,8 +224,7 @@ class InstallmentControllerTest {
                         "other",
                         "other@gmail.com",
                         "Password123@",
-                        "11900000000",
-                        port
+                        "11900000000"
                 );
 
                 factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
@@ -342,8 +340,7 @@ class InstallmentControllerTest {
                         "other",
                         "other2@gmail.com",
                         "Password123@",
-                        "11900000000",
-                        port
+                        "11900000000"
                 );
 
                 factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);

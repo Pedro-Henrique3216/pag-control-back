@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.config.exceptions;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +22,9 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @Value("${frontend.base-url}")
+    private String frontendBaseUrl;
 
     @ExceptionHandler({
             EmailAlreadyInUseException.class,
@@ -118,9 +123,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
-    @ExceptionHandler(InstallmentAccessDeniedException.class)
+    @ExceptionHandler({
+            InstallmentAccessDeniedException.class,
+            EmailNotVerifiedException.class,
+    })
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(InstallmentAccessDeniedException ex){
+    public ResponseEntity<HandleExceptionInternalDto> handleAccessDeniedException(RuntimeException ex){
         logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.FORBIDDEN.value(), LocalDateTime.now()));
     }
@@ -134,6 +142,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedException(RuntimeException ex){
         logger.error(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNAUTHORIZED.value(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(InvalidConfirmationTokenException.class)
+    public ResponseEntity<Void> handleInvalidConfirmationTokenException(InvalidConfirmationTokenException ex){
+        logger.error(ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(frontendBaseUrl + "/email-invalid"))
+                .build();
     }
 
     @ExceptionHandler(TokenGenerationException.class)

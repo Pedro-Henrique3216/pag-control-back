@@ -24,7 +24,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new UserPrincipal(
                 user.getId(),
                 user.getEmail().value(),
-                user.getPassword()
+                user.getPassword(),
+                user.isEmailVerified()
         );
     }
 }
