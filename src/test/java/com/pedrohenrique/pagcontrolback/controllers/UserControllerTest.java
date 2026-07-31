@@ -297,6 +297,22 @@ class UserControllerTest {
                         .then()
                         .statusCode(200);
             }
+
+            @Test
+            void shouldReturn200WhenUserDoesNotExist() {
+
+                var body = Map.of(
+                        "email", "naoexiste@gmail.com"
+                );
+
+                RestAssured.given()
+                        .contentType("application/json")
+                        .body(body)
+                        .when()
+                        .post("/resend-confirmation")
+                        .then()
+                        .statusCode(200);
+            }
         }
 
         @Nested
@@ -318,12 +334,29 @@ class UserControllerTest {
                         .statusCode(400);
             }
 
+
+
             @Test
-            void shouldReturn200WhenUserDoesNotExist() {
+            void shouldReturn429WhenResendLimitIsExceeded(){
+
+                User user = new User(
+                        "Pedro",
+                        null,
+                        "pedroErro429@gmail.com",
+                        bCryptPasswordEncoder.encode("12345678Ab@"),
+                        "(11)99999-9999",
+                        PersonType.PF
+                );
+
+                userRepository.save(user);
 
                 var body = Map.of(
-                        "email", "naoexiste@gmail.com"
+                        "email", "pedroErro429@gmail.com"
                 );
+
+                resendConfirmationEmail(user.getEmail().value());
+                resendConfirmationEmail(user.getEmail().value());
+                resendConfirmationEmail(user.getEmail().value());
 
                 RestAssured.given()
                         .contentType("application/json")
@@ -331,8 +364,16 @@ class UserControllerTest {
                         .when()
                         .post("/resend-confirmation")
                         .then()
-                        .statusCode(200);
+                        .statusCode(429);
             }
+        }
+
+        private void resendConfirmationEmail(String email) {
+            RestAssured.given()
+                    .contentType("application/json")
+                    .body(Map.of("email", email))
+                    .when()
+                    .post("/resend-confirmation");
         }
     }
 

@@ -5,6 +5,7 @@ import com.pedrohenrique.pagcontrolback.ValueObjects.Phone;
 import com.pedrohenrique.pagcontrolback.exceptions.UserDomainException;
 import jakarta.persistence.*;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
@@ -49,6 +50,10 @@ public class User {
     private LocalDateTime updatedAt;
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
+    @Column(name = "last_confirmation_email_sent_at")
+    private LocalDateTime lastConfirmationEmailSentAt;
+    @Column(name = "attempts_confirmation_email_sent")
+    private int attemptsConfirmationEmailSent;
 
     public User(
             String name,
@@ -66,6 +71,7 @@ public class User {
         this.phone = new Phone(phone);
         this.personType = personType;
         this.createdAt = LocalDateTime.now();
+        attemptsConfirmationEmailSent = 0;
     }
 
     public User() {
@@ -145,6 +151,14 @@ public class User {
         return updatedAt;
     }
 
+    public LocalDateTime getLastConfirmationEmailSentAt() {
+        return lastConfirmationEmailSentAt;
+    }
+
+    public int getAttemptsConfirmationEmailSent() {
+        return attemptsConfirmationEmailSent;
+    }
+
     public boolean isEmailVerified() {
         return emailVerified;
     }
@@ -156,6 +170,31 @@ public class User {
 
     public void verifyEmail() {
        emailVerified = true;
+    }
+
+    public boolean canResendConfirmationEmail(Clock clock) {
+        if(emailVerified) {
+            return false;
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        return attemptsConfirmationEmailSent < 3
+                || lastConfirmationEmailSentAt == null
+                || !now.isBefore(lastConfirmationEmailSentAt.plusMinutes(10));
+    }
+
+    public void registerConfirmationEmailSent(Clock clock) {
+        if (attemptsConfirmationEmailSent >= 3) {
+            attemptsConfirmationEmailSent = 0;
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (attemptsConfirmationEmailSent == 0) {
+            lastConfirmationEmailSentAt = now;
+        }
+
+        attemptsConfirmationEmailSent++;
     }
 
     @Override

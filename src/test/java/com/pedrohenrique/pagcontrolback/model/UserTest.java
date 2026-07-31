@@ -4,6 +4,10 @@ import com.pedrohenrique.pagcontrolback.exceptions.UserDomainException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
@@ -187,5 +191,83 @@ class UserTest {
 
             assertEquals("87654321", user.getPassword());
         }
+    }
+
+    @Nested
+    class ResendEmailTests {
+
+        @Test
+        void shouldAllowResendConfirmationEmail() {
+            User user = new User(
+                    "John Doe",
+                    null,
+                    "test@gmail.com",
+                    "12345678",
+                    "11999999999",
+                    PersonType.PF
+            );
+
+            assertTrue(user.canResendConfirmationEmail(Clock.systemDefaultZone()));
+        }
+
+        @Test
+        void shouldBlockAfterThreeAttempts(){
+            User user = new User(
+                    "John Doe",
+                    null,
+                    "test@gmail.com",
+                    "12345678",
+                    "11999999999",
+                    PersonType.PF
+            );
+            user.registerConfirmationEmailSent(Clock.systemDefaultZone());
+            user.registerConfirmationEmailSent(Clock.systemDefaultZone());
+            user.registerConfirmationEmailSent(Clock.systemDefaultZone());
+            assertFalse(user.canResendConfirmationEmail(Clock.systemDefaultZone()));
+        }
+
+        @Test
+        void shouldAllowAgainAfterTenMinutes(){
+            User user = new User(
+                    "John Doe",
+                    null,
+                    "test@gmail.com",
+                    "12345678",
+                    "11999999999",
+                    PersonType.PF
+            );
+
+            Clock clock = Clock.fixed(
+                    Instant.parse("2026-07-31T10:00:00Z"),
+                    ZoneOffset.UTC
+            );
+
+            user.registerConfirmationEmailSent(clock);
+            user.registerConfirmationEmailSent(clock);
+            user.registerConfirmationEmailSent(clock);
+
+            Clock afterTenMinutes = Clock.fixed(
+                    Instant.parse("2026-07-31T10:11:00Z"),
+                    ZoneOffset.UTC
+            );
+
+            assertTrue(user.canResendConfirmationEmail(afterTenMinutes));
+
+        }
+
+        @Test
+        void shouldNotAllowWhenEmailIsVerified(){
+            User user = new User(
+                    "John Doe",
+                    null,
+                    "test@gmail.com",
+                    "12345678",
+                    "11999999999",
+                    PersonType.PF
+            );
+            user.verifyEmail();
+            assertFalse(user.canResendConfirmationEmail(Clock.systemDefaultZone()));
+        }
+
     }
 }
