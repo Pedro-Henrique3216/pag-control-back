@@ -13,7 +13,7 @@ public class SendInstallmentReminderScheduler {
         this.sendInstallmentReminderUseCase = sendInstallmentReminderUseCase;
     }
 
-    @Scheduled(cron = "* * 8 * * MON")
+    @Scheduled(cron = "0 0 8 * * MON")
     public void execute(){
         this.sendInstallmentReminderUseCase.execute();
     }
