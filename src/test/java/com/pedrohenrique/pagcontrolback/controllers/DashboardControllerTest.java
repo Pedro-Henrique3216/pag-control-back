@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -229,18 +230,23 @@ class DashboardControllerTest {
         @Test
         void shouldReturnCorrectMonthlySummaryAcrossMonths() {
 
+            LocalDate currentDateWithDay10 = LocalDate.now().withDayOfMonth(10);
+
+            LocalDate currentDateMinus1Month = currentDateWithDay10.minusMonths(1).withDayOfMonth(10);
+
+
             incomeFactory.createIncome(
                     BigDecimal.valueOf(1000),
-                    "jan",
-                    LocalDate.of(2026, 1, 10),
+                    currentDateMinus1Month.getMonth().name(),
+                    currentDateMinus1Month,
                     port,
                     token
             );
 
             incomeFactory.createIncome(
                     BigDecimal.valueOf(2000),
-                    "fev",
-                    LocalDate.of(2026, 2, 10),
+                    currentDateWithDay10.getMonth().name(),
+                    currentDateWithDay10,
                     port,
                     token
             );
@@ -271,21 +277,27 @@ class DashboardControllerTest {
         @Test
         void shouldReturnMonthlySummaryOrderedByDate() {
 
+            LocalDate currentDateWithDay10 = LocalDate.now().withDayOfMonth(10);
+
+            LocalDate currentDateMinus1Month = currentDateWithDay10.minusMonths(1).withDayOfMonth(10);
+
             incomeFactory.createIncome(
                     BigDecimal.valueOf(1000),
-                    "jan",
-                    LocalDate.of(2026, 1, 10),
+                    currentDateWithDay10.getMonth().name(),
+                    currentDateWithDay10,
                     port,
                     token
             );
 
             incomeFactory.createIncome(
                     BigDecimal.valueOf(2000),
-                    "fev",
-                    LocalDate.of(2026, 2, 10),
+                    currentDateMinus1Month.getMonth().name(),
+                    currentDateMinus1Month,
                     port,
                     token
             );
+
+
 
             RestAssured.given()
                     .header("Authorization", "Bearer " + token)
@@ -294,8 +306,9 @@ class DashboardControllerTest {
                     .get()
                     .then()
                     .statusCode(200)
-                    .body("months_summary[0].month", equalTo("2026-01"))
-                    .body("months_summary[1].month", equalTo("2026-02"));
+                    .body("months_summary[0].month", equalTo(YearMonth.of(currentDateMinus1Month.getYear(), currentDateMinus1Month.getMonthValue()).toString()))
+                    .body("months_summary[1].month", equalTo(YearMonth.of(currentDateWithDay10.getYear(), currentDateWithDay10.getMonthValue()).toString()));
+
 
         }
     }
