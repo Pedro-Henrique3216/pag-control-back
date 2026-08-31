@@ -83,4 +83,13 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID>
         ORDER BY YEAR(i.dueDate), MONTH(i.dueDate)
    """)
     List<Object[]> findOverdueMonthsByUser(UUID userId);
+
+    @Query("""
+        SELECT i
+        FROM Installment i
+        WHERE i.status = 'UNPAID'
+        AND i.dueDate <= :limitDate
+        ORDER BY i.dueDate ASC
+    """)
+    List<Installment> findPendingInstallmentsUntil(LocalDate limitDate);
 }
