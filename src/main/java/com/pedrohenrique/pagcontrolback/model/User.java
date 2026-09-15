@@ -86,8 +86,8 @@ public class User {
             throw new UserDomainException("Fantasy name must be null or blank for individuals (PF)");
         }
 
-        if (personType == PersonType.PJ && (fantasyName == null || fantasyName.isBlank()))
-            throw new UserDomainException("Fantasy name cannot be null or blank for companies (PJ)"); {
+        if (personType == PersonType.PJ && (fantasyName == null || fantasyName.isBlank())) {
+            throw new UserDomainException("Fantasy name cannot be null or blank for companies (PJ)");
         }
     }
 
