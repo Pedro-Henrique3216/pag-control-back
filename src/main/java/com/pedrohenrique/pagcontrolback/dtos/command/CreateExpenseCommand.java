@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.dtos.command;
 
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
+import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,6 +16,10 @@ public record CreateExpenseCommand(
         LocalDate date,
         Map<Integer, String> barcodeByDueInDays,
         BigDecimal totalAmount,
-        UUID categoryId
+        UUID categoryId,
+        boolean isRecurring,
+        RecurrenceType recurrenceType,
+        Integer recurrenceInterval,
+        LocalDate recurrenceEndDate
 ) {
 }

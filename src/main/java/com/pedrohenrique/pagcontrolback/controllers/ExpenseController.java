@@ -49,7 +49,11 @@ public class ExpenseController {
                 expenseRequestDto.date(),
                 expenseRequestDto.barcodeByDueInDays(),
                 expenseRequestDto.totalAmount(),
-                expenseRequestDto.categoryId()
+                expenseRequestDto.categoryId(),
+                expenseRequestDto.isRecurring(),
+                expenseRequestDto.recurrenceType(),
+                expenseRequestDto.recurrenceInterval(),
+                expenseRequestDto.recurrenceEndDate()
         );
 
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(

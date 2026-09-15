@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.dtos.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
+import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,11 +29,19 @@ public record ExpenseRequestDto(
         @JsonProperty("barcode_by_due_in_days")
         Map<Integer, String> barcodeByDueInDays,
         @NotNull(message = "Total amount is required")
-        @DecimalMin(value = "0.01", inclusive = true, message = "Total amount must be greater than zero")
+        @DecimalMin(value = "0.01", message = "Total amount must be greater than zero")
         @JsonProperty("total_amount")
         BigDecimal totalAmount,
         @JsonProperty(value = "category_id")
-        UUID categoryId
+        UUID categoryId,
+        @JsonProperty(value = "is_recurring")
+        boolean isRecurring,
+        @JsonProperty(value = "recurrence_type")
+        RecurrenceType recurrenceType,
+        @JsonProperty(value = "recurrence_interval")
+        Integer recurrenceInterval,
+        @JsonProperty(value = "recurrence_end_date")
+        LocalDate recurrenceEndDate
 ) {
 }
 
