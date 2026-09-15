@@ -479,11 +479,6 @@ class ExpenseTest {
             expense.generateNextInstallment();
 
             assertEquals(2, expense.getInstallments().size());
-
-            Installment generatedInstallment =
-                    expense.getInstallments().get(1);
-
-
         }
 
         @Test
