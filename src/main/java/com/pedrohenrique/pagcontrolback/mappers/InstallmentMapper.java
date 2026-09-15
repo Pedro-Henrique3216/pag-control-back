@@ -14,7 +14,15 @@ public class InstallmentMapper {
                 installment.getBarcode(),
                 installment.getStatus(),
                 installment.getInstallmentNumber(),
-                installment.getTotalInstallments()
+                transformTotalInstallment(installment.getTotalInstallments())
         );
+    }
+
+    private static String transformTotalInstallment(Integer totalInstallments) {
+        if (totalInstallments == null) {
+            return "recorrente, sem contagem fixa";
+        }
+
+        return totalInstallments.toString();
     }
 }

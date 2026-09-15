@@ -18,6 +18,6 @@ public record InstallmentResponseDto(
         @JsonProperty("installment_number")
         int installmentNumber,
         @JsonProperty("total_installments")
-        int totalInstallments
+        String totalInstallments
 ) {
 }
