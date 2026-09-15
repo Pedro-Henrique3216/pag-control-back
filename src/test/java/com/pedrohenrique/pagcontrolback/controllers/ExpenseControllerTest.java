@@ -5,6 +5,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.helpers.*;
 import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
+import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +101,11 @@ class ExpenseControllerTest {
                             put(60, "9876543210987654");
                         }},
                         BigDecimal.valueOf(400.00),
-                        categoryId
+                        categoryId,
+                        false,
+                        null,
+                        null,
+                        null
                 );
 
                 var response = RestAssured
@@ -126,6 +131,8 @@ class ExpenseControllerTest {
                 assertEquals(InstallmentStatus.UNPAID, body.installments().get(0).status());
                 assertEquals(categoryId, body.categoryId());
             }
+
+
         }
 
         @Nested
@@ -140,6 +147,10 @@ class ExpenseControllerTest {
                         null,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
+                        null,
+                        null,
+                        null,
+                        false,
                         null,
                         null,
                         null
@@ -177,6 +188,10 @@ class ExpenseControllerTest {
                             put(30, "1234567890123456");
                         }},
                         BigDecimal.valueOf(400.00),
+                        null,
+                        false,
+                        null,
+                        null,
                         null
                 );
 
@@ -213,6 +228,10 @@ class ExpenseControllerTest {
                             put(30, "1234567890123456");
                         }},
                         BigDecimal.valueOf(400.00),
+                        null,
+                        false,
+                        null,
+                        null,
                         null
                 );
 
@@ -244,6 +263,10 @@ class ExpenseControllerTest {
                         LocalDate.of(2026, 2, 2),
                         null,
                         BigDecimal.valueOf(400.00),
+                        null,
+                        false,
+                        null,
+                        null,
                         null
                 );
 
@@ -279,6 +302,10 @@ class ExpenseControllerTest {
                             put(-1, "1234567890123456");
                         }},
                         BigDecimal.valueOf(400.00),
+                        null,
+                        false,
+                        null,
+                        null,
                         null
                 );
 
@@ -297,6 +324,286 @@ class ExpenseControllerTest {
                 List<String> errors = response.path("errors");
 
                 assertTrue(errors.contains("Installment due in days must be greater than zero."));
+            }
+        }
+    }
+
+    @Nested
+    class Recurrence {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldCreateRecurringExpenseWithFirstInstallment() {
+
+                UUID categoryId = categoryFactory.createCategoryExpense(port, token);
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Netflix",
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(39.90),
+                        categoryId,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        1,
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .response();
+
+                ExpenseResponseDto body =
+                        response.body().as(ExpenseResponseDto.class);
+
+                assertNotNull(body);
+                assertEquals(1, body.installments().size());
+                assertEquals(
+                        LocalDate.of(2026, 2, 2),
+                        body.installments().get(0).dueDate()
+                );
+                assertEquals(InstallmentStatus.UNPAID, body.installments().get(0).status());
+                assertNull(body.installments().get(0).barcode());
+                assertEquals(categoryId, body.categoryId());
+            }
+
+            @Test
+            void shouldCreateRecurringExpenseWithoutSupplier() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Academia",
+                        PaymentType.CREDIT,
+                        null,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(120.00),
+                        null,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        1,
+                        LocalDate.of(2026, 12, 31)
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .response();
+
+                ExpenseResponseDto body =
+                        response.body().as(ExpenseResponseDto.class);
+
+                assertNotNull(body);
+                assertEquals(1, body.installments().size());
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn400WhenRecurrenceTypeIsMissing() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Assinatura",
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(50.00),
+                        null,
+                        true,
+                        null,
+                        1,
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains(
+                        "Recurrence type is required for recurring expenses."
+                ));
+            }
+
+            @Test
+            void shouldReturn400WhenRecurrenceIntervalIsMissing() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Assinatura",
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(50.00),
+                        null,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        null,
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains(
+                        "Recurrence interval is required for recurring expenses."
+                ));
+            }
+
+            @Test
+            void shouldReturn400WhenRecurrenceIntervalIsZeroOrNegative() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Assinatura",
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(50.00),
+                        null,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        0,
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains(
+                        "Recurrence interval must be greater than or equal to zero."
+                ));
+            }
+
+            @Test
+            void shouldReturn400WhenRecurrenceEndDateIsBeforeExpenseDate() {
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Assinatura",
+                        PaymentType.CREDIT,
+                        supplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(50.00),
+                        null,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        1,
+                        LocalDate.of(2026, 1, 1) // antes da expenseDate
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(400)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains(
+                        "Recurrence end date cannot be before expense date."
+                ));
+            }
+
+            @Test
+            void shouldReturn404WhenSupplierNotFoundForRecurringExpense() {
+
+                UUID randomSupplierId = UUID.randomUUID();
+
+                ExpenseRequestDto dto = new ExpenseRequestDto(
+                        null,
+                        "Assinatura",
+                        PaymentType.CREDIT,
+                        randomSupplierId,
+                        LocalDate.of(2026, 2, 2),
+                        new HashMap<>(),
+                        BigDecimal.valueOf(50.00),
+                        null,
+                        true,
+                        RecurrenceType.MONTHLY,
+                        1,
+                        null
+                );
+
+                var response = RestAssured
+                        .given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(dto)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(404)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Supplier not found with id: " + randomSupplierId));
             }
         }
     }

@@ -89,6 +89,8 @@ class InstallmentControllerTest {
             void shouldReturnAllInstallments() {
                 factory.createExpense(supplierId, "INV-001", LocalDate.now(), port, token);
                 factory.createExpense(supplierId, "INV-002", LocalDate.now(), port, token);
+                factory.createExpenseRecurrence(supplierId, "INV-003", BigDecimal.TEN, LocalDate.now(), port, token);
+
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -96,7 +98,8 @@ class InstallmentControllerTest {
                         .get()
                         .then()
                         .statusCode(200)
-                        .body("size()", Matchers.is(2));
+                        .body("size()", Matchers.is(3))
+                        .body("total_installments", Matchers.hasItem("recorrente, sem contagem fixa"));
             }
 
             @Test
