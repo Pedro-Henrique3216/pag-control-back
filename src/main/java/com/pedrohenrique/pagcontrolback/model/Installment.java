@@ -38,7 +38,7 @@ public class Installment {
     private Expense expense;
     @Column(name = "installment_number", nullable = false)
     private Integer installmentNumber;
-    @Column(name = "total_installments", nullable = false)
+    @Column(name = "total_installments")
     private Integer totalInstallments;
 
     public Installment() {
@@ -78,28 +78,21 @@ public class Installment {
             );
         }
 
-        if (totalInstallments == null) {
-            throw new InvalidTotalInstallmentsException(
-                    "Total installments is required."
-            );
-        }
-
         if (installmentNumber <= 0) {
             throw new InvalidInstallmentNumberException(
                     "Installment number must be greater than zero."
             );
         }
 
-        if (totalInstallments <= 0) {
-            throw new InvalidTotalInstallmentsException(
-                    "Total installments must be greater than zero."
-            );
-        }
-
-        if (installmentNumber > totalInstallments) {
-            throw new InvalidInstallmentNumberException(
-                    "Installment number cannot be greater than total installments."
-            );
+        if (totalInstallments != null) {
+            if (totalInstallments <= 0) {
+                throw new InvalidTotalInstallmentsException("Total installments must be greater than zero.");
+            }
+            if (installmentNumber > totalInstallments) {
+                throw new InvalidInstallmentNumberException(
+                        "Installment number cannot be greater than total installments."
+                );
+            }
         }
     }
 

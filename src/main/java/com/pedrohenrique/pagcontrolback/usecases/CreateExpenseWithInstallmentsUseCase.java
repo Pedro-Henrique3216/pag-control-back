@@ -49,14 +49,7 @@ public class CreateExpenseWithInstallmentsUseCase {
 
         User user = userRepository.getReferenceById(authenticatedUserId);
 
-        Expense expense = new Expense(
-                command.invoiceNumber(),
-                command.description(),
-                command.paymentType(),
-                command.date(),
-                user,
-                new Money(command.totalAmount())
-        );
+        Expense expense = command.isRecurring() ? buildRecurringExpense(command, user) : buildRegularExpense(command, user);
 
         if (command.supplierId() != null) {
             Supplier supplier = supplierRepository.findById(command.supplierId())
@@ -70,11 +63,35 @@ public class CreateExpenseWithInstallmentsUseCase {
             expense.assignCategory(category);
         }
 
-        expense.generateInstallments(
-                command.barcodeByDueInDays()
+        return expenseRepository.save(expense);
+    }
+
+    private Expense buildRecurringExpense(CreateExpenseCommand command, User user) {
+        return new Expense(
+                command.invoiceNumber(),
+                command.description(),
+                command.paymentType(),
+                command.date(),
+                user,
+                new Money(command.totalAmount()),
+                command.recurrenceType(),
+                command.recurrenceInterval(),
+                command.recurrenceEndDate()
         );
 
-        return expenseRepository.save(expense);
+    }
+
+    private Expense buildRegularExpense(CreateExpenseCommand command, User user) {
+        Expense expense = new Expense(
+                command.invoiceNumber(),
+                command.description(),
+                command.paymentType(),
+                command.date(),
+                user,
+                new Money(command.totalAmount())
+        );
+        expense.generateInstallments(command.barcodeByDueInDays());
+        return expense;
     }
 
 }

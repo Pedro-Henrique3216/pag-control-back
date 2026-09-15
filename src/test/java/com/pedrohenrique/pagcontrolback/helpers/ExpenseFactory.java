@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.helpers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
+import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.springframework.stereotype.Component;
@@ -30,10 +31,14 @@ public class ExpenseFactory {
                 date,
                 null,
                 BigDecimal.valueOf(100),
+                null,
+                false,
+                null,
+                null,
                 null
         );
 
-        String response = RestAssured
+        RestAssured
                 .given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + token)
@@ -41,12 +46,7 @@ public class ExpenseFactory {
                 .when()
                 .post("http://localhost:" + port + "/api/expenses")
                 .then()
-                .statusCode(201)
-                .extract()
-                .response()
-                .asString();
-
-        System.out.println(response);
+                .statusCode(201);
     }
 
     public void createExpense(
@@ -69,10 +69,14 @@ public class ExpenseFactory {
                     put(10, null);
                 }},
                 amount,
+                null,
+                false,
+                null,
+                null,
                 null
         );
 
-        String response = RestAssured
+        RestAssured
                 .given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + token)
@@ -80,12 +84,7 @@ public class ExpenseFactory {
                 .when()
                 .post("http://localhost:" + port + "/api/expenses")
                 .then()
-                .statusCode(201)
-                .extract()
-                .response()
-                .asString();
-
-        System.out.println(response);
+                .statusCode(201);
     }
 
     public void createExpense(
@@ -109,10 +108,14 @@ public class ExpenseFactory {
                     put(10, null);
                 }},
                 amount,
-                categoryId
+                categoryId,
+                false,
+                null,
+                null,
+                null
         );
 
-        String response = RestAssured
+        RestAssured
                 .given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + token)
@@ -120,13 +123,40 @@ public class ExpenseFactory {
                 .when()
                 .post("http://localhost:" + port + "/api/expenses")
                 .then()
-                .statusCode(201)
-                .extract()
-                .response()
-                .asString();
-
-        System.out.println(response);
+                .statusCode(201);
     }
 
+    public void createExpenseRecurrence(
+            UUID supplierId,
+            String invoiceNumber,
+            BigDecimal amount,
+            LocalDate date,
+            int port,
+            String token)
+    {
+        ExpenseRequestDto dto = new ExpenseRequestDto(
+                invoiceNumber,
+                "Teste",
+                PaymentType.CREDIT,
+                supplierId,
+                date,
+                null,
+                amount,
+                null,
+                true,
+                RecurrenceType.MONTHLY,
+                1,
+                null
+        );
 
+        RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .body(dto)
+                .when()
+                .post("http://localhost:" + port + "/api/expenses")
+                .then()
+                .statusCode(201);
+    }
 }

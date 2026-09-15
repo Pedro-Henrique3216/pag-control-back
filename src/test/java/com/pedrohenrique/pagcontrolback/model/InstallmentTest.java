@@ -84,22 +84,7 @@ class InstallmentTest {
                             null,
                             null,
                             1
-                    )
-            );
-        }
-
-        @Test
-        void shouldThrowWhenTotalInstallmentsIsNull() {
-            assertThrows(
-                    InvalidTotalInstallmentsException.class,
-                    () -> new Installment(
-                            Money.of(BigDecimal.TEN),
-                            LocalDate.now(),
-                            null,
-                            null,
-                            1,
-                            null
-                    )
+                        )
             );
         }
 
