@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
+import com.pedrohenrique.pagcontrolback.services.CreditCardDueDateCalculator;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -54,6 +55,9 @@ public class Expense {
     @Column(name = "recurrence_end_date")
     private LocalDate recurrenceEndDate;
     private boolean active = true;
+    @ManyToOne
+    @JoinColumn(name = "credit_card_id")
+    private CreditCard creditCard;
 
     public Expense() {}
 
@@ -71,6 +75,15 @@ public class Expense {
         this.recurring = false;
     }
 
+    public Expense(String invoiceNumber, String description, PaymentType paymentType, LocalDate expenseDate, User user, Money totalAmount, CreditCard creditCard) {
+        this(invoiceNumber, description, paymentType, expenseDate, user, totalAmount);
+        if(!PaymentType.CREDIT.equals(paymentType)){
+            throw new CreditCardRequiredException("Credit Card Required");
+        }
+        this.creditCard = creditCard;
+        this.creditCard.hasLimit(this.totalAmount);
+    }
+
     public Expense(
             String invoiceNumber,
             String description,
@@ -80,14 +93,23 @@ public class Expense {
             Money totalAmount,
             RecurrenceType recurrenceType,
             Integer recurrenceInterval,
-            LocalDate recurrenceEndDate
+            LocalDate recurrenceEndDate,
+            CreditCard creditCard
     ) {
+
         this(invoiceNumber, description, paymentType, expenseDate, user, totalAmount);
         this.recurring = true;
         validateRecurrence(recurrenceType, recurrenceInterval, recurrenceEndDate);
         this.recurrenceType = recurrenceType;
         this.recurrenceInterval = recurrenceInterval;
         this.recurrenceEndDate = recurrenceEndDate;
+        if(paymentType == PaymentType.CREDIT){
+            if(creditCard == null){
+                throw new CreditCardRequiredException("Credit Card Required");
+            }
+            this.creditCard = creditCard;
+            this.creditCard.hasLimit(this.totalAmount);
+        }
         createFirstInstallmentRecurring();
     }
 
@@ -252,81 +274,27 @@ public class Expense {
         installments.add(installment);
     }
 
-    public void generateNextInstallment() {
-        if (!this.recurring) {
-            return;
-        }
-
-        Installment lastInstallment = installments.get(installments.size() - 1);
-
-        LocalDate lastDueDate = lastInstallment.getDueDate();
-
-        if (lastDueDate.isAfter(LocalDate.now())) {
-            return;
-        }
-
-        LocalDate nextDueDate = calculateNextDueDate(lastDueDate);
-
-        if (recurrenceEndDate != null &&
-                nextDueDate.isAfter(recurrenceEndDate)) {
-            return;
-        }
-
-        Installment installment = new Installment(
-                lastInstallment.getAmount(),
-                nextDueDate,
-                null,
-                this,
-                installments.size() + 1,
-                null
-        );
-
-        this.addInstallment(installment);
-    }
-
-    private LocalDate calculateNextDueDate(LocalDate baseDate) {
-        return switch (this.recurrenceType) {
-            case DAILY ->
-                    baseDate.plusDays(recurrenceInterval);
-
-            case WEEKLY ->
-                    baseDate.plusWeeks(recurrenceInterval);
-
-            case MONTHLY ->
-                    baseDate.plusMonths(recurrenceInterval);
-
-            case YEARLY ->
-                    baseDate.plusYears(recurrenceInterval);
-        };
-    }
-
-    public void generateInstallments(
-            Map<Integer, String> barcodeByDueInDays
-    ) {
-
+    private void validateInstallmentNotGenerated(){
         if (!this.installments.isEmpty()) {
             throw new InstallmentsAlreadyGeneratedException(
                     "Installments have already been generated for this expense."
             );
         }
-
-        boolean allowsMultipleInstallments =
-                this.paymentType == PaymentType.CREDIT ||
-                        this.paymentType == PaymentType.BILL;
-
-        if (allowsMultipleInstallments) {
-            generateMultipleInstallments(barcodeByDueInDays);
-            return;
-        }
-
-        generateSingleInstallment(barcodeByDueInDays);
     }
 
-    private void generateMultipleInstallments(
+    public void generateBillInstallments(
             Map<Integer, String> barcodeByDueInDays
     ) {
+        validateInstallmentNotGenerated();
+
+        if (this.paymentType != PaymentType.BILL) {
+            throw new InvalidPaymentTypeException(
+                    "This expense is not a bill."
+            );
+        }
+
         if (barcodeByDueInDays == null || barcodeByDueInDays.isEmpty()) {
-            throw new InstallmentsRequiredForPaymentTypeException("Installment intervals must be provided for CREDIT or BILL payment types.");
+            throw new InstallmentsRequiredForPaymentTypeException("Installment intervals must be provided for BILL payment type.");
         }
 
         int count = barcodeByDueInDays.size();
@@ -340,8 +308,8 @@ public class Expense {
 
             int dueInDays = entry.getKey();
 
-            if (dueInDays <= 0) {
-                throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater than zero.");
+            if (dueInDays < 0) {
+                throw new InvalidInstallmentDueInDaysException("Installment due in days must be greater zero.");
             }
 
             index++;
@@ -366,38 +334,82 @@ public class Expense {
         }
     }
 
-    private void generateSingleInstallment(
-            Map<Integer, String> barcodeByDueInDays
+    public void generateCreditCardInstallments(
+           int numberOfInstallments
     ) {
-        if (barcodeByDueInDays != null && barcodeByDueInDays.size() > 1) {
-            throw new MultipleInstallmentsNotAllowedForPaymentTypeException(
-                    "Only one installment is allowed for payment type " + this.getPaymentType()
+        validateInstallmentNotGenerated();
+
+        if (this.paymentType != PaymentType.CREDIT) {
+            throw new InvalidPaymentTypeException(
+                    "This expense is not a credit card purchase."
             );
         }
 
-        if (barcodeByDueInDays != null &&
-                barcodeByDueInDays.keySet().stream().anyMatch(days -> days != 0)) {
-            throw new InvalidInstallmentDueInDaysException(
-                    "For payment type " + this.getPaymentType() + ", installment due in days must be 0."
+        if (numberOfInstallments <= 0) {
+            throw new InstallmentsRequiredForPaymentTypeException("Number of installments must be greater than zero.");
+        }
+
+        Money baseAmount = totalAmount.divide(numberOfInstallments);
+        Money remainder = totalAmount.subtract(baseAmount.multiply(numberOfInstallments));
+
+        for (int installmentNumber = 1; installmentNumber <= numberOfInstallments; installmentNumber++) {
+
+            LocalDate dueDate = CreditCardDueDateCalculator.calculateDueDate(
+                    this.expenseDate,
+                    this.creditCard.getClosingDay(),
+                    this.creditCard.getDueDay(),
+                    installmentNumber
+            );
+
+            Money value = baseAmount;
+
+            if (installmentNumber == numberOfInstallments) {
+                value = value.add(remainder);
+            }
+
+            Installment installment = new Installment(
+                    value,
+                    dueDate,
+                    null,
+                    this,
+                    installmentNumber,
+                    numberOfInstallments
+            );
+
+            this.addInstallment(installment);
+        }
+    }
+
+    public void generateSingleInstallment() {
+        validateInstallmentNotGenerated();
+
+        if (this.paymentType != PaymentType.CASH
+                && this.paymentType != PaymentType.PIX
+                && this.paymentType != PaymentType.DEBIT) {
+            throw new InvalidPaymentTypeException(
+                    "This payment type does not support a single installment."
             );
         }
 
-        String barcode = barcodeByDueInDays == null
-                ? null
-                : barcodeByDueInDays.values().stream()
-                  .filter(v -> v != null && !v.isBlank())
-                  .findFirst()
-                  .orElse(null);
-
-        Installment installment = new Installment(totalAmount, expenseDate, barcode, this, 1, 1);
+        Installment installment = new Installment(totalAmount, expenseDate, null, this, 1, 1);
         installment.markAsPaid();
-
         this.addInstallment(installment);
     }
 
     private void createFirstInstallmentRecurring(
     ) {
-        LocalDate dueDate = expenseDate;
+        LocalDate dueDate;
+
+        if (this.paymentType == PaymentType.CREDIT) {
+            dueDate = CreditCardDueDateCalculator.calculateDueDate(
+                    this.expenseDate,
+                    this.creditCard.getClosingDay(),
+                    this.creditCard.getDueDay(),
+                    1
+            );
+        } else {
+            dueDate = expenseDate;
+        }
 
         if (recurrenceEndDate != null &&
                 dueDate.isAfter(recurrenceEndDate)) {
@@ -413,6 +425,66 @@ public class Expense {
                 null
         );
         this.addInstallment(installment);
+    }
+
+    public void generateNextInstallment() {
+        if (!this.recurring) {
+            return;
+        }
+
+        Installment lastInstallment = installments.get(installments.size() - 1);
+
+        LocalDate lastDueDate = lastInstallment.getDueDate();
+
+        if (lastDueDate.isAfter(LocalDate.now())) {
+            return;
+        }
+
+        LocalDate nextDueDate;
+
+        int installmentNumber = installments.size() + 1;
+
+        if(this.paymentType == PaymentType.CREDIT) {
+            nextDueDate = CreditCardDueDateCalculator.calculateDueDate(
+                    this.expenseDate,
+                    this.creditCard.getClosingDay(),
+                    this.creditCard.getDueDay(),
+                    installmentNumber
+            );
+        } else {
+            nextDueDate = calculateNextDueDate(lastDueDate);
+        }
+
+        if (recurrenceEndDate != null && nextDueDate.isAfter(recurrenceEndDate)) {
+            return;
+        }
+
+        Installment installment = new Installment(
+                lastInstallment.getAmount(),
+                nextDueDate,
+                null,
+                this,
+                installmentNumber,
+                null
+        );
+
+        this.addInstallment(installment);
+    }
+
+    private LocalDate calculateNextDueDate(LocalDate baseDate) {
+        return switch (this.recurrenceType) {
+            case DAILY ->
+                    baseDate.plusDays(recurrenceInterval);
+
+            case WEEKLY ->
+                    baseDate.plusWeeks(recurrenceInterval);
+
+            case MONTHLY ->
+                    baseDate.plusMonths(recurrenceInterval);
+
+            case YEARLY ->
+                    baseDate.plusYears(recurrenceInterval);
+        };
     }
 
     public boolean isPaidOff() {

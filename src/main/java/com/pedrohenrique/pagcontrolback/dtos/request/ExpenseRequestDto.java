@@ -28,6 +28,10 @@ public record ExpenseRequestDto(
         LocalDate date,
         @JsonProperty("barcode_by_due_in_days")
         Map<Integer, String> barcodeByDueInDays,
+        @JsonProperty("number_of_installments")
+        Integer numberOfInstallments,
+        @JsonProperty("credit_card_id")
+        UUID creditCardId,
         @NotNull(message = "Total amount is required")
         @DecimalMin(value = "0.01", message = "Total amount must be greater than zero")
         @JsonProperty("total_amount")

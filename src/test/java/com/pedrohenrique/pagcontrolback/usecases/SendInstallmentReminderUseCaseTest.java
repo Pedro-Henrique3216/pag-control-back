@@ -42,18 +42,25 @@ class SendInstallmentReminderUseCaseTest {
                 PersonType.PF
         );
 
+        CreditCard creditCard = new CreditCard(
+                "NUBANK",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(1000.00)),
+                new User()
+        );
+
         Expense expense = new Expense(
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
                 LocalDate.now(),
                 user,
-                Money.of(BigDecimal.valueOf(300))
+                Money.of(BigDecimal.valueOf(300)),
+                creditCard
         );
 
-        expense.generateInstallments(
-                Map.of(3, "TESTE!@#")
-        );
+        expense.generateCreditCardInstallments(1);
         List<Installment> installments = expense.getInstallments();
         when(installmentRepository.findPendingInstallmentsUntil(LocalDate.now().plusDays(7))).thenReturn(installments);
         sendInstallmentReminderUseCase.execute();
@@ -73,17 +80,26 @@ class SendInstallmentReminderUseCaseTest {
 
         ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
 
+        CreditCard creditCard = new CreditCard(
+                "NUBANK",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(1000.00)),
+                new User()
+        );
+
         Expense expense = new Expense(
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
                 LocalDate.now(),
                 user,
-                Money.of(BigDecimal.valueOf(300))
+                Money.of(BigDecimal.valueOf(300)),
+                creditCard
         );
 
-        expense.generateInstallments(
-                Map.of(3, "TESTE!@#", 4, "", 6, "")
+        expense.generateCreditCardInstallments(
+                3
         );
 
         User user2 = new User(
@@ -97,17 +113,26 @@ class SendInstallmentReminderUseCaseTest {
 
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
+        CreditCard creditCard2 = new CreditCard(
+                "NUBANK",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(1000.00)),
+                new User()
+        );
+
         Expense expense2 = new Expense(
                 "12343",
                 "teste2",
                 PaymentType.CREDIT,
                 LocalDate.now(),
                 user2,
-                Money.of(BigDecimal.valueOf(300))
+                Money.of(BigDecimal.valueOf(300)),
+                creditCard2
         );
 
-        expense2.generateInstallments(
-                Map.of(3, "TESTE!@#", 6, "")
+        expense2.generateCreditCardInstallments(
+                2
         );
 
         List<Installment> installments = new ArrayList<>(expense.getInstallments());
@@ -129,21 +154,31 @@ class SendInstallmentReminderUseCaseTest {
                 PersonType.PF
         );
 
+
+        CreditCard creditCard = new CreditCard(
+                "NUBANK",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(1000.00)),
+                new User()
+        );
+
         Expense expense = new Expense(
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusDays(3),
+                LocalDate.now().minusMonths(1),
                 user,
-                Money.of(BigDecimal.valueOf(300))
+                Money.of(BigDecimal.valueOf(300)),
+                creditCard
         );
 
-        expense.generateInstallments(
-                Map.of(2, "TESTE!@#", 7, "", 10, "")
+        expense.generateCreditCardInstallments(
+                3
         );
 
         List<Installment> installments = expense.getInstallments();
-        when(installmentRepository.findPendingInstallmentsUntil(LocalDate.now().plusDays(7))).thenReturn(installments);
+        when(installmentRepository.findPendingInstallmentsUntil(LocalDate.now().plusDays(7))).thenReturn(List.of(installments.get(0),  installments.get(1)));
 
         sendInstallmentReminderUseCase.execute();
         ArgumentCaptor<InstallmentReminderEvent> captor = ArgumentCaptor.forClass(InstallmentReminderEvent.class);
@@ -151,7 +186,7 @@ class SendInstallmentReminderUseCaseTest {
 
         InstallmentReminderEvent event = captor.getValue();
 
-        assertEquals(2, event.upcoming().size());
+        assertEquals(1, event.upcoming().size());
         assertEquals(1, event.overdue().size());
 
     }
@@ -175,17 +210,26 @@ class SendInstallmentReminderUseCaseTest {
                 PersonType.PF
         );
 
+        CreditCard creditCard = new CreditCard(
+                "NUBANK",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(1000.00)),
+                new User()
+        );
+
         Expense expense = new Expense(
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusDays(3),
+                LocalDate.now().minusMonths(1),
                 user,
-                Money.of(BigDecimal.valueOf(300))
+                Money.of(BigDecimal.valueOf(300)),
+                creditCard
         );
 
-        expense.generateInstallments(
-                Map.of(2, "TESTE!@#")
+        expense.generateCreditCardInstallments(
+                1
         );
 
         List<Installment> installments = expense.getInstallments();
@@ -199,7 +243,6 @@ class SendInstallmentReminderUseCaseTest {
 
         assertEquals("teste", event.overdue().get(0).description());
         assertEquals(BigDecimal.valueOf(300).setScale(2, RoundingMode.HALF_UP), event.overdue().get(0).amount());
-        assertEquals("TESTE!@#", event.overdue().get(0).barcode());
         assertEquals(user.getName(), event.name());
         assertEquals(user.getEmail().value(), event.email());
     }

@@ -28,6 +28,7 @@ class InstallmentRepositoryImplTest {
     @Autowired
     private InstallmentRepositoryImpl repository;
 
+
     private User createUser(String email) {
 
         User user = new User(
@@ -43,6 +44,7 @@ class InstallmentRepositoryImplTest {
 
         return user;
     }
+
 
     private Supplier createSupplier(
             User user,
@@ -62,6 +64,7 @@ class InstallmentRepositoryImplTest {
         return supplier;
     }
 
+
     private Category createCategory(
             User user,
             String name
@@ -78,6 +81,7 @@ class InstallmentRepositoryImplTest {
         return category;
     }
 
+
     private Expense createExpense(
             User user,
             Supplier supplier,
@@ -85,18 +89,63 @@ class InstallmentRepositoryImplTest {
             String description,
             PaymentType paymentType
     ) {
-
-        Expense expense = new Expense(
-                "INV-" + UUID.randomUUID(),
+        return createExpense(
+                user,
+                supplier,
+                category,
                 description,
                 paymentType,
-                LocalDate.now(),
-                user,
-                new Money(BigDecimal.valueOf(100))
+                LocalDate.now()
         );
+    }
+
+
+    private Expense createExpense(
+            User user,
+            Supplier supplier,
+            Category category,
+            String description,
+            PaymentType paymentType,
+            LocalDate expenseDate
+    ) {
+
+        Expense expense;
+
+        if (PaymentType.CREDIT.equals(paymentType)) {
+
+            CreditCard creditCard = new CreditCard(
+                    "NUBANK",
+                    9,
+                    15,
+                    Money.of(BigDecimal.valueOf(1000)),
+                    user
+            );
+
+            em.persist(creditCard);
+
+            expense = new Expense(
+                    "INV-" + UUID.randomUUID(),
+                    description,
+                    paymentType,
+                    expenseDate,
+                    user,
+                    Money.of(BigDecimal.valueOf(100)),
+                    creditCard
+            );
+
+        } else {
+
+            expense = new Expense(
+                    "INV-" + UUID.randomUUID(),
+                    description,
+                    paymentType,
+                    expenseDate,
+                    user,
+                    Money.of(BigDecimal.valueOf(100))
+            );
+        }
 
         expense.setSupplier(supplier);
-
         expense.assignCategory(category);
 
         em.persist(expense);
@@ -104,10 +153,28 @@ class InstallmentRepositoryImplTest {
         return expense;
     }
 
+
     private Installment createInstallment(
             Expense expense,
             LocalDate dueDate,
             InstallmentStatus status
+    ) {
+        return createInstallment(
+                expense,
+                dueDate,
+                status,
+                1,
+                1
+        );
+    }
+
+
+    private Installment createInstallment(
+            Expense expense,
+            LocalDate dueDate,
+            InstallmentStatus status,
+            int installmentNumber,
+            int totalInstallments
     ) {
 
         Installment installment = new Installment(
@@ -115,8 +182,8 @@ class InstallmentRepositoryImplTest {
                 dueDate,
                 null,
                 expense,
-                1,
-                1
+                installmentNumber,
+                totalInstallments
         );
 
         if (status == InstallmentStatus.PAID) {
@@ -127,6 +194,7 @@ class InstallmentRepositoryImplTest {
 
         return installment;
     }
+
 
     @Nested
     class SearchTests {
@@ -160,6 +228,7 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             User user2 = createUser("user2@test.com");
 
             Supplier supplier2 = createSupplier(
@@ -186,8 +255,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -200,22 +271,43 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user1.getId());
 
+
             assertEquals(1, result.size());
+
+            assertEquals(
+                    user1.getId(),
+                    result.get(0)
+                            .getExpense()
+                            .getUser()
+                            .getId()
+            );
         }
+
 
         @Test
         void shouldFilterBySupplier() {
 
             User user = createUser("supplier@test.com");
 
-            Supplier supplier1 = createSupplier(user, "S1");
+            Supplier supplier1 = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Supplier supplier2 = createSupplier(user, "S2");
+            Supplier supplier2 = createSupplier(
+                    user,
+                    "S2"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense1 = createExpense(
                     user,
@@ -233,6 +325,7 @@ class InstallmentRepositoryImplTest {
                     PaymentType.CREDIT
             );
 
+
             createInstallment(
                     expense1,
                     LocalDate.now(),
@@ -245,8 +338,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -259,43 +354,59 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
 
+
             assertEquals(1, result.size());
+
+            assertEquals(
+                    supplier1.getId(),
+                    result.get(0)
+                            .getExpense()
+                            .getSupplier()
+                            .getId()
+            );
         }
+
 
         @Test
         void shouldFilterByMonth() {
 
             User user = createUser("month@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense = createExpense(
                     user,
                     supplier,
                     category,
                     "Expense",
-                    PaymentType.CREDIT
+                    PaymentType.CREDIT,
+                    LocalDate.of(2026, 2, 10)
             );
+
 
             createInstallment(
                     expense,
-                    LocalDate.of(2026, 2, 10),
+                    LocalDate.of(2026, 2, 20),
                     InstallmentStatus.UNPAID
             );
 
-            createInstallment(
-                    expense,
-                    LocalDate.of(2026, 3, 10),
-                    InstallmentStatus.UNPAID
-            );
 
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -308,20 +419,35 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
 
+
             assertEquals(1, result.size());
+
+            assertEquals(
+                    LocalDate.of(2026, 2, 20),
+                    result.get(0).getDueDate()
+            );
         }
+
 
         @Test
         void shouldFilterByStatus() {
 
             User user = createUser("status@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense = createExpense(
                     user,
@@ -331,6 +457,7 @@ class InstallmentRepositoryImplTest {
                     PaymentType.CREDIT
             );
 
+
             createInstallment(
                     expense,
                     LocalDate.now(),
@@ -339,12 +466,14 @@ class InstallmentRepositoryImplTest {
 
             createInstallment(
                     expense,
-                    LocalDate.now(),
+                    LocalDate.now().plusDays(1),
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -357,8 +486,10 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
+
 
             assertEquals(1, result.size());
 
@@ -368,14 +499,22 @@ class InstallmentRepositoryImplTest {
             );
         }
 
+
         @Test
         void shouldReturnOnlyOverdueInstallments() {
 
             User user = createUser("overdue@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense = createExpense(
                     user,
@@ -384,6 +523,7 @@ class InstallmentRepositoryImplTest {
                     "Expense",
                     PaymentType.CREDIT
             );
+
 
             createInstallment(
                     expense,
@@ -397,8 +537,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -411,8 +553,10 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
+
 
             assertEquals(1, result.size());
 
@@ -423,14 +567,22 @@ class InstallmentRepositoryImplTest {
             );
         }
 
+
         @Test
         void shouldReturnInstallmentsDueInNext7Days() {
 
             User user = createUser("next7@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense = createExpense(
                     user,
@@ -439,6 +591,7 @@ class InstallmentRepositoryImplTest {
                     "Expense",
                     PaymentType.CREDIT
             );
+
 
             createInstallment(
                     expense,
@@ -452,8 +605,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -466,20 +621,35 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
 
+
             assertEquals(1, result.size());
+
+            assertEquals(
+                    LocalDate.now().plusDays(3),
+                    result.get(0).getDueDate()
+            );
         }
+
 
         @Test
         void shouldFilterByPaymentType() {
 
             User user = createUser("payment@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense creditExpense = createExpense(
                     user,
@@ -497,6 +667,7 @@ class InstallmentRepositoryImplTest {
                     PaymentType.CASH
             );
 
+
             createInstallment(
                     creditExpense,
                     LocalDate.now(),
@@ -509,8 +680,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -523,8 +696,10 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
+
 
             assertEquals(1, result.size());
 
@@ -536,16 +711,27 @@ class InstallmentRepositoryImplTest {
             );
         }
 
+
         @Test
         void shouldFilterByCategory() {
 
             User user = createUser("category@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category food = createCategory(user, "Food");
+            Category food = createCategory(
+                    user,
+                    "Food"
+            );
 
-            Category transport = createCategory(user, "Transport");
+            Category transport = createCategory(
+                    user,
+                    "Transport"
+            );
+
 
             Expense expense1 = createExpense(
                     user,
@@ -563,6 +749,7 @@ class InstallmentRepositoryImplTest {
                     PaymentType.CREDIT
             );
 
+
             createInstallment(
                     expense1,
                     LocalDate.now(),
@@ -575,8 +762,10 @@ class InstallmentRepositoryImplTest {
                     InstallmentStatus.UNPAID
             );
 
+
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -589,8 +778,10 @@ class InstallmentRepositoryImplTest {
                     food.getId()
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
+
 
             assertEquals(1, result.size());
 
@@ -603,10 +794,12 @@ class InstallmentRepositoryImplTest {
             );
         }
 
+
         @Test
         void shouldReturnEmptyListWhenNoInstallmentsMatch() {
 
             User user = createUser("empty@test.com");
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -619,14 +812,16 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
 
-            assertNotNull(result);
 
+            assertNotNull(result);
             assertTrue(result.isEmpty());
         }
     }
+
 
     @Nested
     class OrderingTests {
@@ -636,9 +831,16 @@ class InstallmentRepositoryImplTest {
 
             User user = createUser("order@test.com");
 
-            Supplier supplier = createSupplier(user, "S1");
+            Supplier supplier = createSupplier(
+                    user,
+                    "S1"
+            );
 
-            Category category = createCategory(user, "Food");
+            Category category = createCategory(
+                    user,
+                    "Food"
+            );
+
 
             Expense expense = createExpense(
                     user,
@@ -648,26 +850,35 @@ class InstallmentRepositoryImplTest {
                     PaymentType.CREDIT
             );
 
+
             createInstallment(
                     expense,
                     LocalDate.now().plusDays(10),
-                    InstallmentStatus.UNPAID
+                    InstallmentStatus.UNPAID,
+                    1,
+                    3
             );
 
             createInstallment(
                     expense,
                     LocalDate.now().plusDays(2),
-                    InstallmentStatus.UNPAID
+                    InstallmentStatus.UNPAID,
+                    2,
+                    3
             );
 
             createInstallment(
                     expense,
                     LocalDate.now().plusDays(5),
-                    InstallmentStatus.UNPAID
+                    InstallmentStatus.UNPAID,
+                    3,
+                    3
             );
+
 
             em.flush();
             em.clear();
+
 
             var query = new ListInstallmentQuery(
                     null,
@@ -680,19 +891,28 @@ class InstallmentRepositoryImplTest {
                     null
             );
 
+
             List<Installment> result =
                     repository.search(query, user.getId());
 
+
             assertEquals(3, result.size());
 
+
             assertTrue(
-                    result.get(0).getDueDate()
-                            .isBefore(result.get(1).getDueDate())
+                    result.get(0)
+                            .getDueDate()
+                            .isBefore(
+                                    result.get(1).getDueDate()
+                            )
             );
 
             assertTrue(
-                    result.get(1).getDueDate()
-                            .isBefore(result.get(2).getDueDate())
+                    result.get(1)
+                            .getDueDate()
+                            .isBefore(
+                                    result.get(2).getDueDate()
+                            )
             );
         }
     }

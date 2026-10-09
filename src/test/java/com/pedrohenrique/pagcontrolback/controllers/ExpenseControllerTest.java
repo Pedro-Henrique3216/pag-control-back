@@ -93,13 +93,15 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Teste",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>() {{
                             put(30, "1234567890123456");
                             put(60, "9876543210987654");
                         }},
+                        null,
+                        null,
                         BigDecimal.valueOf(400.00),
                         categoryId,
                         false,
@@ -150,6 +152,8 @@ class ExpenseControllerTest {
                         null,
                         null,
                         null,
+                        null,
+                        null,
                         false,
                         null,
                         null,
@@ -187,6 +191,8 @@ class ExpenseControllerTest {
                         new HashMap<>() {{
                             put(30, "1234567890123456");
                         }},
+                        null,
+                        null,
                         BigDecimal.valueOf(400.00),
                         null,
                         false,
@@ -221,12 +227,14 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Teste",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         randomSupplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>() {{
                             put(30, "1234567890123456");
                         }},
+                        null,
+                        null,
                         BigDecimal.valueOf(400.00),
                         null,
                         false,
@@ -258,9 +266,11 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Teste",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
+                        null,
+                        null,
                         null,
                         BigDecimal.valueOf(400.00),
                         null,
@@ -285,7 +295,7 @@ class ExpenseControllerTest {
                 List<String> errors = response.path("errors");
 
                 assertTrue(errors.contains(
-                        "Installment intervals must be provided for CREDIT or BILL payment types."
+                        "Installment intervals must be provided for BILL payment type."
                 ));
             }
 
@@ -295,12 +305,14 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Teste",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>() {{
                             put(-1, "1234567890123456");
                         }},
+                        null,
+                        null,
                         BigDecimal.valueOf(400.00),
                         null,
                         false,
@@ -323,7 +335,7 @@ class ExpenseControllerTest {
 
                 List<String> errors = response.path("errors");
 
-                assertTrue(errors.contains("Installment due in days must be greater than zero."));
+                assertTrue(errors.contains("Installment due in days must be greater zero."));
             }
         }
     }
@@ -342,10 +354,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Netflix",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(39.90),
                         categoryId,
                         true,
@@ -386,10 +400,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Academia",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         null,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(120.00),
                         null,
                         true,
@@ -427,10 +443,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Assinatura",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(50.00),
                         null,
                         true,
@@ -464,10 +482,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Assinatura",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(50.00),
                         null,
                         true,
@@ -501,10 +521,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Assinatura",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(50.00),
                         null,
                         true,
@@ -538,10 +560,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Assinatura",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         supplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(50.00),
                         null,
                         true,
@@ -577,10 +601,12 @@ class ExpenseControllerTest {
                 ExpenseRequestDto dto = new ExpenseRequestDto(
                         null,
                         "Assinatura",
-                        PaymentType.CREDIT,
+                        PaymentType.BILL,
                         randomSupplierId,
                         LocalDate.of(2026, 2, 2),
                         new HashMap<>(),
+                        null,
+                        null,
                         BigDecimal.valueOf(50.00),
                         null,
                         true,

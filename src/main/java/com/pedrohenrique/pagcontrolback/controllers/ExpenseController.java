@@ -48,6 +48,8 @@ public class ExpenseController {
                 expenseRequestDto.supplierId(),
                 expenseRequestDto.date(),
                 expenseRequestDto.barcodeByDueInDays(),
+                expenseRequestDto.numberOfInstallments(),
+                expenseRequestDto.creditCardId(),
                 expenseRequestDto.totalAmount(),
                 expenseRequestDto.categoryId(),
                 expenseRequestDto.isRecurring(),
@@ -65,7 +67,7 @@ public class ExpenseController {
         return ResponseEntity.created(uri).body(ExpenseMapper.fromDomain(expenseSaved));
     }
 
-    @GetMapping()
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ExpenseResponseDto>> getExpenses(
             @AuthenticationPrincipal UserPrincipal user,

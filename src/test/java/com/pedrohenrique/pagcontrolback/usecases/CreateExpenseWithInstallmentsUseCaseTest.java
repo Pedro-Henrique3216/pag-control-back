@@ -4,16 +4,14 @@ import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
-import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
-import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import com.pedrohenrique.pagcontrolback.repositories.*;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,6 +38,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private CreditCardRepository creditCardRepository;
 
     @InjectMocks
     private CreateExpenseWithInstallmentsUseCase useCase;
@@ -91,10 +92,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Conta do mercado",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     supplierId,
                     LocalDate.now(),
                     installments,
+                    null,
+                    null,
                     new BigDecimal("300.00"),
                     categoryId,
                     false,
@@ -137,10 +140,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Descrição",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     UUID.randomUUID(),
                     LocalDate.now(),
                     Map.of(30, ""),
+                    null,
+                    null,
                     BigDecimal.valueOf(100),
                     null,
                     false,
@@ -170,10 +175,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Descrição",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     supplierId,
                     LocalDate.now(),
                     Map.of(30, ""),
+                    null,
+                    null,
                     BigDecimal.valueOf(100),
                     null,
                     false,
@@ -212,10 +219,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Descrição",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     supplierId,
                     LocalDate.now(),
                     Map.of(30, ""),
+                    null,
+                    null,
                     BigDecimal.valueOf(100),
                     categoryId,
                     false,
@@ -259,10 +268,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Descrição",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     supplierId,
                     LocalDate.now(),
                     Map.of(30, ""),
+                    null,
+                    null,
                     BigDecimal.valueOf(100),
                     categoryId,
                     false,
@@ -296,10 +307,20 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             UUID authenticatedUserId = UUID.randomUUID();
             UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
+            UUID creditCardId = UUID.randomUUID();
 
             User user = createUser();
+            ReflectionTestUtils.setField(user, "id", authenticatedUserId);
+
             Supplier supplier = createSupplier(user);
             Category category = new Category("Assinaturas", TransactionType.EXPENSE, user);
+            CreditCard creditCard = new CreditCard(
+                    "NUBANK",
+                    9,
+                    10,
+                    Money.of(BigDecimal.valueOf(1000)),
+                    user
+            );
 
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-01",
@@ -307,7 +328,9 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     PaymentType.CREDIT,
                     supplierId,
                     LocalDate.now(),
-                    Map.of(),
+                    null,
+                    1,
+                    creditCardId,
                     new BigDecimal("39.90"),
                     categoryId,
                     true,
@@ -320,6 +343,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             when(supplierRepository.findById(supplierId)).thenReturn(Optional.of(supplier));
             when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
                     .thenReturn(Optional.of(category));
+            when(creditCardRepository.findCreditCardByCardIdAndUserId(creditCardId, user.getId())).thenReturn(creditCard);
             when(expenseRepository.save(any(Expense.class))).thenReturn(new Expense(
                     command.invoiceNumber(),
                     command.description(),
@@ -329,7 +353,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     new Money(command.totalAmount()),
                     command.recurrenceType(),
                     command.recurrenceInterval(),
-                    command.recurrenceEndDate()
+                    command.recurrenceEndDate(),
+                    creditCard
             ));
 
             Expense expense = useCase.execute(authenticatedUserId, command);
@@ -351,10 +376,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-02",
                     "Assinatura sem tipo",
-                    PaymentType.CREDIT,
+                    PaymentType.CASH,
                     null,
                     LocalDate.now(),
-                    Map.of(),
+                    null,
+                    null,
+                    null,
                     new BigDecimal("50.00"),
                     null,
                     true,
@@ -380,10 +407,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-03",
                     "Assinatura sem intervalo",
-                    PaymentType.CREDIT,
+                    PaymentType.CASH,
                     null,
                     LocalDate.now(),
-                    Map.of(),
+                    null,
+                    null,
+                    null,
                     new BigDecimal("50.00"),
                     null,
                     true,
@@ -409,10 +438,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-04",
                     "Assinatura com intervalo inválido",
-                    PaymentType.CREDIT,
+                    PaymentType.CASH,
                     null,
                     LocalDate.now(),
-                    Map.of(),
+                    null,
+                    null,
+                    null,
                     new BigDecimal("50.00"),
                     null,
                     true,
@@ -440,10 +471,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-05",
                     "Assinatura com fim retroativo",
-                    PaymentType.CREDIT,
+                    PaymentType.CASH,
                     null,
                     expenseDate,
-                    Map.of(),
+                    null,
+                    null,
+                    null,
                     new BigDecimal("50.00"),
                     null,
                     true,
@@ -470,10 +503,12 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV-REC-06",
                     "Assinatura",
-                    PaymentType.CREDIT,
+                    PaymentType.CASH,
                     supplierId,
                     LocalDate.now(),
-                    Map.of(),
+                    null,
+                    null,
+                    null,
                     new BigDecimal("50.00"),
                     null,
                     true,
