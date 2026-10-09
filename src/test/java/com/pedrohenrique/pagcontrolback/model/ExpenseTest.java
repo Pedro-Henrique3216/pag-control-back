@@ -1003,7 +1003,7 @@ class ExpenseTest {
 
             expense.generateNextInstallment();
 
-            assertEquals(1, expense.getInstallments().size());
+            assertEquals(2, expense.getInstallments().size());
         }
 
         @Test

@@ -1,6 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
+import com.pedrohenrique.pagcontrolback.exceptions.CreditLimitExceededException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -113,8 +114,8 @@ class CreditCardTest {
 
         Money expenseValue = new Money(new BigDecimal("5000.01"));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        CreditLimitExceededException exception = assertThrows(
+                CreditLimitExceededException.class,
                 () -> creditCard.hasLimit(expenseValue)
         );
 
