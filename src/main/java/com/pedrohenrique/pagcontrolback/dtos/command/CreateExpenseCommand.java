@@ -15,6 +15,8 @@ public record CreateExpenseCommand(
         UUID supplierId,
         LocalDate date,
         Map<Integer, String> barcodeByDueInDays,
+        Integer numberOfInstallments,
+        UUID creditCardId,
         BigDecimal totalAmount,
         UUID categoryId,
         boolean isRecurring,

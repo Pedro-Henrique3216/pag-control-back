@@ -3,14 +3,8 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
-import com.pedrohenrique.pagcontrolback.model.Category;
-import com.pedrohenrique.pagcontrolback.model.Expense;
-import com.pedrohenrique.pagcontrolback.model.Supplier;
-import com.pedrohenrique.pagcontrolback.model.User;
-import com.pedrohenrique.pagcontrolback.repositories.CategoryRepository;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
-import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import com.pedrohenrique.pagcontrolback.model.*;
+import com.pedrohenrique.pagcontrolback.repositories.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -23,17 +17,20 @@ public class CreateExpenseWithInstallmentsUseCase {
     private final UserRepository userRepository;
     private final SupplierRepository supplierRepository;
     private final CategoryRepository categoryRepository;
+    private final CreditCardRepository creditCardRepository;
 
     public CreateExpenseWithInstallmentsUseCase(
             ExpenseRepository expenseRepository,
             UserRepository userRepository,
             SupplierRepository supplierRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository,
+            CreditCardRepository creditCardRepository
     ) {
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.supplierRepository = supplierRepository;
         this.categoryRepository = categoryRepository;
+        this.creditCardRepository = creditCardRepository;
     }
 
     @Transactional
@@ -67,6 +64,13 @@ public class CreateExpenseWithInstallmentsUseCase {
     }
 
     private Expense buildRecurringExpense(CreateExpenseCommand command, User user) {
+        CreditCard creditCard = null;
+        if (command.paymentType() == PaymentType.CREDIT){
+            if(command.creditCardId() == null){
+                throw new CreditCardRequiredException("Credit card ID is required.");
+            }
+            creditCard = creditCardRepository.findCreditCardByCardIdAndUserId(command.creditCardId(), user.getId());
+        }
         return new Expense(
                 command.invoiceNumber(),
                 command.description(),
@@ -76,22 +80,52 @@ public class CreateExpenseWithInstallmentsUseCase {
                 new Money(command.totalAmount()),
                 command.recurrenceType(),
                 command.recurrenceInterval(),
-                command.recurrenceEndDate()
+                command.recurrenceEndDate(),
+                creditCard
         );
 
     }
 
     private Expense buildRegularExpense(CreateExpenseCommand command, User user) {
-        Expense expense = new Expense(
-                command.invoiceNumber(),
-                command.description(),
-                command.paymentType(),
-                command.date(),
-                user,
-                new Money(command.totalAmount())
-        );
-        expense.generateInstallments(command.barcodeByDueInDays());
-        return expense;
+
+        if (command.paymentType() == PaymentType.CREDIT) {
+            CreditCard creditCard = creditCardRepository.findCreditCardByCardIdAndUserId(command.creditCardId(), user.getId());
+            Expense expense = new Expense(
+                    command.invoiceNumber(),
+                    command.description(),
+                    command.paymentType(),
+                    command.date(),
+                    user,
+                    Money.of(command.totalAmount()),
+                    creditCard
+            );
+            expense.generateCreditCardInstallments(command.numberOfInstallments());
+            return expense;
+
+        } else if (command.paymentType() == PaymentType.BILL) {
+            Expense expense = new Expense(
+                    command.invoiceNumber(),
+                    command.description(),
+                    command.paymentType(),
+                    command.date(),
+                    user,
+                    Money.of(command.totalAmount())
+            );
+            expense.generateBillInstallments(command.barcodeByDueInDays());
+            return expense;
+
+        } else {
+            Expense expense = new Expense(
+                    command.invoiceNumber(),
+                    command.description(),
+                    command.paymentType(),
+                    command.date(),
+                    user,
+                    Money.of(command.totalAmount())
+            );
+            expense.generateSingleInstallment();
+            return expense;
+        }
     }
 
 }
