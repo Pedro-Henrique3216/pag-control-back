@@ -1,7 +1,6 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
-import com.pedrohenrique.pagcontrolback.exceptions.CreditCardRequiredException;
 import com.pedrohenrique.pagcontrolback.exceptions.CreditLimitExceededException;
 import jakarta.persistence.*;
 
