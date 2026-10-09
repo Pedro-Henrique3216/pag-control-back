@@ -83,7 +83,13 @@ class ReportRepositoryTest {
 
         expense.setSupplier(supplier);
 
-        expense.generateInstallments(installments);
+        if(paymentType.equals(PaymentType.CREDIT)) {
+            expense.generateCreditCardInstallments(1);
+        } else if(paymentType.equals(PaymentType.BILL)) {
+            expense.generateBillInstallments(installments);
+        } else {
+            expense.generateSingleInstallment();
+        }
 
         return expenseRepository.save(expense);
     }
@@ -133,7 +139,7 @@ class ReportRepositoryTest {
                     user,
                     supplier,
                     BigDecimal.valueOf(1500),
-                    Map.of(0, "")
+                    null
             );
 
             List<MonthSummaryDto> result =
@@ -268,12 +274,12 @@ class ReportRepositoryTest {
 
             createExpense(
                     "e1",
-                    PaymentType.CASH,
+                    PaymentType.BILL,
                     LocalDate.of(2026, 2, 10),
                     user,
                     supplier,
                     BigDecimal.valueOf(300),
-                    Map.of(0, "")
+                    Map.of(1, "")
             );
 
             createExpense(
@@ -282,8 +288,8 @@ class ReportRepositoryTest {
                     LocalDate.of(2026, 2, 15),
                     user,
                     supplier,
-                    BigDecimal.valueOf(200),
-                    Map.of(0, "")
+                    BigDecimal.valueOf(500),
+                    null
             );
 
             List<MonthSummaryDto> result =

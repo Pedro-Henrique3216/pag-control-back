@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -29,6 +30,8 @@ public class ExpenseFactory {
                 PaymentType.CASH,
                 supplierId,
                 date,
+                null,
+                null,
                 null,
                 BigDecimal.valueOf(100),
                 null,
@@ -61,13 +64,15 @@ public class ExpenseFactory {
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
                 "Teste",
-                PaymentType.CREDIT,
+                PaymentType.BILL,
                 supplierId,
                 date,
                 new HashMap<>() {{
                     put(5, null);
                     put(10, null);
                 }},
+                null,
+                null,
                 amount,
                 null,
                 false,
@@ -100,13 +105,15 @@ public class ExpenseFactory {
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
                 "Teste",
-                PaymentType.CREDIT,
+                PaymentType.BILL,
                 supplierId,
                 date,
                 new HashMap<>() {{
                     put(5, null);
                     put(10, null);
                 }},
+                null,
+                null,
                 amount,
                 categoryId,
                 false,
@@ -137,9 +144,11 @@ public class ExpenseFactory {
         ExpenseRequestDto dto = new ExpenseRequestDto(
                 invoiceNumber,
                 "Teste",
-                PaymentType.CREDIT,
+                PaymentType.BILL,
                 supplierId,
                 date,
+                Map.of(0, ""),
+                null,
                 null,
                 amount,
                 null,

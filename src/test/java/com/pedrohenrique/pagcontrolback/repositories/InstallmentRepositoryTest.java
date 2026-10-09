@@ -106,7 +106,14 @@ class InstallmentRepositoryTest {
             expense.assignCategory(category);
         }
 
-        expense.generateInstallments(installments);
+        if(paymentType == PaymentType.BILL){
+            expense.generateBillInstallments(installments);
+        } else if (paymentType == PaymentType.CREDIT) {
+            expense.generateCreditCardInstallments(1);
+        } else {
+            expense.generateSingleInstallment();
+        }
+
 
         return expenseRepository.save(expense);
     }
@@ -130,10 +137,10 @@ class InstallmentRepositoryTest {
                     supplier,
                     null,
                     "teste",
-                    PaymentType.CASH,
+                    PaymentType.BILL,
                     LocalDate.now(),
                     BigDecimal.valueOf(100),
-                    Map.of(0, "")
+                    Map.of(1, "")
             );
 
             createExpense(
@@ -144,7 +151,7 @@ class InstallmentRepositoryTest {
                     PaymentType.CASH,
                     LocalDate.now(),
                     BigDecimal.valueOf(200),
-                    Map.of(0, "")
+                    null
             );
 
             BigDecimal result =
@@ -157,7 +164,7 @@ class InstallmentRepositoryTest {
                     );
 
             assertEquals(
-                    new BigDecimal("300").floatValue(),
+                    new BigDecimal("200").floatValue(),
                     result.floatValue()
             );
         }
@@ -210,7 +217,7 @@ class InstallmentRepositoryTest {
                     PaymentType.CASH,
                     LocalDate.now(),
                     BigDecimal.valueOf(100),
-                    Map.of(0, "")
+                    null
             );
 
             List<CategorySummaryDto> result =
@@ -253,7 +260,7 @@ class InstallmentRepositoryTest {
                     PaymentType.CASH,
                     LocalDate.now(),
                     BigDecimal.valueOf(100),
-                    Map.of(0, "")
+                    null
             );
 
             List<CategorySummaryDto> result =
@@ -399,7 +406,7 @@ class InstallmentRepositoryTest {
                     supplier,
                     null,
                     "teste",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     LocalDate.now(),
                     BigDecimal.valueOf(200),
                     Map.of(7, "")
@@ -410,7 +417,7 @@ class InstallmentRepositoryTest {
                     supplier,
                     null,
                     "teste2",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     LocalDate.now(),
                     BigDecimal.valueOf(250),
                     Map.of(1, "")
@@ -443,7 +450,7 @@ class InstallmentRepositoryTest {
                     supplier,
                     null,
                     "teste",
-                    PaymentType.CREDIT,
+                    PaymentType.BILL,
                     LocalDate.now(),
                     BigDecimal.valueOf(200),
                     Map.of(7, "")

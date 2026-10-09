@@ -89,7 +89,7 @@ class DashboardControllerTest {
                     supplierId,
                     "teste",
                     BigDecimal.valueOf(1000),
-                    LocalDate.of(2026, 2, 15),
+                    LocalDate.of(2026, 2, 5),
                     categoryId,
                     port,
                     token
@@ -99,7 +99,7 @@ class DashboardControllerTest {
                     supplierId,
                     "outros",
                     BigDecimal.valueOf(1250),
-                    LocalDate.of(2026, 2, 15),
+                    LocalDate.now().withDayOfMonth(1),
                     port,
                     token
             );
@@ -112,7 +112,15 @@ class DashboardControllerTest {
                     token
             );
 
-            List<UUID> installmentIds = installmentHelper.getInstallments(token, port);
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(500),
+                    "teste",
+                    LocalDate.now().withDayOfMonth(1),
+                    port,
+                    token
+            );
+
+            List<UUID> installmentIds = installmentHelper.getInstallments(token, port);;
             payInstallments(installmentIds);
 
             RestAssured.given()
@@ -123,16 +131,16 @@ class DashboardControllerTest {
                     .then()
                     .statusCode(200)
                     .body("total_income", equalTo(3000.0F))
-                    .body("total_expense", equalTo(2250.0F))
-                    .body("balance", equalTo(750.0F))
+                    .body("total_expense", equalTo(1000.0F))
+                    .body("balance", equalTo(2000.0F))
                     .body("overdue_total", equalTo(0))
                     .body("overdue_count", equalTo(0))
                     .body("upcoming_total", equalTo(0))
                     .body("upcoming_count", equalTo(0))
-                    .body("expenses_by_category.size()", equalTo(2))
+                    .body("expenses_by_category.size()", equalTo(1))
                     .body("months_summary.size()", greaterThanOrEqualTo(1))
-                    .body("months_summary[0].income", equalTo(3000.0F))
-                    .body("months_summary[0].expense", equalTo(2250.0F));
+                    .body("months_summary[0].income", equalTo(500F))
+                    .body("months_summary[0].expense", equalTo(1250.0F));
         }
 
         @Test
