@@ -58,6 +58,9 @@ public class Expense {
     @ManyToOne
     @JoinColumn(name = "credit_card_id")
     private CreditCard creditCard;
+    @ManyToOne
+    @JoinColumn(name = "recurring_expense_id")
+    private RecurringExpense recurringExpense;
 
     public Expense() {}
 
