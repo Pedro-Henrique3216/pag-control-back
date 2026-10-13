@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.model;
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
-import org.hibernate.sql.ast.tree.expression.Star;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -239,6 +238,14 @@ public class RecurringExpense {
 
     public CreditCard getCreditCard() {
         return creditCard;
+    }
+
+    public Integer getRecurrenceDay() {
+        return recurrenceDay;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
     private LocalDate calculateFirstOccurrence() {
