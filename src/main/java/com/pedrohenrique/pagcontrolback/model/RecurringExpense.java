@@ -3,6 +3,7 @@ package com.pedrohenrique.pagcontrolback.model;
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
+import org.hibernate.sql.ast.tree.expression.Star;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -144,7 +145,7 @@ public class RecurringExpense {
         }
 
         if (startDate == null) {
-            throw new IllegalArgumentException(
+            throw new StartDateRequiredException(
                     "Start date is required."
             );
         }
@@ -153,7 +154,7 @@ public class RecurringExpense {
                 && (recurrenceDay == null
                 || recurrenceDay < 1
                 || recurrenceDay > 31)) {
-            throw new IllegalArgumentException(
+            throw new RecurrenceDayException(
                     "Recurrence day must be between 1 and 31."
             );
         }
