@@ -12,7 +12,6 @@ public record CreateRecurringExpenseCommand(
         PaymentType paymentType,
         UUID supplierId,
         LocalDate startDate,
-        Integer numberOfInstallments,
         UUID creditCardId,
         BigDecimal totalAmount,
         UUID categoryId,
