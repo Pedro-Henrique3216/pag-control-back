@@ -116,6 +116,33 @@ public class Expense {
         createFirstInstallmentRecurring();
     }
 
+    public Expense(
+            String description,
+            PaymentType paymentType,
+            LocalDate expenseDate,
+            User user,
+            Money totalAmount,
+            CreditCard creditCard
+    ) {
+        validateExpenseDate(expenseDate);
+        validatePaymentType(paymentType);
+        validateDescription(description);
+        this.description = description;
+        this.createdAt = LocalDateTime.now();
+        this.paymentType = paymentType;
+        this.expenseDate = expenseDate;
+        this.totalAmount = totalAmount;
+        setUser(user);
+        if(paymentType == PaymentType.CREDIT){
+            if(creditCard == null){
+                throw new CreditCardRequiredException("Credit Card Required");
+            }
+            this.creditCard = creditCard;
+            this.creditCard.hasLimit(this.totalAmount);
+        }
+        this.createInstallmentRecurring();
+    }
+
     private void validateRecurrence(RecurrenceType recurrenceType, Integer recurrenceInterval, LocalDate recurrenceEndDate) {
         if (recurrenceType == null) {
             throw new RecurrenceTypeRequiredException("Recurrence type is required for recurring expenses.");
@@ -397,6 +424,32 @@ public class Expense {
         Installment installment = new Installment(totalAmount, expenseDate, null, this, 1, 1);
         installment.markAsPaid();
         this.addInstallment(installment);
+    }
+
+    private void createInstallmentRecurring(
+    ) {
+        LocalDate dueDate;
+
+        if (this.paymentType == PaymentType.CREDIT) {
+            dueDate = CreditCardDueDateCalculator.calculateDueDate(
+                    this.recurringExpense.getNextOccurrence(),
+                    this.creditCard.getClosingDay(),
+                    this.creditCard.getDueDay(),
+                    1
+            );
+        } else {
+            dueDate = this.recurringExpense.getNextOccurrence();
+        }
+
+        Installment installment = new Installment(
+                this.totalAmount,
+                dueDate,
+                null,
+                this,
+                1,
+                null
+        );
+        this.installments.add(installment);
     }
 
     private void createFirstInstallmentRecurring(
