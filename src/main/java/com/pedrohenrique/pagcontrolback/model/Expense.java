@@ -46,14 +46,6 @@ public class Expense {
     private Category category;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    private boolean recurring;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "recurrence_type")
-    private RecurrenceType recurrenceType;
-    @Column(name = "recurrence_interval")
-    private Integer recurrenceInterval;
-    @Column(name = "recurrence_end_date")
-    private LocalDate recurrenceEndDate;
     private boolean active = true;
     @ManyToOne
     @JoinColumn(name = "credit_card_id")
@@ -75,7 +67,6 @@ public class Expense {
         this.expenseDate = expenseDate;
         this.totalAmount = totalAmount;
         setUser(user);
-        this.recurring = false;
     }
 
     public Expense(String invoiceNumber, String description, PaymentType paymentType, LocalDate expenseDate, User user, Money totalAmount, CreditCard creditCard) {
@@ -85,35 +76,6 @@ public class Expense {
         }
         this.creditCard = creditCard;
         this.creditCard.hasLimit(this.totalAmount);
-    }
-
-    public Expense(
-            String invoiceNumber,
-            String description,
-            PaymentType paymentType,
-            LocalDate expenseDate,
-            User user,
-            Money totalAmount,
-            RecurrenceType recurrenceType,
-            Integer recurrenceInterval,
-            LocalDate recurrenceEndDate,
-            CreditCard creditCard
-    ) {
-
-        this(invoiceNumber, description, paymentType, expenseDate, user, totalAmount);
-        this.recurring = true;
-        validateRecurrence(recurrenceType, recurrenceInterval, recurrenceEndDate);
-        this.recurrenceType = recurrenceType;
-        this.recurrenceInterval = recurrenceInterval;
-        this.recurrenceEndDate = recurrenceEndDate;
-        if(paymentType == PaymentType.CREDIT){
-            if(creditCard == null){
-                throw new CreditCardRequiredException("Credit Card Required");
-            }
-            this.creditCard = creditCard;
-            this.creditCard.hasLimit(this.totalAmount);
-        }
-        createFirstInstallmentRecurring();
     }
 
     public Expense(
@@ -137,25 +99,6 @@ public class Expense {
             this.creditCard.hasLimit(this.totalAmount);
         }
         this.createInstallmentRecurring();
-    }
-
-    private void validateRecurrence(RecurrenceType recurrenceType, Integer recurrenceInterval, LocalDate recurrenceEndDate) {
-        if (recurrenceType == null) {
-            throw new RecurrenceTypeRequiredException("Recurrence type is required for recurring expenses.");
-        }
-        if (recurrenceInterval == null) {
-            throw new RecurrenceIntervalException("Recurrence interval is required for recurring expenses.");
-        }
-
-        if (recurrenceInterval <= 0) {
-            throw new RecurrenceIntervalException("Recurrence interval must be greater than or equal to zero.");
-        }
-
-        if (recurrenceEndDate != null && recurrenceEndDate.isBefore(this.expenseDate)) {
-            throw new InvalidRecurrenceEndDateException(
-                    "Recurrence end date cannot be before expense date."
-            );
-        }
     }
 
     private void validateExpenseDate(LocalDate expenseDate) {
@@ -186,7 +129,7 @@ public class Expense {
             throw new InstallmentRequiredException("Installment cannot be null.");
         }
 
-        if ((this.paymentType == PaymentType.DEBIT || this.paymentType == PaymentType.CASH || this.paymentType == PaymentType.PIX) && !this.recurring) {
+        if (this.paymentType == PaymentType.DEBIT || this.paymentType == PaymentType.CASH || this.paymentType == PaymentType.PIX) {
             if (!this.installments.isEmpty()) {
                 throw new MultipleInstallmentsNotAllowedForPaymentTypeException("Payment type " + this.paymentType + " allows only one installment");
             }
@@ -249,22 +192,6 @@ public class Expense {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    public boolean getRecurring() {
-        return recurring;
-    }
-
-    public RecurrenceType getRecurrenceType() {
-        return recurrenceType;
-    }
-
-    public Integer getRecurrenceInterval() {
-        return recurrenceInterval;
-    }
-
-    public LocalDate getRecurrenceEndDate() {
-        return recurrenceEndDate;
     }
 
     public Boolean getActive() {
@@ -446,97 +373,6 @@ public class Expense {
                 null
         );
         this.addInstallment(installment);
-    }
-
-    private void createFirstInstallmentRecurring(
-    ) {
-        LocalDate dueDate;
-
-        if (this.paymentType == PaymentType.CREDIT) {
-            dueDate = CreditCardDueDateCalculator.calculateDueDate(
-                    this.expenseDate,
-                    this.creditCard.getClosingDay(),
-                    this.creditCard.getDueDay(),
-                    1
-            );
-        } else {
-            dueDate = expenseDate;
-        }
-
-        if (recurrenceEndDate != null &&
-                dueDate.isAfter(recurrenceEndDate)) {
-            throw new RuntimeException("Recurrence end date must be after recurrence start date.");
-        }
-
-        Installment installment = new Installment(
-                this.totalAmount,
-                dueDate,
-                null,
-                this,
-                installments.size() + 1,
-                null
-        );
-        this.addInstallment(installment);
-    }
-
-    public void generateNextInstallment() {
-        if (!this.recurring) {
-            return;
-        }
-
-        Installment lastInstallment = installments.get(installments.size() - 1);
-
-        LocalDate lastDueDate = lastInstallment.getDueDate();
-
-        if (lastDueDate.isAfter(LocalDate.now())) {
-            return;
-        }
-
-        LocalDate nextDueDate;
-
-        int installmentNumber = installments.size() + 1;
-
-        if(this.paymentType == PaymentType.CREDIT) {
-            nextDueDate = CreditCardDueDateCalculator.calculateDueDate(
-                    this.expenseDate,
-                    this.creditCard.getClosingDay(),
-                    this.creditCard.getDueDay(),
-                    installmentNumber
-            );
-        } else {
-            nextDueDate = calculateNextDueDate(lastDueDate);
-        }
-
-        if (recurrenceEndDate != null && nextDueDate.isAfter(recurrenceEndDate)) {
-            return;
-        }
-
-        Installment installment = new Installment(
-                lastInstallment.getAmount(),
-                nextDueDate,
-                null,
-                this,
-                installmentNumber,
-                null
-        );
-
-        this.addInstallment(installment);
-    }
-
-    private LocalDate calculateNextDueDate(LocalDate baseDate) {
-        return switch (this.recurrenceType) {
-            case DAILY ->
-                    baseDate.plusDays(recurrenceInterval);
-
-            case WEEKLY ->
-                    baseDate.plusWeeks(recurrenceInterval);
-
-            case MONTHLY ->
-                    baseDate.plusMonths(recurrenceInterval);
-
-            case YEARLY ->
-                    baseDate.plusYears(recurrenceInterval);
-        };
     }
 
     public boolean isPaidOff() {
