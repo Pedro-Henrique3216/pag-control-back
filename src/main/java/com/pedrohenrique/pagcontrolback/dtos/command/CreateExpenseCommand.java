@@ -1,7 +1,6 @@
 package com.pedrohenrique.pagcontrolback.dtos.command;
 
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
-import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

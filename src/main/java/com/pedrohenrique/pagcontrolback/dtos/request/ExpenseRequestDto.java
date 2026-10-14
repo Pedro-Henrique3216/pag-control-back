@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.dtos.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
-import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
