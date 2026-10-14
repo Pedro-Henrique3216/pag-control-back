@@ -37,15 +37,7 @@ public record ExpenseRequestDto(
         @JsonProperty("total_amount")
         BigDecimal totalAmount,
         @JsonProperty(value = "category_id")
-        UUID categoryId,
-        @JsonProperty(value = "is_recurring")
-        boolean isRecurring,
-        @JsonProperty(value = "recurrence_type")
-        RecurrenceType recurrenceType,
-        @JsonProperty(value = "recurrence_interval")
-        Integer recurrenceInterval,
-        @JsonProperty(value = "recurrence_end_date")
-        LocalDate recurrenceEndDate
+        UUID categoryId
 ) {
 }
 

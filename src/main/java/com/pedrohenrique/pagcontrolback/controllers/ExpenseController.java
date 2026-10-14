@@ -51,11 +51,7 @@ public class ExpenseController {
                 expenseRequestDto.numberOfInstallments(),
                 expenseRequestDto.creditCardId(),
                 expenseRequestDto.totalAmount(),
-                expenseRequestDto.categoryId(),
-                expenseRequestDto.isRecurring(),
-                expenseRequestDto.recurrenceType(),
-                expenseRequestDto.recurrenceInterval(),
-                expenseRequestDto.recurrenceEndDate()
+                expenseRequestDto.categoryId()
         );
 
         var expenseSaved = createExpenseWithInstallmentsUseCase.execute(

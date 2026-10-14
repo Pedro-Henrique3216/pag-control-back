@@ -18,10 +18,6 @@ public record CreateExpenseCommand(
         Integer numberOfInstallments,
         UUID creditCardId,
         BigDecimal totalAmount,
-        UUID categoryId,
-        boolean isRecurring,
-        RecurrenceType recurrenceType,
-        Integer recurrenceInterval,
-        LocalDate recurrenceEndDate
+        UUID categoryId
 ) {
 }
