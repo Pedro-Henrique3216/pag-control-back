@@ -41,7 +41,7 @@ public class GenerateRecurringExpenseUseCase {
                     Expense expense = new Expense(
                             recurringExpense.getDescription(),
                             recurringExpense.getPaymentType(),
-                            recurringExpense.getStartDate(),
+                            recurringExpense.getNextOccurrence(),
                             recurringExpense.getUser(),
                             recurringExpense.getAmount(),
                             recurringExpense.getCreditCard()

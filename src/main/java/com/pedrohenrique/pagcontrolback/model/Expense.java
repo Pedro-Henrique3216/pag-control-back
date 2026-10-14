@@ -449,7 +449,7 @@ public class Expense {
                 1,
                 null
         );
-        this.installments.add(installment);
+        this.addInstallment(installment);
     }
 
     private void createFirstInstallmentRecurring(
