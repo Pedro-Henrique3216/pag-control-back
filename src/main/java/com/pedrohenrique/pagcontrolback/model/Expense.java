@@ -117,27 +117,23 @@ public class Expense {
     }
 
     public Expense(
-            String description,
-            PaymentType paymentType,
-            LocalDate expenseDate,
-            User user,
-            Money totalAmount,
-            CreditCard creditCard
+            RecurringExpense recurringExpense
     ) {
-        validateExpenseDate(expenseDate);
-        validatePaymentType(paymentType);
-        validateDescription(description);
-        this.description = description;
+        validateExpenseDate(recurringExpense.getNextOccurrence());
+        validatePaymentType(recurringExpense.getPaymentType());
+        validateDescription(recurringExpense.getDescription());
+        this.description = recurringExpense.getDescription();
         this.createdAt = LocalDateTime.now();
-        this.paymentType = paymentType;
-        this.expenseDate = expenseDate;
-        this.totalAmount = totalAmount;
-        setUser(user);
+        this.paymentType = recurringExpense.getPaymentType();
+        this.expenseDate = recurringExpense.getNextOccurrence();
+        this.totalAmount = recurringExpense.getAmount();
+        setUser(recurringExpense.getUser());
+        this.recurringExpense = recurringExpense;
         if(paymentType == PaymentType.CREDIT){
-            if(creditCard == null){
+            if(recurringExpense.getCreditCard() == null){
                 throw new CreditCardRequiredException("Credit Card Required");
             }
-            this.creditCard = creditCard;
+            this.creditCard = recurringExpense.getCreditCard();
             this.creditCard.hasLimit(this.totalAmount);
         }
         this.createInstallmentRecurring();

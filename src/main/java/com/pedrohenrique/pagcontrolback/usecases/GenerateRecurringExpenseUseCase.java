@@ -39,12 +39,7 @@ public class GenerateRecurringExpenseUseCase {
 
                 if(!alreadyGenerated){
                     Expense expense = new Expense(
-                            recurringExpense.getDescription(),
-                            recurringExpense.getPaymentType(),
-                            recurringExpense.getNextOccurrence(),
-                            recurringExpense.getUser(),
-                            recurringExpense.getAmount(),
-                            recurringExpense.getCreditCard()
+                            recurringExpense
                     );
                     expenseRepository.save(expense);
                 }
