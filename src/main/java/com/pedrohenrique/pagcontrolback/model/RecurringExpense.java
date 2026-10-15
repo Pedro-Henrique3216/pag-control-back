@@ -66,6 +66,8 @@ public class RecurringExpense {
     @JoinColumn(name = "credit_card_id")
     private CreditCard creditCard;
 
+    protected RecurringExpense() {}
+
     public RecurringExpense(
             String description,
             Money amount,
