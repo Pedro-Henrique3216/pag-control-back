@@ -26,6 +26,12 @@ public class DatabaseCleaner {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private RecurringExpenseRepository recurringExpenseRepository;
+
+    @Autowired
+    private CreditCardRepository creditCardRepository;
+
     @Transactional
     public void clearDatabase() {
 
@@ -33,6 +39,9 @@ public class DatabaseCleaner {
 
         expenseRepository.deleteAll();
         incomeRepository.deleteAll();
+
+        recurringExpenseRepository.deleteAll();
+        creditCardRepository.deleteAll();
 
         categoryRepository.deleteAll();
         supplierRepository.deleteAll();
