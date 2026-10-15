@@ -35,7 +35,7 @@ public class CreateRecurringExpenseUseCase {
     }
 
     @Transactional
-    public void execute(
+    public RecurringExpense execute(
             CreateRecurringExpenseCommand command,
             UUID authenticatedUserId
     ) {
@@ -121,6 +121,6 @@ public class CreateRecurringExpenseUseCase {
                 creditCard
         );
 
-        recurringExpenseRepository.save(recurringExpense);
+        return recurringExpenseRepository.save(recurringExpense);
     }
 }
