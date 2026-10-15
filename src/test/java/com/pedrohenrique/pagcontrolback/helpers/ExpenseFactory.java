@@ -2,7 +2,6 @@ package com.pedrohenrique.pagcontrolback.helpers;
 
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
-import com.pedrohenrique.pagcontrolback.model.RecurrenceType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.springframework.stereotype.Component;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
