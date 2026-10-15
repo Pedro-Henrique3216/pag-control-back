@@ -34,10 +34,6 @@ public class ExpenseFactory {
                 null,
                 null,
                 BigDecimal.valueOf(100),
-                null,
-                false,
-                null,
-                null,
                 null
         );
 
@@ -74,10 +70,6 @@ public class ExpenseFactory {
                 null,
                 null,
                 amount,
-                null,
-                false,
-                null,
-                null,
                 null
         );
 
@@ -115,47 +107,7 @@ public class ExpenseFactory {
                 null,
                 null,
                 amount,
-                categoryId,
-                false,
-                null,
-                null,
-                null
-        );
-
-        RestAssured
-                .given()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token)
-                .body(dto)
-                .when()
-                .post("http://localhost:" + port + "/api/expenses")
-                .then()
-                .statusCode(201);
-    }
-
-    public void createExpenseRecurrence(
-            UUID supplierId,
-            String invoiceNumber,
-            BigDecimal amount,
-            LocalDate date,
-            int port,
-            String token)
-    {
-        ExpenseRequestDto dto = new ExpenseRequestDto(
-                invoiceNumber,
-                "Teste",
-                PaymentType.BILL,
-                supplierId,
-                date,
-                Map.of(0, ""),
-                null,
-                null,
-                amount,
-                null,
-                true,
-                RecurrenceType.MONTHLY,
-                1,
-                null
+                categoryId
         );
 
         RestAssured

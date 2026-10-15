@@ -87,10 +87,21 @@ class InstallmentControllerTest {
 
             @Test
             void shouldReturnAllInstallments() {
-                factory.createExpense(supplierId, "INV-001", LocalDate.now(), port, token);
-                factory.createExpense(supplierId, "INV-002", LocalDate.now(), port, token);
-                factory.createExpenseRecurrence(supplierId, "INV-003", BigDecimal.TEN, LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
+                factory.createExpense(
+                        supplierId,
+                        "INV-002",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -98,14 +109,26 @@ class InstallmentControllerTest {
                         .get()
                         .then()
                         .statusCode(200)
-                        .body("size()", Matchers.is(3))
-                        .body("total_installments", Matchers.hasItem("recorrente, sem contagem fixa"));
+                        .body("size()", Matchers.is(2));
             }
 
             @Test
             void shouldFilterByMonth() {
-                factory.createExpense(supplierId, "INV-001", LocalDate.of(2026, 2, 1), port, token);
-                factory.createExpense(supplierId, "INV-002", LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        LocalDate.of(2026, 2, 1),
+                        port,
+                        token
+                );
+
+                factory.createExpense(
+                        supplierId,
+                        "INV-002",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -119,10 +142,28 @@ class InstallmentControllerTest {
 
             @Test
             void shouldFilterBySupplier() {
-                UUID otherSupplier = supplierFactory.createSupplier("Other Supplier", null, port, token);
+                UUID otherSupplier = supplierFactory.createSupplier(
+                        "Other Supplier",
+                        null,
+                        port,
+                        token
+                );
 
-                factory.createExpense(supplierId, "INV-001", LocalDate.now(), port, token);
-                factory.createExpense(otherSupplier, "INV-002", LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                factory.createExpense(
+                        otherSupplier,
+                        "INV-002",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -136,8 +177,22 @@ class InstallmentControllerTest {
 
             @Test
             void shouldFilterByStatus() {
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
-                factory.createExpense(supplierId, "INV-002", LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                factory.createExpense(
+                        supplierId,
+                        "INV-002",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -151,8 +206,23 @@ class InstallmentControllerTest {
 
             @Test
             void shouldFilterOverdue() {
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now().minusDays(20), port, token);
-                factory.createExpense(supplierId, "INV-002", BigDecimal.valueOf(300), LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now().minusDays(20),
+                        port,
+                        token
+                );
+
+                factory.createExpense(
+                        supplierId,
+                        "INV-002",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -166,8 +236,23 @@ class InstallmentControllerTest {
 
             @Test
             void shouldFilterDueInNextDays() {
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now().minusDays(10), port, token);
-                factory.createExpense(supplierId, "INV-002", BigDecimal.valueOf(300), LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now().minusDays(10),
+                        port,
+                        token
+                );
+
+                factory.createExpense(
+                        supplierId,
+                        "INV-002",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -189,10 +274,18 @@ class InstallmentControllerTest {
 
             @Test
             void shouldPayInstallment() {
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
-
-                Installment installment = installmentRepository.findAll().get(0);
+                Installment installment = installmentRepository
+                        .findAll()
+                        .get(0);
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -201,7 +294,9 @@ class InstallmentControllerTest {
                         .then()
                         .statusCode(200);
 
-                Installment updated = installmentRepository.findById(installment.getInstallmentId()).orElseThrow();
+                Installment updated = installmentRepository
+                        .findById(installment.getInstallmentId())
+                        .orElseThrow();
 
                 assertEquals(InstallmentStatus.PAID, updated.getStatus());
             }
@@ -222,7 +317,6 @@ class InstallmentControllerTest {
 
             @Test
             void shouldReturn403WhenInstallmentDoesNotBelongToUser() {
-
                 authFactory.createUser(
                         "other",
                         "other@gmail.com",
@@ -230,11 +324,24 @@ class InstallmentControllerTest {
                         "11900000000"
                 );
 
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
-                Installment installment = installmentRepository.findAll().get(0);
+                Installment installment = installmentRepository
+                        .findAll()
+                        .get(0);
 
-                String otherToken = authFactory.loginAndGetToken(port, "other@gmail.com", "Password123@");
+                String otherToken = authFactory.loginAndGetToken(
+                        port,
+                        "other@gmail.com",
+                        "Password123@"
+                );
 
                 RestAssured.given()
                         .header("Authorization", "Bearer " + otherToken)
@@ -254,8 +361,14 @@ class InstallmentControllerTest {
 
             @Test
             void shouldUpdateInstallment() {
-
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
                 var response = RestAssured.given()
                         .header("Authorization", "Bearer " + token)
@@ -266,9 +379,11 @@ class InstallmentControllerTest {
                         .extract()
                         .response();
 
-                System.out.println(response.jsonPath().getObject("[0]", InstallmentResponseDto.class));
-                System.out.println(response.asString());
-                InstallmentResponseDto installment = response.jsonPath().getObject("[0]", InstallmentResponseDto.class);
+                InstallmentResponseDto installment =
+                        response.jsonPath().getObject(
+                                "[0]",
+                                InstallmentResponseDto.class
+                        );
 
                 InstallmentUpdateDto dto = new InstallmentUpdateDto(
                         BigDecimal.valueOf(500),
@@ -285,9 +400,14 @@ class InstallmentControllerTest {
                         .then()
                         .statusCode(200);
 
-                Installment updated = installmentRepository.findById(installment.id()).orElseThrow();
+                Installment updated = installmentRepository
+                        .findById(installment.id())
+                        .orElseThrow();
 
-                assertEquals(500, updated.getAmount().value().doubleValue());
+                assertEquals(
+                        500,
+                        updated.getAmount().value().doubleValue()
+                );
             }
         }
 
@@ -296,10 +416,18 @@ class InstallmentControllerTest {
 
             @Test
             void shouldReturn400WhenInvalidRequest() {
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
-
-                Installment installment = installmentRepository.findAll().get(0);
+                Installment installment = installmentRepository
+                        .findAll()
+                        .get(0);
 
                 InstallmentUpdateDto dto = new InstallmentUpdateDto(
                         BigDecimal.valueOf(-500),
@@ -319,7 +447,6 @@ class InstallmentControllerTest {
 
             @Test
             void shouldReturn404WhenInstallmentNotFound() {
-
                 InstallmentUpdateDto dto = new InstallmentUpdateDto(
                         BigDecimal.valueOf(500),
                         LocalDate.now().plusDays(10),
@@ -338,7 +465,6 @@ class InstallmentControllerTest {
 
             @Test
             void shouldReturn403WhenNotOwner() {
-
                 authFactory.createUser(
                         "other",
                         "other2@gmail.com",
@@ -346,11 +472,24 @@ class InstallmentControllerTest {
                         "11900000000"
                 );
 
-                factory.createExpense(supplierId, "INV-001", BigDecimal.valueOf(300), LocalDate.now(), port, token);
+                factory.createExpense(
+                        supplierId,
+                        "INV-001",
+                        BigDecimal.valueOf(300),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
 
-                Installment installment = installmentRepository.findAll().get(0);
+                Installment installment = installmentRepository
+                        .findAll()
+                        .get(0);
 
-                String otherToken = authFactory.loginAndGetToken(port, "other2@gmail.com", "Password123@");
+                String otherToken = authFactory.loginAndGetToken(
+                        port,
+                        "other2@gmail.com",
+                        "Password123@"
+                );
 
                 InstallmentUpdateDto dto = new InstallmentUpdateDto(
                         BigDecimal.valueOf(500),

@@ -167,7 +167,7 @@ class SendInstallmentReminderUseCaseTest {
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusMonths(1),
+                LocalDate.now().minusMonths(2),
                 user,
                 Money.of(BigDecimal.valueOf(300)),
                 creditCard
@@ -213,7 +213,7 @@ class SendInstallmentReminderUseCaseTest {
         CreditCard creditCard = new CreditCard(
                 "NUBANK",
                 9,
-                15,
+                10,
                 Money.of(BigDecimal.valueOf(1000.00)),
                 new User()
         );
@@ -222,7 +222,7 @@ class SendInstallmentReminderUseCaseTest {
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusMonths(1),
+                LocalDate.now().minusMonths(2),
                 user,
                 Money.of(BigDecimal.valueOf(300)),
                 creditCard
