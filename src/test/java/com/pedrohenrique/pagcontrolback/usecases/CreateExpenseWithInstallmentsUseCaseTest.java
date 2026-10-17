@@ -1,6 +1,5 @@
 package com.pedrohenrique.pagcontrolback.usecases;
 
-import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -69,13 +67,11 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldCreateExpenseWithInstallmentsSuccessfully() {
-
             UUID authenticatedUserId = UUID.randomUUID();
             UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
 
             User user = createUser();
-
             Supplier supplier = createSupplier(user);
 
             Category category = new Category(
@@ -99,11 +95,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     null,
                     null,
                     new BigDecimal("300.00"),
-                    categoryId,
-                    false,
-                    null,
-                    null,
-                    null
+                    categoryId
             );
 
             when(userRepository.getReferenceById(authenticatedUserId))
@@ -112,13 +104,14 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             when(supplierRepository.findById(supplierId))
                     .thenReturn(Optional.of(supplier));
 
-            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
-                    .thenReturn(Optional.of(category));
+            when(categoryRepository.findCategoryByIdAndUserId(
+                    categoryId,
+                    authenticatedUserId
+            )).thenReturn(Optional.of(category));
 
             useCase.execute(authenticatedUserId, command);
 
-            verify(expenseRepository, times(1))
-                    .save(any(Expense.class));
+            verify(expenseRepository).save(any(Expense.class));
         }
     }
 
@@ -127,7 +120,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldThrowWhenCommandIsNull() {
-
             assertThrows(
                     CreateExpenseCommandRequiredException.class,
                     () -> useCase.execute(UUID.randomUUID(), null)
@@ -136,7 +128,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldThrowWhenAuthenticatedUserIdIsNull() {
-
             CreateExpenseCommand command = new CreateExpenseCommand(
                     "INV123",
                     "Descrição",
@@ -147,10 +138,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     null,
                     null,
                     BigDecimal.valueOf(100),
-                    null,
-                    false,
-                    null,
-                    null,
                     null
             );
 
@@ -166,7 +153,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldThrowWhenSupplierNotFound() {
-
             UUID authenticatedUserId = UUID.randomUUID();
             UUID supplierId = UUID.randomUUID();
 
@@ -182,10 +168,6 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     null,
                     null,
                     BigDecimal.valueOf(100),
-                    null,
-                    false,
-                    null,
-                    null,
                     null
             );
 
@@ -207,13 +189,11 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldThrowWhenCategoryNotFound() {
-
             UUID authenticatedUserId = UUID.randomUUID();
             UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
 
             User user = createUser();
-
             Supplier supplier = createSupplier(user);
 
             CreateExpenseCommand command = new CreateExpenseCommand(
@@ -226,11 +206,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     null,
                     null,
                     BigDecimal.valueOf(100),
-                    categoryId,
-                    false,
-                    null,
-                    null,
-                    null
+                    categoryId
             );
 
             when(userRepository.getReferenceById(authenticatedUserId))
@@ -239,8 +215,10 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             when(supplierRepository.findById(supplierId))
                     .thenReturn(Optional.of(supplier));
 
-            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
-                    .thenReturn(Optional.empty());
+            when(categoryRepository.findCategoryByIdAndUserId(
+                    categoryId,
+                    authenticatedUserId
+            )).thenReturn(Optional.empty());
 
             assertThrows(
                     CategoryNotFoundException.class,
@@ -250,13 +228,11 @@ class CreateExpenseWithInstallmentsUseCaseTest {
 
         @Test
         void shouldThrowWhenCategoryTypeIsInvalid() {
-
             UUID authenticatedUserId = UUID.randomUUID();
             UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
 
             User user = createUser();
-
             Supplier supplier = createSupplier(user);
 
             Category category = new Category(
@@ -275,11 +251,7 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     null,
                     null,
                     BigDecimal.valueOf(100),
-                    categoryId,
-                    false,
-                    null,
-                    null,
-                    null
+                    categoryId
             );
 
             when(userRepository.getReferenceById(authenticatedUserId))
@@ -288,240 +260,13 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             when(supplierRepository.findById(supplierId))
                     .thenReturn(Optional.of(supplier));
 
-            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
-                    .thenReturn(Optional.of(category));
+            when(categoryRepository.findCategoryByIdAndUserId(
+                    categoryId,
+                    authenticatedUserId
+            )).thenReturn(Optional.of(category));
 
             assertThrows(
                     CategoryTypeInvalidException.class,
-                    () -> useCase.execute(authenticatedUserId, command)
-            );
-        }
-    }
-
-    @Nested
-    class RecurrenceTests {
-
-        @Test
-        void shouldCreateRecurringExpenseSuccessfully() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            UUID supplierId = UUID.randomUUID();
-            UUID categoryId = UUID.randomUUID();
-            UUID creditCardId = UUID.randomUUID();
-
-            User user = createUser();
-            ReflectionTestUtils.setField(user, "id", authenticatedUserId);
-
-            Supplier supplier = createSupplier(user);
-            Category category = new Category("Assinaturas", TransactionType.EXPENSE, user);
-            CreditCard creditCard = new CreditCard(
-                    "NUBANK",
-                    9,
-                    10,
-                    Money.of(BigDecimal.valueOf(1000)),
-                    user
-            );
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-01",
-                    "Netflix",
-                    PaymentType.CREDIT,
-                    supplierId,
-                    LocalDate.now(),
-                    null,
-                    1,
-                    creditCardId,
-                    new BigDecimal("39.90"),
-                    categoryId,
-                    true,
-                    RecurrenceType.MONTHLY,
-                    1,
-                    null
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-            when(supplierRepository.findById(supplierId)).thenReturn(Optional.of(supplier));
-            when(categoryRepository.findCategoryByIdAndUserId(categoryId, authenticatedUserId))
-                    .thenReturn(Optional.of(category));
-            when(creditCardRepository.findCreditCardByCardIdAndUserId(creditCardId, user.getId())).thenReturn(creditCard);
-            when(expenseRepository.save(any(Expense.class))).thenReturn(new Expense(
-                    command.invoiceNumber(),
-                    command.description(),
-                    command.paymentType(),
-                    command.date(),
-                    user,
-                    new Money(command.totalAmount()),
-                    command.recurrenceType(),
-                    command.recurrenceInterval(),
-                    command.recurrenceEndDate(),
-                    creditCard
-            ));
-
-            Expense expense = useCase.execute(authenticatedUserId, command);
-
-            verify(expenseRepository, times(1)).save(any(Expense.class));
-
-            assertTrue(expense.getRecurring());
-            assertEquals(RecurrenceType.MONTHLY, expense.getRecurrenceType());
-            assertEquals(1, expense.getInstallments().size());
-
-        }
-
-        @Test
-        void shouldThrowWhenRecurrenceTypeIsNull() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            User user = createUser();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-02",
-                    "Assinatura sem tipo",
-                    PaymentType.CASH,
-                    null,
-                    LocalDate.now(),
-                    null,
-                    null,
-                    null,
-                    new BigDecimal("50.00"),
-                    null,
-                    true,
-                    null,
-                    1,
-                    null
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-
-            assertThrows(
-                    RecurrenceTypeRequiredException.class,
-                    () -> useCase.execute(authenticatedUserId, command)
-            );
-        }
-
-        @Test
-        void shouldThrowWhenRecurrenceIntervalIsNull() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            User user = createUser();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-03",
-                    "Assinatura sem intervalo",
-                    PaymentType.CASH,
-                    null,
-                    LocalDate.now(),
-                    null,
-                    null,
-                    null,
-                    new BigDecimal("50.00"),
-                    null,
-                    true,
-                    RecurrenceType.MONTHLY,
-                    null,
-                    null
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-
-            assertThrows(
-                    RecurrenceIntervalException.class,
-                    () -> useCase.execute(authenticatedUserId, command)
-            );
-        }
-
-        @Test
-        void shouldThrowWhenRecurrenceIntervalIsZeroOrNegative() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            User user = createUser();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-04",
-                    "Assinatura com intervalo inválido",
-                    PaymentType.CASH,
-                    null,
-                    LocalDate.now(),
-                    null,
-                    null,
-                    null,
-                    new BigDecimal("50.00"),
-                    null,
-                    true,
-                    RecurrenceType.MONTHLY,
-                    0,
-                    null
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-
-            assertThrows(
-                    RecurrenceIntervalException.class,
-                    () -> useCase.execute(authenticatedUserId, command)
-            );
-        }
-
-        @Test
-        void shouldThrowWhenRecurrenceEndDateIsBeforeExpenseDate() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            User user = createUser();
-
-            LocalDate expenseDate = LocalDate.now();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-05",
-                    "Assinatura com fim retroativo",
-                    PaymentType.CASH,
-                    null,
-                    expenseDate,
-                    null,
-                    null,
-                    null,
-                    new BigDecimal("50.00"),
-                    null,
-                    true,
-                    RecurrenceType.MONTHLY,
-                    1,
-                    expenseDate.minusDays(1)
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-
-            assertThrows(
-                    InvalidRecurrenceEndDateException.class,
-                    () -> useCase.execute(authenticatedUserId, command)
-            );
-        }
-
-        @Test
-        void shouldThrowWhenSupplierNotFoundForRecurringExpense() {
-
-            UUID authenticatedUserId = UUID.randomUUID();
-            UUID supplierId = UUID.randomUUID();
-            User user = createUser();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV-REC-06",
-                    "Assinatura",
-                    PaymentType.CASH,
-                    supplierId,
-                    LocalDate.now(),
-                    null,
-                    null,
-                    null,
-                    new BigDecimal("50.00"),
-                    null,
-                    true,
-                    RecurrenceType.MONTHLY,
-                    1,
-                    null
-            );
-
-            when(userRepository.getReferenceById(authenticatedUserId)).thenReturn(user);
-            when(supplierRepository.findById(supplierId)).thenReturn(Optional.empty());
-
-            assertThrows(
-                    SupplierNotFoundException.class,
                     () -> useCase.execute(authenticatedUserId, command)
             );
         }

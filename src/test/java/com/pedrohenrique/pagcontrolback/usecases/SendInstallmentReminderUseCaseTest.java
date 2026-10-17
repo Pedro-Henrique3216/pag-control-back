@@ -145,6 +145,7 @@ class SendInstallmentReminderUseCaseTest {
 
     @Test
     void shouldSeparateOverdueAndUpcomingInstallments(){
+        LocalDate today = LocalDate.now();
         User user = new User(
                 "Pedro",
                 null,
@@ -167,18 +168,30 @@ class SendInstallmentReminderUseCaseTest {
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusMonths(1),
+                LocalDate.now().minusMonths(2),
                 user,
                 Money.of(BigDecimal.valueOf(300)),
                 creditCard
         );
 
-        expense.generateCreditCardInstallments(
-                3
+        Installment overdueInstallment = new Installment(
+                Money.of(BigDecimal.valueOf(75)),
+                today.minusDays(1),
+                null,
+                expense,
+                1,
+                2
         );
 
-        List<Installment> installments = expense.getInstallments();
-        when(installmentRepository.findPendingInstallmentsUntil(LocalDate.now().plusDays(7))).thenReturn(List.of(installments.get(0),  installments.get(1)));
+        Installment upcomingInstallment = new Installment(
+                Money.of(BigDecimal.valueOf(75)),
+                today.plusDays(3),
+                null,
+                expense,
+                2,
+                2
+        );
+        when(installmentRepository.findPendingInstallmentsUntil(LocalDate.now().plusDays(7))).thenReturn(List.of(overdueInstallment, upcomingInstallment));
 
         sendInstallmentReminderUseCase.execute();
         ArgumentCaptor<InstallmentReminderEvent> captor = ArgumentCaptor.forClass(InstallmentReminderEvent.class);
@@ -213,7 +226,7 @@ class SendInstallmentReminderUseCaseTest {
         CreditCard creditCard = new CreditCard(
                 "NUBANK",
                 9,
-                15,
+                10,
                 Money.of(BigDecimal.valueOf(1000.00)),
                 new User()
         );
@@ -222,7 +235,7 @@ class SendInstallmentReminderUseCaseTest {
                 "1234",
                 "teste",
                 PaymentType.CREDIT,
-                LocalDate.now().minusMonths(1),
+                LocalDate.now().minusMonths(2),
                 user,
                 Money.of(BigDecimal.valueOf(300)),
                 creditCard

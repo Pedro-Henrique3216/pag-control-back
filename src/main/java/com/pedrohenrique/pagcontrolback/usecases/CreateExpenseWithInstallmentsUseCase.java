@@ -46,7 +46,7 @@ public class CreateExpenseWithInstallmentsUseCase {
 
         User user = userRepository.getReferenceById(authenticatedUserId);
 
-        Expense expense = command.isRecurring() ? buildRecurringExpense(command, user) : buildRegularExpense(command, user);
+        Expense expense = buildRegularExpense(command, user);
 
         if (command.supplierId() != null) {
             Supplier supplier = supplierRepository.findById(command.supplierId())
@@ -61,29 +61,6 @@ public class CreateExpenseWithInstallmentsUseCase {
         }
 
         return expenseRepository.save(expense);
-    }
-
-    private Expense buildRecurringExpense(CreateExpenseCommand command, User user) {
-        CreditCard creditCard = null;
-        if (command.paymentType() == PaymentType.CREDIT){
-            if(command.creditCardId() == null){
-                throw new CreditCardRequiredException("Credit card ID is required.");
-            }
-            creditCard = creditCardRepository.findCreditCardByCardIdAndUserId(command.creditCardId(), user.getId());
-        }
-        return new Expense(
-                command.invoiceNumber(),
-                command.description(),
-                command.paymentType(),
-                command.date(),
-                user,
-                new Money(command.totalAmount()),
-                command.recurrenceType(),
-                command.recurrenceInterval(),
-                command.recurrenceEndDate(),
-                creditCard
-        );
-
     }
 
     private Expense buildRegularExpense(CreateExpenseCommand command, User user) {
