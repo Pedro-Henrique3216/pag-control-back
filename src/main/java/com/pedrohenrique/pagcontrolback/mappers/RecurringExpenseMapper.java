@@ -14,7 +14,7 @@ public class RecurringExpenseMapper {
                 recurringExpense.getStartDate(),
                 recurringExpense.getAmount().value(),
                 recurringExpense.getCategory() != null ? CategoryMapper.fromDomain(recurringExpense.getCategory()) : null,
-                recurringExpense.getCreditCard() != null ? CreditCardMapper.fromDomain(recurringExpense.getCreditCard()) : null,
+                recurringExpense.getCreditCard() != null ? CreditCardMapper.toCreditCardSummaryResponseDto(recurringExpense.getCreditCard()) : null,
                 recurringExpense.getRecurrenceDay(),
                 recurringExpense.getRecurrenceType(),
                 recurringExpense.getRecurrenceInterval(),
