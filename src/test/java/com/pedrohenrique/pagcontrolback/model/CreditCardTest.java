@@ -1,7 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
-import com.pedrohenrique.pagcontrolback.exceptions.CreditLimitExceededException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -149,5 +149,100 @@ class CreditCardTest {
 
         assertEquals(10, creditCard.getClosingDay());
         assertEquals(17, creditCard.getDueDay());
+    }
+
+    @Test
+    void shouldThrowWhenNameIsNull() {
+        User user = createUser();
+        Money creditLimit = new Money(new BigDecimal("5000.00"));
+
+        InvalidCreditCardNameException exception = assertThrows(
+                InvalidCreditCardNameException.class,
+                () -> new CreditCard(null, 10, 17, creditLimit, user)
+        );
+
+        assertEquals("Credit card name cannot be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenNameIsEmpty() {
+        User user = createUser();
+        Money creditLimit = new Money(new BigDecimal("5000.00"));
+
+        InvalidCreditCardNameException exception = assertThrows(
+                InvalidCreditCardNameException.class,
+                () -> new CreditCard("", 10, 17, creditLimit, user)
+        );
+
+        assertEquals("Credit card name cannot be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenNameContainsOnlyWhitespace() {
+        User user = createUser();
+        Money creditLimit = new Money(new BigDecimal("5000.00"));
+
+        assertThrows(
+                InvalidCreditCardNameException.class,
+                () -> new CreditCard("   ", 10, 17, creditLimit, user)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenClosingDayIsLessThanOne() {
+        assertThrows(
+                InvalidCreditCardClosingDayException.class,
+                () -> new CreditCard(
+                        "Nubank", 0, 17,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowWhenClosingDayIsGreaterThanThirtyOne() {
+        assertThrows(
+                InvalidCreditCardClosingDayException.class,
+                () -> new CreditCard(
+                        "Nubank", 32, 17,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowWhenDueDayIsLessThanOne() {
+        assertThrows(
+                InvalidCreditCardDueDayException.class,
+                () -> new CreditCard(
+                        "Nubank", 10, 0,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowWhenDueDayIsGreaterThanThirtyOne() {
+        assertThrows(
+                InvalidCreditCardDueDayException.class,
+                () -> new CreditCard(
+                        "Nubank", 10, 32,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowWhenCreditLimitIsNull() {
+        assertThrows(
+                InvalidCreditLimitException.class,
+                () -> new CreditCard(
+                        "Nubank", 10, 17, null, createUser()
+                )
+        );
     }
 }
