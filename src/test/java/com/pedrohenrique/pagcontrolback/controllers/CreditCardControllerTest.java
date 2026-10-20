@@ -154,4 +154,84 @@ class CreditCardControllerTest {
             }
         }
     }
+
+    @Nested
+    class ListCreditCards {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldReturnCreditCardsOfAuthenticatedUser() {
+                String firstCard = """
+                    {
+                        "name": "Nubank",
+                        "closing_day": 10,
+                        "due_day": 17,
+                        "credit_limit": 5000.00
+                    }
+                    """;
+
+                String secondCard = """
+                    {
+                        "name": "Inter",
+                        "closing_day": 5,
+                        "due_day": 12,
+                        "credit_limit": 3000.00
+                    }
+                    """;
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(firstCard)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201);
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(secondCard)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201);
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .body("size()", equalTo(2))
+                        .body("name", containsInAnyOrder("Nubank", "Inter"));
+            }
+
+            @Test
+            void shouldReturnEmptyListWhenUserHasNoCreditCards() {
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .body("size()", equalTo(0));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() {
+                given()
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(401);
+            }
+        }
+    }
 }

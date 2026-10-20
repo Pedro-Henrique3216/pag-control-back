@@ -7,24 +7,25 @@ import com.pedrohenrique.pagcontrolback.dtos.response.CreditCardResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CreditCardMapper;
 import com.pedrohenrique.pagcontrolback.model.CreditCard;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCreditCardUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.ListCreditCardUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/credit_cards")
 public class CreditCardController {
 
     private final CreateCreditCardUseCase createCreditCardUseCase;
+    private final ListCreditCardUseCase listCreditCardUseCase;
 
-    public CreditCardController(CreateCreditCardUseCase createCreditCardUseCase) {
+    public CreditCardController(CreateCreditCardUseCase createCreditCardUseCase, ListCreditCardUseCase listCreditCardUseCase) {
         this.createCreditCardUseCase = createCreditCardUseCase;
+        this.listCreditCardUseCase = listCreditCardUseCase;
     }
 
     @PostMapping
@@ -45,5 +46,18 @@ public class CreditCardController {
         URI uri = uriBuilder.path("/credit_cards/{id}").buildAndExpand(creditCard.getId()).toUri();
 
         return ResponseEntity.created(uri).body(CreditCardMapper.toCreditCardResponseDto(creditCard));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CreditCardResponseDto>> findCreditCardByUserId(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        List<CreditCard> creditCards = listCreditCardUseCase.findCreditCardByUserId(userPrincipal.getId());
+
+        List<CreditCardResponseDto> response = creditCards.stream()
+                .map(CreditCardMapper::toCreditCardResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
