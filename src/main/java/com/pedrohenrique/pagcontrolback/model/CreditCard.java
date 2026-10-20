@@ -4,6 +4,7 @@ import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -110,6 +111,29 @@ public class CreditCard {
     public void hasLimit(Money expenseValue) {
         if(expenseValue.value().compareTo(creditLimit.value()) > 0){
             throw new CreditLimitExceededException("credit limit exceeded");
+        }
+    }
+
+    public void updateCreditCard(String name, Integer closingDay, Integer dueDay, BigDecimal creditLimit){
+        if (name != null) {
+            validateName(name);
+            this.name = name;
+        }
+
+        if (closingDay != null) {
+            validateClosingDay(closingDay);
+            this.closingDay = closingDay;
+        }
+
+        if (dueDay != null) {
+            validateDueDay(dueDay);
+            this.dueDay = dueDay;
+        }
+
+        if (creditLimit != null) {
+            Money creditLimitMoney = new Money(creditLimit);
+            validateCreditLimit(creditLimitMoney);
+            this.creditLimit = creditLimitMoney;
         }
     }
 }
