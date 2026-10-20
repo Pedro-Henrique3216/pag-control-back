@@ -1,7 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
-import com.pedrohenrique.pagcontrolback.exceptions.CreditLimitExceededException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -32,12 +32,51 @@ public class CreditCard {
     public CreditCard() {}
 
     public CreditCard(String name, int closingDay, int dueDay, Money creditLimit, User user) {
+        validateData(
+                name,
+                closingDay,
+                dueDay,
+                creditLimit
+        );
         this.name = name;
         this.closingDay = closingDay;
         this.dueDay = dueDay;
         this.creditLimit = creditLimit;
         this.user = user;
         active = true;
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new InvalidCreditCardNameException("Credit card name cannot be null or empty");
+        }
+    }
+
+    private void validateClosingDay(int closingDay) {
+        if (closingDay < 1 || closingDay > 31) {
+            throw new InvalidCreditCardClosingDayException("Closing day must be between 1 and 31");
+        }
+    }
+
+    private void validateDueDay(int dueDay) {
+        if (dueDay < 1 || dueDay > 31) {
+            throw new InvalidCreditCardDueDayException("Due day must be between 1 and 31");
+        }
+    }
+
+    private void validateCreditLimit(Money creditLimit) {
+        if (creditLimit == null) {
+            throw new InvalidCreditLimitException("Credit limit cannot be null");
+        }
+    }
+
+    private void validateData(
+            String name, int closingDay, int dueDay, Money creditLimit
+    ) {
+        validateName(name);
+        validateClosingDay(closingDay);
+        validateDueDay(dueDay);
+        validateCreditLimit(creditLimit);
     }
 
     public UUID getId() {

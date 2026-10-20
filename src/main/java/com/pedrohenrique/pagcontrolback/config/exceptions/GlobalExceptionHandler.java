@@ -59,6 +59,18 @@ public class GlobalExceptionHandler {
             RecurrenceTypeRequiredException.class,
             RecurrenceIntervalException.class,
             InvalidRecurrenceEndDateException.class,
+            InvalidRecurrenceEndDateException.class,
+            CreditCardRequiredException.class,
+            CreditLimitExceededException.class,
+            InvalidCreditCardClosingDayException.class,
+            InvalidCreditCardDueDayException.class,
+            InvalidCreditCardNameException.class,
+            InvalidCreditLimitException.class,
+            InvalidInstallmentNumberException.class,
+            InvalidPaymentTypeException.class,
+            InvalidTotalInstallmentsException.class,
+            RecurrenceDayException.class,
+            StartDateRequiredException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -84,6 +96,7 @@ public class GlobalExceptionHandler {
             SupplierNotFoundException.class,
             InstallmentNotFoundException.class,
             CategoryNotFoundException.class,
+            CreditCardNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
@@ -94,7 +107,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             SupplierAlreadyExistsWithCnpjException.class,
             InstallmentAlreadyPaidException.class,
-            CategoryAlreadyExistsException.class
+            CategoryAlreadyExistsException.class,
+            InstallmentsAlreadyGeneratedException.class,
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<HandleExceptionInternalDto> handleConflictException(RuntimeException ex){
@@ -137,6 +151,7 @@ public class GlobalExceptionHandler {
             BadCredentialsException.class,
             InvalidTokenException.class,
             UserNotFoundException.class,
+            ExpiredTokenException.class,
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<HandleExceptionInternalDto> handleUnauthorizedException(RuntimeException ex){
