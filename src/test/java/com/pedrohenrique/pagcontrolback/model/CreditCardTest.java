@@ -21,6 +21,16 @@ class CreditCardTest {
         );
     }
 
+    private CreditCard createCreditCard() {
+        return new CreditCard(
+                "Nubank",
+                10,
+                17,
+                new Money(new BigDecimal("2000.00")),
+                createUser()
+        );
+    }
+
     @Test
     void shouldCreateCreditCardSuccessfully() {
         User user = createUser();
@@ -37,19 +47,16 @@ class CreditCardTest {
         assertEquals("Nubank", creditCard.getName());
         assertEquals(10, creditCard.getClosingDay());
         assertEquals(17, creditCard.getDueDay());
-        assertEquals(creditLimit.value(), creditCard.getCreditLimit().value());
+        assertEquals(
+                creditLimit.value(),
+                creditCard.getCreditLimit().value()
+        );
         assertEquals(user, creditCard.getUser());
     }
 
     @Test
     void shouldCreateCreditCardAsActive() {
-        CreditCard creditCard = new CreditCard(
-                "Nubank",
-                10,
-                17,
-                new Money(new BigDecimal("5000.00")),
-                createUser()
-        );
+        CreditCard creditCard = createCreditCard();
 
         assertTrue(creditCard.isActive());
     }
@@ -74,13 +81,7 @@ class CreditCardTest {
 
     @Test
     void shouldNotThrowWhenExpenseIsBelowCreditLimit() {
-        CreditCard creditCard = new CreditCard(
-                "Nubank",
-                10,
-                17,
-                new Money(new BigDecimal("5000.00")),
-                createUser()
-        );
+        CreditCard creditCard = createCreditCard();
 
         Money expenseValue = new Money(new BigDecimal("1000.00"));
 
@@ -139,13 +140,7 @@ class CreditCardTest {
 
     @Test
     void shouldReturnClosingAndDueDays() {
-        CreditCard creditCard = new CreditCard(
-                "Nubank",
-                10,
-                17,
-                new Money(new BigDecimal("5000.00")),
-                createUser()
-        );
+        CreditCard creditCard = createCreditCard();
 
         assertEquals(10, creditCard.getClosingDay());
         assertEquals(17, creditCard.getDueDay());
@@ -153,38 +148,53 @@ class CreditCardTest {
 
     @Test
     void shouldThrowWhenNameIsNull() {
-        User user = createUser();
-        Money creditLimit = new Money(new BigDecimal("5000.00"));
-
         InvalidCreditCardNameException exception = assertThrows(
                 InvalidCreditCardNameException.class,
-                () -> new CreditCard(null, 10, 17, creditLimit, user)
+                () -> new CreditCard(
+                        null,
+                        10,
+                        17,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
         );
 
-        assertEquals("Credit card name cannot be null or empty", exception.getMessage());
+        assertEquals(
+                "Credit card name cannot be null or empty",
+                exception.getMessage()
+        );
     }
 
     @Test
     void shouldThrowWhenNameIsEmpty() {
-        User user = createUser();
-        Money creditLimit = new Money(new BigDecimal("5000.00"));
-
         InvalidCreditCardNameException exception = assertThrows(
                 InvalidCreditCardNameException.class,
-                () -> new CreditCard("", 10, 17, creditLimit, user)
+                () -> new CreditCard(
+                        "",
+                        10,
+                        17,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
         );
 
-        assertEquals("Credit card name cannot be null or empty", exception.getMessage());
+        assertEquals(
+                "Credit card name cannot be null or empty",
+                exception.getMessage()
+        );
     }
 
     @Test
     void shouldThrowWhenNameContainsOnlyWhitespace() {
-        User user = createUser();
-        Money creditLimit = new Money(new BigDecimal("5000.00"));
-
         assertThrows(
                 InvalidCreditCardNameException.class,
-                () -> new CreditCard("   ", 10, 17, creditLimit, user)
+                () -> new CreditCard(
+                        "   ",
+                        10,
+                        17,
+                        new Money(new BigDecimal("5000.00")),
+                        createUser()
+                )
         );
     }
 
@@ -193,7 +203,9 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditCardClosingDayException.class,
                 () -> new CreditCard(
-                        "Nubank", 0, 17,
+                        "Nubank",
+                        0,
+                        17,
                         new Money(new BigDecimal("5000.00")),
                         createUser()
                 )
@@ -205,7 +217,9 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditCardClosingDayException.class,
                 () -> new CreditCard(
-                        "Nubank", 32, 17,
+                        "Nubank",
+                        32,
+                        17,
                         new Money(new BigDecimal("5000.00")),
                         createUser()
                 )
@@ -217,7 +231,9 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditCardDueDayException.class,
                 () -> new CreditCard(
-                        "Nubank", 10, 0,
+                        "Nubank",
+                        10,
+                        0,
                         new Money(new BigDecimal("5000.00")),
                         createUser()
                 )
@@ -229,7 +245,9 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditCardDueDayException.class,
                 () -> new CreditCard(
-                        "Nubank", 10, 32,
+                        "Nubank",
+                        10,
+                        32,
                         new Money(new BigDecimal("5000.00")),
                         createUser()
                 )
@@ -241,8 +259,230 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditLimitException.class,
                 () -> new CreditCard(
-                        "Nubank", 10, 17, null, createUser()
+                        "Nubank",
+                        10,
+                        17,
+                        null,
+                        createUser()
                 )
+        );
+    }
+
+    // Tests for updateCreditCard
+
+    @Test
+    void shouldUpdateCreditCardInformation() {
+        CreditCard creditCard = createCreditCard();
+
+        BigDecimal newCreditLimit = new BigDecimal("5000.00");
+
+        creditCard.updateCreditCard(
+                "Inter",
+                15,
+                25,
+                newCreditLimit
+        );
+
+        assertEquals("Inter", creditCard.getName());
+        assertEquals(15, creditCard.getClosingDay());
+        assertEquals(25, creditCard.getDueDay());
+        assertEquals(
+                newCreditLimit,
+                creditCard.getCreditLimit().value()
+        );
+    }
+
+    @Test
+    void shouldUpdateOnlyNameWhenOtherFieldsAreNull() {
+        CreditCard creditCard = createCreditCard();
+
+        Integer previousClosingDay = creditCard.getClosingDay();
+        Integer previousDueDay = creditCard.getDueDay();
+        BigDecimal previousCreditLimit =
+                creditCard.getCreditLimit().value();
+
+        creditCard.updateCreditCard("Inter", null, null, null);
+
+        assertEquals("Inter", creditCard.getName());
+        assertEquals(previousClosingDay, creditCard.getClosingDay());
+        assertEquals(previousDueDay, creditCard.getDueDay());
+        assertEquals(
+                previousCreditLimit,
+                creditCard.getCreditLimit().value()
+        );
+    }
+
+    @Test
+    void shouldUpdateOnlyClosingDay() {
+        CreditCard creditCard = createCreditCard();
+
+        creditCard.updateCreditCard(null, 15, null, null);
+
+        assertEquals(15, creditCard.getClosingDay());
+        assertEquals("Nubank", creditCard.getName());
+        assertEquals(17, creditCard.getDueDay());
+        assertEquals(
+                new BigDecimal("2000.00"),
+                creditCard.getCreditLimit().value()
+        );
+    }
+
+    @Test
+    void shouldUpdateOnlyDueDay() {
+        CreditCard creditCard = createCreditCard();
+
+        creditCard.updateCreditCard(null, null, 25, null);
+
+        assertEquals(25, creditCard.getDueDay());
+        assertEquals("Nubank", creditCard.getName());
+        assertEquals(10, creditCard.getClosingDay());
+        assertEquals(
+                new BigDecimal("2000.00"),
+                creditCard.getCreditLimit().value()
+        );
+    }
+
+    @Test
+    void shouldUpdateOnlyCreditLimit() {
+        CreditCard creditCard = createCreditCard();
+
+        BigDecimal newCreditLimit = new BigDecimal("5000.00");
+
+        creditCard.updateCreditCard(
+                null,
+                null,
+                null,
+                newCreditLimit
+        );
+
+        assertEquals(
+                newCreditLimit,
+                creditCard.getCreditLimit().value()
+        );
+        assertEquals("Nubank", creditCard.getName());
+        assertEquals(10, creditCard.getClosingDay());
+        assertEquals(17, creditCard.getDueDay());
+    }
+
+    @Test
+    void shouldKeepAllFieldsWhenUpdateValuesAreNull() {
+        CreditCard creditCard = createCreditCard();
+
+        String previousName = creditCard.getName();
+        Integer previousClosingDay = creditCard.getClosingDay();
+        Integer previousDueDay = creditCard.getDueDay();
+        BigDecimal previousCreditLimit =
+                creditCard.getCreditLimit().value();
+
+        creditCard.updateCreditCard(null, null, null, null);
+
+        assertEquals(previousName, creditCard.getName());
+        assertEquals(previousClosingDay, creditCard.getClosingDay());
+        assertEquals(previousDueDay, creditCard.getDueDay());
+        assertEquals(
+                previousCreditLimit,
+                creditCard.getCreditLimit().value()
+        );
+    }
+
+    @Test
+    void shouldKeepCreditCardActiveAfterUpdate() {
+        CreditCard creditCard = createCreditCard();
+
+        creditCard.updateCreditCard(
+                "Inter",
+                15,
+                25,
+                new BigDecimal("5000.00")
+        );
+
+        assertTrue(creditCard.isActive());
+    }
+
+    @Test
+    void shouldKeepAssociatedUserAfterUpdate() {
+        User user = createUser();
+
+        CreditCard creditCard = new CreditCard(
+                "Nubank",
+                10,
+                17,
+                new Money(new BigDecimal("2000.00")),
+                user
+        );
+
+        creditCard.updateCreditCard(
+                "Inter",
+                15,
+                25,
+                new BigDecimal("5000.00")
+        );
+
+        assertEquals(user, creditCard.getUser());
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedNameIsNull() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardNameException.class,
+                () -> creditCard.updateCreditCard(
+                        null == null ? "" : null,
+                        null,
+                        null,
+                        null
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedNameContainsOnlyWhitespace() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardNameException.class,
+                () -> creditCard.updateCreditCard("   ", null, null, null)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedClosingDayIsInvalid() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardClosingDayException.class,
+                () -> creditCard.updateCreditCard(null, 0, null, null)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedClosingDayIsGreaterThanThirtyOne() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardClosingDayException.class,
+                () -> creditCard.updateCreditCard(null, 32, null, null)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedDueDayIsInvalid() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardDueDayException.class,
+                () -> creditCard.updateCreditCard(null, null, 0, null)
+        );
+    }
+
+    @Test
+    void shouldThrowWhenUpdatedDueDayIsGreaterThanThirtyOne() {
+        CreditCard creditCard = createCreditCard();
+
+        assertThrows(
+                InvalidCreditCardDueDayException.class,
+                () -> creditCard.updateCreditCard(null, null, 32, null)
         );
     }
 }

@@ -234,4 +234,302 @@ class CreditCardControllerTest {
             }
         }
     }
+
+    @Nested
+    class UpdateCreditCard {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldUpdateCreditCardSuccessfully() {
+                String requestBody = """
+                        {
+                            "name": "Inter",
+                            "closing_day": 15,
+                            "due_day": 25,
+                            "credit_limit": 5000.00
+                        }
+                        """;
+
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(requestBody)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(200)
+                        .body("id", equalTo(creditCardId))
+                        .body("name", equalTo("Inter"))
+                        .body("closing_day", equalTo(15))
+                        .body("due_day", equalTo(25))
+                        .body("credit_limit", equalTo(5000.00F))
+                        .body("active", equalTo(true));
+            }
+
+            @Test
+            void shouldUpdateCreditCardPartially() {
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                String requestBody = """
+                        {
+                            "name": "Inter"
+                        }
+                        """;
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(requestBody)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(200)
+                        .body("name", equalTo("Inter"))
+                        .body("closing_day", equalTo(10))
+                        .body("due_day", equalTo(17))
+                        .body("credit_limit", equalTo(2000.00F));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturnNotFoundWhenCreditCardDoesNotExist() {
+                String creditCardId = java.util.UUID.randomUUID().toString();
+
+                String requestBody = """
+                        {
+                            "name": "Inter",
+                            "closing_day": 15,
+                            "due_day": 25,
+                            "credit_limit": 5000.00
+                        }
+                        """;
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(requestBody)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturnNotFoundWhenCreditCardBelongsToAnotherUser() {
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                authTestFactory.createUser(
+                        "Jane Doe",
+                        "jane@gmail.com",
+                        "Password123@",
+                        "11987654321"
+                );
+
+                String anotherUserToken = authTestFactory.loginAndGetToken(
+                        port,
+                        "jane@gmail.com",
+                        "Password123@"
+                );
+
+                given()
+                        .header("Authorization", "Bearer " + anotherUserToken)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "name": "Inter",
+                                    "closing_day": 15,
+                                    "due_day": 25,
+                                    "credit_limit": 5000.00
+                                }
+                                """)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturnBadRequestWhenClosingDayIsInvalid() {
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "closing_day": 32
+                                }
+                                """)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturnBadRequestWhenDueDayIsInvalid() {
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "due_day": 0
+                                }
+                                """)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturnBadRequestWhenNameIsBlank() {
+                String creditCardId =
+                        given()
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(ContentType.JSON)
+                                .body("""
+                                        {
+                                            "name": "Nubank",
+                                            "closing_day": 10,
+                                            "due_day": 17,
+                                            "credit_limit": 2000.00
+                                        }
+                                        """)
+                                .when()
+                                .post()
+                                .then()
+                                .statusCode(201)
+                                .extract()
+                                .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "name": ""
+                                }
+                                """)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() {
+                String creditCardId = java.util.UUID.randomUUID().toString();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "name": "Inter",
+                                    "closing_day": 15,
+                                    "due_day": 25,
+                                    "credit_limit": 5000.00
+                                }
+                                """)
+                        .when()
+                        .put("/" + creditCardId)
+                        .then()
+                        .statusCode(401);
+            }
+        }
+    }
 }
