@@ -67,6 +67,14 @@ public class CreateExpenseWithInstallmentsUseCase {
 
         if (command.paymentType() == PaymentType.CREDIT) {
             CreditCard creditCard = creditCardRepository.findCreditCardByCardIdAndUserId(command.creditCardId(), user.getId());
+            if (creditCard == null) {
+                throw new CreditCardNotFoundException("Credit card not found with id: " + command.creditCardId());
+            }
+
+            if (!creditCard.isActive()){
+                throw new CreditCardInactiveException("Credit card is not active.");
+            }
+
             Expense expense = new Expense(
                     command.invoiceNumber(),
                     command.description(),
