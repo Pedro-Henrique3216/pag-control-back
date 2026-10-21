@@ -104,6 +104,11 @@ public class CreateRecurringExpenseUseCase {
                         "Credit card not found."
                 );
             }
+
+            if (!creditCard.isActive()){
+                throw new CreditCardInactiveException(
+                        "Credit card is not active.");
+            }
         }
 
         RecurringExpense recurringExpense = new RecurringExpense(
