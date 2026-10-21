@@ -9,6 +9,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.CreditCardResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CreditCardMapper;
 import com.pedrohenrique.pagcontrolback.model.CreditCard;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCreditCardUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.DeactivateCreditCardUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListCreditCardUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.UpdateCreditCardUseCase;
 import org.springframework.http.ResponseEntity;
@@ -27,11 +28,18 @@ public class CreditCardController {
     private final CreateCreditCardUseCase createCreditCardUseCase;
     private final ListCreditCardUseCase listCreditCardUseCase;
     private final UpdateCreditCardUseCase updateCreditCardUseCase;
+    private final DeactivateCreditCardUseCase deactivateCreditCardUseCase;
 
-    public CreditCardController(CreateCreditCardUseCase createCreditCardUseCase, ListCreditCardUseCase listCreditCardUseCase, UpdateCreditCardUseCase updateCreditCardUseCase) {
+    public CreditCardController(
+            CreateCreditCardUseCase createCreditCardUseCase,
+            ListCreditCardUseCase listCreditCardUseCase,
+            UpdateCreditCardUseCase updateCreditCardUseCase,
+            DeactivateCreditCardUseCase deactivateCreditCardUseCase
+    ) {
         this.createCreditCardUseCase = createCreditCardUseCase;
         this.listCreditCardUseCase = listCreditCardUseCase;
         this.updateCreditCardUseCase = updateCreditCardUseCase;
+        this.deactivateCreditCardUseCase = deactivateCreditCardUseCase;
     }
 
     @PostMapping
@@ -80,5 +88,15 @@ public class CreditCardController {
         CreditCard creditCard = updateCreditCardUseCase.updateCreditCard(command, userPrincipal.getId());
 
         return ResponseEntity.ok(CreditCardMapper.toCreditCardResponseDto(creditCard));
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivateCreditCard(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        deactivateCreditCardUseCase.deactivateCreditCard(id, userPrincipal.getId());
+
+        return ResponseEntity.noContent().build();
     }
 }
