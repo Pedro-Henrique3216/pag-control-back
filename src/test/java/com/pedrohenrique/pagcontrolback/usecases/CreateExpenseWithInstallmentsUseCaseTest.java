@@ -1,5 +1,7 @@
+
 package com.pedrohenrique.pagcontrolback.usecases;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
 import com.pedrohenrique.pagcontrolback.model.*;
@@ -19,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,6 +64,44 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         );
     }
 
+    private CreateExpenseCommand createBillCommand(
+            UUID supplierId,
+            UUID categoryId
+    ) {
+        Map<Integer, String> installments = new HashMap<>();
+        installments.put(30, null);
+        installments.put(60, null);
+        installments.put(90, "123456789");
+
+        return new CreateExpenseCommand(
+                "INV123",
+                "Conta do mercado",
+                PaymentType.BILL,
+                supplierId,
+                LocalDate.now(),
+                installments,
+                null,
+                null,
+                new BigDecimal("300.00"),
+                categoryId
+        );
+    }
+
+    private CreateExpenseCommand createCreditCommand(UUID creditCardId) {
+        return new CreateExpenseCommand(
+                "INV123",
+                "Compra no cartão",
+                PaymentType.CREDIT,
+                null,
+                LocalDate.now(),
+                null,
+                1,
+                creditCardId,
+                new BigDecimal("100.00"),
+                null
+        );
+    }
+
     @Nested
     class SuccessTests {
 
@@ -80,23 +120,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     user
             );
 
-            Map<Integer, String> installments = new HashMap<>();
-            installments.put(30, null);
-            installments.put(60, null);
-            installments.put(90, "123456789");
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV123",
-                    "Conta do mercado",
-                    PaymentType.BILL,
-                    supplierId,
-                    LocalDate.now(),
-                    installments,
-                    null,
-                    null,
-                    new BigDecimal("300.00"),
-                    categoryId
-            );
+            CreateExpenseCommand command =
+                    createBillCommand(supplierId, categoryId);
 
             when(userRepository.getReferenceById(authenticatedUserId))
                     .thenReturn(user);
@@ -124,20 +149,14 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     CreateExpenseCommandRequiredException.class,
                     () -> useCase.execute(UUID.randomUUID(), null)
             );
+
+            verifyNoInteractions(userRepository);
         }
 
         @Test
         void shouldThrowWhenAuthenticatedUserIdIsNull() {
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV123",
-                    "Descrição",
-                    PaymentType.BILL,
+            CreateExpenseCommand command = createBillCommand(
                     UUID.randomUUID(),
-                    LocalDate.now(),
-                    Map.of(30, ""),
-                    null,
-                    null,
-                    BigDecimal.valueOf(100),
                     null
             );
 
@@ -145,6 +164,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     UserIdRequiredException.class,
                     () -> useCase.execute(null, command)
             );
+
+            verifyNoInteractions(userRepository);
         }
     }
 
@@ -157,17 +178,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
             UUID supplierId = UUID.randomUUID();
 
             User user = createUser();
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV123",
-                    "Descrição",
-                    PaymentType.BILL,
+            CreateExpenseCommand command = createBillCommand(
                     supplierId,
-                    LocalDate.now(),
-                    Map.of(30, ""),
-                    null,
-                    null,
-                    BigDecimal.valueOf(100),
                     null
             );
 
@@ -181,6 +193,8 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     SupplierNotFoundException.class,
                     () -> useCase.execute(authenticatedUserId, command)
             );
+
+            verify(expenseRepository, never()).save(any(Expense.class));
         }
     }
 
@@ -190,30 +204,16 @@ class CreateExpenseWithInstallmentsUseCaseTest {
         @Test
         void shouldThrowWhenCategoryNotFound() {
             UUID authenticatedUserId = UUID.randomUUID();
-            UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
 
             User user = createUser();
-            Supplier supplier = createSupplier(user);
-
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV123",
-                    "Descrição",
-                    PaymentType.BILL,
-                    supplierId,
-                    LocalDate.now(),
-                    Map.of(30, ""),
+            CreateExpenseCommand command = createBillCommand(
                     null,
-                    null,
-                    BigDecimal.valueOf(100),
                     categoryId
             );
 
             when(userRepository.getReferenceById(authenticatedUserId))
                     .thenReturn(user);
-
-            when(supplierRepository.findById(supplierId))
-                    .thenReturn(Optional.of(supplier));
 
             when(categoryRepository.findCategoryByIdAndUserId(
                     categoryId,
@@ -224,16 +224,16 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     CategoryNotFoundException.class,
                     () -> useCase.execute(authenticatedUserId, command)
             );
+
+            verify(expenseRepository, never()).save(any(Expense.class));
         }
 
         @Test
         void shouldThrowWhenCategoryTypeIsInvalid() {
             UUID authenticatedUserId = UUID.randomUUID();
-            UUID supplierId = UUID.randomUUID();
             UUID categoryId = UUID.randomUUID();
 
             User user = createUser();
-            Supplier supplier = createSupplier(user);
 
             Category category = new Category(
                     "Salário",
@@ -241,24 +241,13 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     user
             );
 
-            CreateExpenseCommand command = new CreateExpenseCommand(
-                    "INV123",
-                    "Descrição",
-                    PaymentType.BILL,
-                    supplierId,
-                    LocalDate.now(),
-                    Map.of(30, ""),
+            CreateExpenseCommand command = createBillCommand(
                     null,
-                    null,
-                    BigDecimal.valueOf(100),
                     categoryId
             );
 
             when(userRepository.getReferenceById(authenticatedUserId))
                     .thenReturn(user);
-
-            when(supplierRepository.findById(supplierId))
-                    .thenReturn(Optional.of(supplier));
 
             when(categoryRepository.findCategoryByIdAndUserId(
                     categoryId,
@@ -269,6 +258,93 @@ class CreateExpenseWithInstallmentsUseCaseTest {
                     CategoryTypeInvalidException.class,
                     () -> useCase.execute(authenticatedUserId, command)
             );
+
+            verify(expenseRepository, never()).save(any(Expense.class));
+        }
+    }
+
+    @Nested
+    class CreditCardTests {
+
+        @Test
+        void shouldThrowWhenCreditCardNotFound() {
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID creditCardId = UUID.randomUUID();
+
+            User user = createUser();
+            CreateExpenseCommand command = createCreditCommand(creditCardId);
+
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
+
+            when(creditCardRepository.findCreditCardByCardIdAndUserId(
+                    eq(creditCardId),
+                    any()
+            )).thenReturn(null);
+
+            assertThrows(
+                    CreditCardNotFoundException.class,
+                    () -> useCase.execute(authenticatedUserId, command)
+            );
+
+            verify(expenseRepository, never()).save(any(Expense.class));
+        }
+
+        @Test
+        void shouldThrowWhenCreditCardIsInactive() {
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID creditCardId = UUID.randomUUID();
+
+            User user = createUser();
+            CreditCard creditCard = mock(CreditCard.class);
+
+            CreateExpenseCommand command = createCreditCommand(creditCardId);
+
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
+
+            when(creditCardRepository.findCreditCardByCardIdAndUserId(
+                    eq(creditCardId),
+                    any()
+            )).thenReturn(creditCard);
+
+            when(creditCard.isActive()).thenReturn(false);
+
+            assertThrows(
+                    CreditCardInactiveException.class,
+                    () -> useCase.execute(authenticatedUserId, command)
+            );
+
+            verify(expenseRepository, never()).save(any(Expense.class));
+        }
+
+        @Test
+        void shouldCreateExpenseWhenCreditCardIsActive() {
+            UUID authenticatedUserId = UUID.randomUUID();
+            UUID creditCardId = UUID.randomUUID();
+
+            User user = createUser();
+            CreditCard creditCard = new CreditCard(
+                "teste",
+                9,
+                15,
+                Money.of(BigDecimal.valueOf(10000.00)),
+                user
+            );
+
+            CreateExpenseCommand command = createCreditCommand(creditCardId);
+
+            when(userRepository.getReferenceById(authenticatedUserId))
+                    .thenReturn(user);
+
+            when(creditCardRepository.findCreditCardByCardIdAndUserId(
+                    eq(creditCardId),
+                    any()
+            )).thenReturn(creditCard);
+
+            useCase.execute(authenticatedUserId, command);
+
+            verify(expenseRepository).save(any(Expense.class));
         }
     }
 }
