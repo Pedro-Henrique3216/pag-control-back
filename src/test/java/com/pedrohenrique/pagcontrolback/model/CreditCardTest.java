@@ -428,7 +428,7 @@ class CreditCardTest {
         assertThrows(
                 InvalidCreditCardNameException.class,
                 () -> creditCard.updateCreditCard(
-                        null == null ? "" : null,
+                        "",
                         null,
                         null,
                         null
