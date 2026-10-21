@@ -131,9 +131,7 @@ public class CreditCard {
         }
 
         if (creditLimit != null) {
-            Money creditLimitMoney = new Money(creditLimit);
-            validateCreditLimit(creditLimitMoney);
-            this.creditLimit = creditLimitMoney;
+            this.creditLimit = Money.of(creditLimit);
         }
     }
 }
