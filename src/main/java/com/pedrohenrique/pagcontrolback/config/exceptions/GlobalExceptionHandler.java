@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -178,6 +179,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<HandleExceptionInternalDto> handleTokenGeneration(TokenGenerationException ex) {
         logger.error(ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR.value(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(CreditCardInactiveException.class)
+    public ResponseEntity<HandleExceptionInternalDto> handleCreditCardInactiveException(CreditCardInactiveException ex){
+        logger.error(ex.getMessage(), ex);
+        return ResponseEntity.unprocessableContent().body(new HandleExceptionInternalDto(List.of(ex.getMessage()), HttpStatus.UNPROCESSABLE_CONTENT.value(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(Exception.class)
