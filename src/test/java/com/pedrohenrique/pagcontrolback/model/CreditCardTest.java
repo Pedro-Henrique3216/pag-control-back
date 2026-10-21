@@ -485,4 +485,13 @@ class CreditCardTest {
                 () -> creditCard.updateCreditCard(null, null, 32, null)
         );
     }
+
+    @Test
+    void shouldDeactivateCreditCardSuccessfully() {
+        CreditCard creditCard = createCreditCard();
+
+        creditCard.deactivateCreditCard();
+
+        assertFalse(creditCard.isActive());
+    }
 }
