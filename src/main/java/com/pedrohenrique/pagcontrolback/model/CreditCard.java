@@ -134,4 +134,8 @@ public class CreditCard {
             this.creditLimit = Money.of(creditLimit);
         }
     }
+
+    public void deactivateCreditCard() {
+        this.active = false;
+    }
 }
