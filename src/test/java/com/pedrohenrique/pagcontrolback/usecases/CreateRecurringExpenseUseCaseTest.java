@@ -1,3 +1,4 @@
+
 package com.pedrohenrique.pagcontrolback.usecases;
 
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateRecurringExpenseCommand;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -269,6 +269,8 @@ class CreateRecurringExpenseUseCaseTest {
                 creditCardId, userId
         )).thenReturn(creditCard);
 
+        when(creditCard.isActive()).thenReturn(true);
+
         useCase.execute(command, userId);
 
         ArgumentCaptor<RecurringExpense> captor =
@@ -280,6 +282,8 @@ class CreateRecurringExpenseUseCaseTest {
 
         verify(creditCardRepository)
                 .findCreditCardByCardIdAndUserId(creditCardId, userId);
+
+        verify(creditCard).isActive();
     }
 
     @Test
@@ -327,6 +331,37 @@ class CreateRecurringExpenseUseCaseTest {
                 CreditCardNotFoundException.class,
                 () -> useCase.execute(command, userId)
         );
+
+        verify(recurringExpenseRepository, never())
+                .save(any(RecurringExpense.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCreditCardIsInactive() {
+        UUID creditCardId = UUID.randomUUID();
+
+        command = createCommand(
+                PaymentType.CREDIT,
+                null,
+                creditCardId,
+                null
+        );
+
+        when(userRepository.getReferenceById(userId))
+                .thenReturn(user);
+
+        when(creditCardRepository.findCreditCardByCardIdAndUserId(
+                creditCardId, userId
+        )).thenReturn(creditCard);
+
+        when(creditCard.isActive()).thenReturn(false);
+
+        assertThrows(
+                CreditCardInactiveException.class,
+                () -> useCase.execute(command, userId)
+        );
+
+        verify(creditCard).isActive();
 
         verify(recurringExpenseRepository, never())
                 .save(any(RecurringExpense.class));
