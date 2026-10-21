@@ -532,4 +532,147 @@ class CreditCardControllerTest {
             }
         }
     }
+
+    @Nested
+    class DeactivateCreditCard {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldDeactivateCreditCardSuccessfully() {
+                String response = given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body("""
+                            {
+                                "name": "Nubank",
+                                "closing_day": 10,
+                                "due_day": 17,
+                                "credit_limit": 3000.00
+                            }
+                            """)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .patch("/" + response + "/deactivate")
+                        .then()
+                        .statusCode(204);
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .body("find { it.id == '" + response + "' }.active", is(false));
+            }
+
+            @Test
+            void shouldReturnNoContentWhenCreditCardIsAlreadyInactive() {
+                String creditCardId = given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body("""
+                            {
+                                "name": "Nubank",
+                                "closing_day": 10,
+                                "due_day": 17,
+                                "credit_limit": 3000.00
+                            }
+                            """)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .path("id");
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .patch("/" + creditCardId + "/deactivate")
+                        .then()
+                        .statusCode(204);
+
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .patch("/" + creditCardId + "/deactivate")
+                        .then()
+                        .statusCode(204);
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturnNotFoundWhenCreditCardDoesNotExist() {
+                given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .patch("/" + java.util.UUID.randomUUID() + "/deactivate")
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturnNotFoundWhenCreditCardBelongsToAnotherUser() {
+                String creditCardId = given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body("""
+                            {
+                                "name": "Nubank",
+                                "closing_day": 10,
+                                "due_day": 17,
+                                "credit_limit": 3000.00
+                            }
+                            """)
+                        .when()
+                        .post()
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .path("id");
+
+                authTestFactory.createUser(
+                        "Jane Doe",
+                        "jane@gmail.com",
+                        "Password123@",
+                        "11912345678"
+                );
+
+                String anotherUserToken = authTestFactory.loginAndGetToken(
+                        port,
+                        "jane@gmail.com",
+                        "Password123@"
+                );
+
+                given()
+                        .header("Authorization", "Bearer " + anotherUserToken)
+                        .when()
+                        .patch("/" + creditCardId + "/deactivate")
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturnUnauthorizedWhenUserIsNotAuthenticated() {
+                given()
+                        .when()
+                        .patch("/" + java.util.UUID.randomUUID() + "/deactivate")
+                        .then()
+                        .statusCode(401);
+            }
+        }
+    }
 }
