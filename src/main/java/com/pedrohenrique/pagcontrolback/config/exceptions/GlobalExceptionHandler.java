@@ -72,6 +72,7 @@ public class GlobalExceptionHandler {
             InvalidTotalInstallmentsException.class,
             RecurrenceDayException.class,
             StartDateRequiredException.class,
+            IllegalArgumentException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -98,6 +99,7 @@ public class GlobalExceptionHandler {
             InstallmentNotFoundException.class,
             CategoryNotFoundException.class,
             CreditCardNotFoundException.class,
+            ExpenseNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){

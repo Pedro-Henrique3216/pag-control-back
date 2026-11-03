@@ -8,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
 import com.pedrohenrique.pagcontrolback.usecases.CreateExpenseWithInstallmentsUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.GetExpenseByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListExpensesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,10 +29,16 @@ public class ExpenseController {
 
     private final CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase;
     private final ListExpensesUseCase listExpensesUseCase;
+    private final GetExpenseByIdUseCase getExpenseByIdUseCase;
 
-    public ExpenseController(CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase, ListExpensesUseCase listExpensesUseCase) {
+    public ExpenseController(
+            CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase,
+            ListExpensesUseCase listExpensesUseCase,
+            GetExpenseByIdUseCase getExpenseByIdUseCase
+    ) {
         this.createExpenseWithInstallmentsUseCase = createExpenseWithInstallmentsUseCase;
         this.listExpensesUseCase = listExpensesUseCase;
+        this.getExpenseByIdUseCase = getExpenseByIdUseCase;
     }
 
     @PostMapping
@@ -92,6 +99,16 @@ public class ExpenseController {
         return ResponseEntity.ok(expenses.stream()
                 .map(ExpenseMapper::fromDomain)
                 .toList());
+    }
+
+    @GetMapping("/{expenseId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<ExpenseResponseDto> getExpense(
+            @PathVariable UUID expenseId,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Expense expense = getExpenseByIdUseCase.getExpenseById(expenseId, user.getId());
+        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
     }
 
 }

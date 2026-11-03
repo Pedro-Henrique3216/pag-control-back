@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
@@ -18,4 +19,13 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
             """
     )
     boolean existsByRecurringExpenseIdAndOccurrenceDate(UUID recurringExpenseId, LocalDate date);
+
+    @Query(
+            """
+                SELECT Expense FROM Expense e
+                            WHERE e.id = :expenseId
+                                        AND e.user.id = :userId
+            """
+    )
+    Optional<Expense> findByExpenseIdAndUserId(UUID expenseId, UUID userId);
 }
