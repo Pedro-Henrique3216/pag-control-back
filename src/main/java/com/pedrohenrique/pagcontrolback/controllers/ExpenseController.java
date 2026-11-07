@@ -2,14 +2,16 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateExpenseCommand;
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateExpenseCommand;
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateExpenseFinancialDataCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
+import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateDto;
+import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateFinancialDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
-import com.pedrohenrique.pagcontrolback.usecases.CreateExpenseWithInstallmentsUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.GetExpenseByIdUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListExpensesUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -30,15 +32,21 @@ public class ExpenseController {
     private final CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase;
     private final ListExpensesUseCase listExpensesUseCase;
     private final GetExpenseByIdUseCase getExpenseByIdUseCase;
+    private final UpdateExpenseUseCase updateExpenseUseCase;
+    private final UpdateExpenseFinancialDataUseCase updateExpenseFinancialDataUseCase;
 
     public ExpenseController(
             CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase,
             ListExpensesUseCase listExpensesUseCase,
-            GetExpenseByIdUseCase getExpenseByIdUseCase
+            GetExpenseByIdUseCase getExpenseByIdUseCase,
+            UpdateExpenseUseCase updateExpenseUseCase,
+            UpdateExpenseFinancialDataUseCase updateExpenseFinancialDataUseCase
     ) {
         this.createExpenseWithInstallmentsUseCase = createExpenseWithInstallmentsUseCase;
         this.listExpensesUseCase = listExpensesUseCase;
         this.getExpenseByIdUseCase = getExpenseByIdUseCase;
+        this.updateExpenseUseCase = updateExpenseUseCase;
+        this.updateExpenseFinancialDataUseCase = updateExpenseFinancialDataUseCase;
     }
 
     @PostMapping
@@ -108,6 +116,42 @@ public class ExpenseController {
             @AuthenticationPrincipal UserPrincipal user
     ) {
         Expense expense = getExpenseByIdUseCase.getExpenseById(expenseId, user.getId());
+        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+    }
+
+    @PutMapping("/{expenseId}/details")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<ExpenseResponseDto> updateExpense(
+            @PathVariable UUID expenseId,
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestBody ExpenseUpdateDto dto
+    ) {
+        UpdateExpenseCommand command = new UpdateExpenseCommand(
+                dto.description(),
+                dto.invoiceNumber(),
+                dto.supplierId(),
+                dto.categoryId()
+        );
+
+        Expense expense = updateExpenseUseCase.updateExpense(expenseId, user.getId(), command);
+        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+    }
+
+    @PutMapping("/{expenseId}/financial")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<ExpenseResponseDto> updateExpenseFinancial(
+            @PathVariable UUID expenseId,
+            @AuthenticationPrincipal UserPrincipal user,
+            @Valid @RequestBody ExpenseUpdateFinancialDto dto
+    ){
+        UpdateExpenseFinancialDataCommand command = new UpdateExpenseFinancialDataCommand(
+                dto.expenseDate(),
+                dto.totalAmount()
+        );
+
+        Expense expense = updateExpenseFinancialDataUseCase.updateFinancialData(
+                expenseId, user.getId(), command
+        );
         return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
     }
 

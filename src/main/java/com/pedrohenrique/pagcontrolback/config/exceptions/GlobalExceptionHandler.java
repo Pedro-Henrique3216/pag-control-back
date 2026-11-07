@@ -72,7 +72,8 @@ public class GlobalExceptionHandler {
             InvalidTotalInstallmentsException.class,
             RecurrenceDayException.class,
             StartDateRequiredException.class,
-            IllegalArgumentException.class
+            IllegalArgumentException.class,
+            UpdateInstallmentException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
