@@ -22,10 +22,10 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     @Query(
             """
-                SELECT Expense FROM Expense e
-                            WHERE e.id = :expenseId
-                                        AND e.user.id = :userId
-                                                    AND e.active = true
+                SELECT e FROM Expense e
+                WHERE e.id = :expenseId
+                  AND e.user.id = :userId
+                  AND e.active = true
             """
     )
     Optional<Expense> findActiveExpenseByIdAndUserId(UUID expenseId, UUID userId);
