@@ -25,7 +25,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
                 SELECT Expense FROM Expense e
                             WHERE e.id = :expenseId
                                         AND e.user.id = :userId
+                                                    AND e.active = true
             """
     )
-    Optional<Expense> findByExpenseIdAndUserId(UUID expenseId, UUID userId);
+    Optional<Expense> findActiveExpenseByIdAndUserId(UUID expenseId, UUID userId);
 }

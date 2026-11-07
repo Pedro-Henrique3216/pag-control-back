@@ -49,7 +49,7 @@ class UpdateExpenseFinancialDataUseCaseTest {
         UpdateExpenseFinancialDataCommand command =
                 new UpdateExpenseFinancialDataCommand(expenseDate, amount);
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(expenseRepository.save(expense)).thenReturn(expense);
@@ -63,7 +63,7 @@ class UpdateExpenseFinancialDataUseCaseTest {
         assertNotNull(result);
         assertSame(expense, result);
 
-        verify(expenseRepository).findByExpenseIdAndUserId(expenseId, userId);
+        verify(expenseRepository).findActiveExpenseByIdAndUserId(expenseId, userId);
 
         verify(expense).updateFinancialData(
                 expenseDate,
@@ -80,7 +80,7 @@ class UpdateExpenseFinancialDataUseCaseTest {
         UpdateExpenseFinancialDataCommand command =
                 new UpdateExpenseFinancialDataCommand(expenseDate, null);
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(expenseRepository.save(expense)).thenReturn(expense);
@@ -99,7 +99,7 @@ class UpdateExpenseFinancialDataUseCaseTest {
         UpdateExpenseFinancialDataCommand command =
                 new UpdateExpenseFinancialDataCommand(null, amount);
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(expenseRepository.save(expense)).thenReturn(expense);
@@ -164,7 +164,7 @@ class UpdateExpenseFinancialDataUseCaseTest {
                         new BigDecimal("200.00")
                 );
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.empty());
 
         assertThrows(

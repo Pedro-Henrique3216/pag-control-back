@@ -40,7 +40,7 @@ public class UpdateExpenseFinancialDataUseCase {
         }
 
         Expense expense = expenseRepository
-                .findByExpenseIdAndUserId(expenseId, userId)
+                .findActiveExpenseByIdAndUserId(expenseId, userId)
                 .orElseThrow(() ->
                         new ExpenseNotFoundException("Expense not found")
                 );

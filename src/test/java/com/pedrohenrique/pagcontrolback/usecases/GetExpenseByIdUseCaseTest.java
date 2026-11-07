@@ -40,7 +40,7 @@ class GetExpenseByIdUseCaseTest {
     @Test
     void shouldReturnExpenseWhenExpenseExistsAndBelongsToAuthenticatedUser() {
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, authenticatedUserId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId))
                 .thenReturn(Optional.of(expense));
 
         Expense result = getExpenseByIdUseCase.getExpenseById(
@@ -52,7 +52,7 @@ class GetExpenseByIdUseCaseTest {
         assertSame(expense, result);
 
         verify(expenseRepository, times(1))
-                .findByExpenseIdAndUserId(expenseId, authenticatedUserId);
+                .findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId);
     }
 
     @Test
@@ -90,7 +90,7 @@ class GetExpenseByIdUseCaseTest {
     @Test
     void shouldThrowExpenseNotFoundExceptionWhenExpenseDoesNotExist() {
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, authenticatedUserId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -103,13 +103,13 @@ class GetExpenseByIdUseCaseTest {
 
 
         verify(expenseRepository, times(1))
-                .findByExpenseIdAndUserId(expenseId, authenticatedUserId);
+                .findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId);
     }
 
     @Test
     void shouldThrowExpenseNotFoundExceptionWhenExpenseDoesNotBelongToAuthenticatedUser() {
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, authenticatedUserId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -121,6 +121,6 @@ class GetExpenseByIdUseCaseTest {
         );
 
         verify(expenseRepository, times(1))
-                .findByExpenseIdAndUserId(expenseId, authenticatedUserId);
+                .findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId);
     }
 }

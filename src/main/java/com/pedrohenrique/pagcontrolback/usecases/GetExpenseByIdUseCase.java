@@ -24,7 +24,7 @@ public class GetExpenseByIdUseCase {
             throw new IllegalArgumentException("Authenticated user ID cannot be null");
         }
 
-        return expenseRepository.findByExpenseIdAndUserId(expenseId, authenticatedUserId)
+        return expenseRepository.findActiveExpenseByIdAndUserId(expenseId, authenticatedUserId)
                 .orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
     }
 }

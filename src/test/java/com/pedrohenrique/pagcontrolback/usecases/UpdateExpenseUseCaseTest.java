@@ -69,7 +69,7 @@ class UpdateExpenseUseCaseTest {
                 categoryId
         );
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(supplierRepository.findByIdAndUser_Id(supplierId, userId))
@@ -104,7 +104,7 @@ class UpdateExpenseUseCaseTest {
                 null
         );
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(expenseRepository.save(expense)).thenReturn(expense);
@@ -174,7 +174,7 @@ class UpdateExpenseUseCaseTest {
     void shouldThrowExceptionWhenExpenseDoesNotExist() {
         UpdateExpenseCommand command = createCommand();
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -195,7 +195,7 @@ class UpdateExpenseUseCaseTest {
                 null
         );
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(supplierRepository.findByIdAndUser_Id(supplierId, userId))
@@ -219,7 +219,7 @@ class UpdateExpenseUseCaseTest {
                 categoryId
         );
 
-        when(expenseRepository.findByExpenseIdAndUserId(expenseId, userId))
+        when(expenseRepository.findActiveExpenseByIdAndUserId(expenseId, userId))
                 .thenReturn(Optional.of(expense));
 
         when(categoryRepository.findCategoryByIdAndUserId(categoryId, userId))
