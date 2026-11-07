@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -1071,5 +1072,52 @@ class ExpenseTest {
             assertNotNull(expense.getUpdatedAt());
         }
     }
+
+
+    @Nested
+    class DeactivateTests {
+
+        @Test
+        void shouldDeactivateExpenseSuccessfully() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            assertTrue(expense.getActive());
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenExpenseIsDeactivated() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            LocalDateTime beforeDeactivation = LocalDateTime.now();
+
+            expense.deactivate();
+
+            LocalDateTime afterDeactivation = LocalDateTime.now();
+
+            assertNotNull(expense.getUpdatedAt());
+
+            assertFalse(expense.getUpdatedAt().isBefore(beforeDeactivation));
+            assertFalse(expense.getUpdatedAt().isAfter(afterDeactivation));
+        }
+
+        @Test
+        void shouldKeepExpenseInactiveWhenDeactivatedMoreThanOnce() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+            assertNotNull(expense.getUpdatedAt());
+        }
+    }
+
 
 }

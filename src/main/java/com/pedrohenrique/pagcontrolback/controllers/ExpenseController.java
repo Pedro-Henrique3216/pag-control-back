@@ -34,19 +34,22 @@ public class ExpenseController {
     private final GetExpenseByIdUseCase getExpenseByIdUseCase;
     private final UpdateExpenseUseCase updateExpenseUseCase;
     private final UpdateExpenseFinancialDataUseCase updateExpenseFinancialDataUseCase;
+    private final DeleteExpenseUseCase deleteExpenseUseCase;
 
     public ExpenseController(
             CreateExpenseWithInstallmentsUseCase createExpenseWithInstallmentsUseCase,
             ListExpensesUseCase listExpensesUseCase,
             GetExpenseByIdUseCase getExpenseByIdUseCase,
             UpdateExpenseUseCase updateExpenseUseCase,
-            UpdateExpenseFinancialDataUseCase updateExpenseFinancialDataUseCase
+            UpdateExpenseFinancialDataUseCase updateExpenseFinancialDataUseCase,
+            DeleteExpenseUseCase deleteExpenseUseCase
     ) {
         this.createExpenseWithInstallmentsUseCase = createExpenseWithInstallmentsUseCase;
         this.listExpensesUseCase = listExpensesUseCase;
         this.getExpenseByIdUseCase = getExpenseByIdUseCase;
         this.updateExpenseUseCase = updateExpenseUseCase;
         this.updateExpenseFinancialDataUseCase = updateExpenseFinancialDataUseCase;
+        this.deleteExpenseUseCase = deleteExpenseUseCase;
     }
 
     @PostMapping
@@ -153,6 +156,18 @@ public class ExpenseController {
                 expenseId, user.getId(), command
         );
         return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+    }
+
+    @DeleteMapping("/{expenseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteExpense(
+            @PathVariable UUID expenseId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        deleteExpenseUseCase.deleteExpense(
+                expenseId,
+                userPrincipal.getId()
+        );
     }
 
 }

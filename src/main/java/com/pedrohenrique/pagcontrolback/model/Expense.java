@@ -480,6 +480,11 @@ public class Expense {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void deactivate() {
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public boolean isPaidOff() {
         return installments.stream().allMatch(installment -> installment.getStatus() == InstallmentStatus.PAID);
     }
