@@ -319,6 +319,69 @@ class DashboardControllerTest {
 
 
         }
+
+        @Test
+        void shouldIgnoreDeletedExpensesInMonthlySummary() {
+
+            UUID supplierId = supplierFactory.createSupplier(
+                    "Fornecedor Teste",
+                    null,
+                    port,
+                    token
+            );
+
+            expenseFactory.createExpense(
+                    supplierId,
+                    "despesa-excluida",
+                    BigDecimal.valueOf(500),
+                    LocalDate.of(2026, 2, 10),
+                    port,
+                    token
+            );
+
+            incomeFactory.createIncome(
+                    BigDecimal.valueOf(1000),
+                    "receita",
+                    LocalDate.of(2026, 2, 15),
+                    port,
+                    token
+            );
+
+            List<UUID> installmentIds =
+                    installmentHelper.getInstallments(token, port);
+
+            payInstallments(installmentIds);
+
+            String expenseId = RestAssured.given()
+                    .basePath("/api/expenses")
+                    .header("Authorization", "Bearer " + token)
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .path("[0].id");
+
+            RestAssured.given()
+                    .basePath("/api/expenses")
+                    .header("Authorization", "Bearer " + token)
+                    .when()
+                    .delete("/{expenseId}", expenseId)
+                    .then()
+                    .statusCode(204);
+
+            RestAssured.given()
+                    .basePath("/api/dashboard")
+                    .header("Authorization", "Bearer " + token)
+                    .queryParam("month", "2026-02")
+                    .when()
+                    .get()
+                    .then()
+                    .statusCode(200)
+                    .body("months_summary.size()", equalTo(1))
+                    .body("months_summary[0].income", equalTo(1000.0F))
+                    .body("months_summary[0].expense", equalTo(0.0F));
+        }
     }
 
     @Nested

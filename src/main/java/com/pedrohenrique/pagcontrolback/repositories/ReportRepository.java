@@ -52,6 +52,7 @@ public class ReportRepository implements IReportRepository {
                        FROM installments i
                        JOIN expenses e ON i.expense_id = e.id
                        WHERE e.user_id = :userId
+                       AND e.active = true
                        AND i.due_date BETWEEN :startDate AND :endDate
                        AND i.status = 'PAID'
                    ) AS combined
