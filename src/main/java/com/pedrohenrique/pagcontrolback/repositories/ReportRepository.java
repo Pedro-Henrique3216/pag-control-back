@@ -26,8 +26,7 @@ public class ReportRepository implements IReportRepository {
 
         Query query = em.createNativeQuery(
                 """
-               
-                        SELECT
+                       SELECT
                        year_value,
                        month_value,
                        COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount END), 0) AS income,

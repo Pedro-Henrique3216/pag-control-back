@@ -334,7 +334,7 @@ class DashboardControllerTest {
                     supplierId,
                     "despesa-excluida",
                     BigDecimal.valueOf(500),
-                    LocalDate.of(2026, 2, 10),
+                    LocalDate.now().minusDays(20),
                     port,
                     token
             );
@@ -342,7 +342,7 @@ class DashboardControllerTest {
             incomeFactory.createIncome(
                     BigDecimal.valueOf(1000),
                     "receita",
-                    LocalDate.of(2026, 2, 15),
+                    LocalDate.now().minusDays(20),
                     port,
                     token
             );
