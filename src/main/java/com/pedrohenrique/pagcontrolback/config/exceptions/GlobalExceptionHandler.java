@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -72,6 +71,8 @@ public class GlobalExceptionHandler {
             InvalidTotalInstallmentsException.class,
             RecurrenceDayException.class,
             StartDateRequiredException.class,
+            IllegalArgumentException.class,
+            UpdateInstallmentException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -98,6 +99,7 @@ public class GlobalExceptionHandler {
             InstallmentNotFoundException.class,
             CategoryNotFoundException.class,
             CreditCardNotFoundException.class,
+            ExpenseNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){

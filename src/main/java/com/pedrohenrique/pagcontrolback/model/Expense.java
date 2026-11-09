@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Table(name = "expenses")
@@ -373,6 +374,115 @@ public class Expense {
                 null
         );
         this.addInstallment(installment);
+    }
+
+    public void updateDetails(
+            String description,
+            String invoiceNumber,
+            Supplier supplier,
+            Category category
+    ) {
+        if (description != null) {
+            validateDescription(description);
+            this.description = description;
+        }
+
+        if (invoiceNumber != null) {
+            this.invoiceNumber = invoiceNumber;
+        }
+
+        if (supplier != null) {
+            this.supplier = supplier;
+        }
+
+        if (category != null) {
+            assignCategory(category);
+        }
+
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateFinancialData(
+            LocalDate expenseDate,
+            Money totalAmount
+    ) {
+        boolean existsInstallmentPaid = this.installments.stream()
+                .anyMatch(installment ->
+                        installment.getStatus() == InstallmentStatus.PAID
+                );
+
+        if (existsInstallmentPaid) {
+            throw new UpdateInstallmentException(
+                    "Cannot update financial data because an installment has already been paid."
+            );
+        }
+
+        LocalDate oldExpenseDate = this.expenseDate;
+
+        if (expenseDate != null) {
+            validateExpenseDate(expenseDate);
+            this.expenseDate = expenseDate;
+        }
+
+        if (totalAmount != null) {
+            this.totalAmount = totalAmount;
+        }
+
+        int numberOfInstallments = this.installments.size();
+
+        if (numberOfInstallments == 0) {
+            this.updatedAt = LocalDateTime.now();
+            return;
+        }
+
+        Money baseAmount = this.totalAmount.divide(numberOfInstallments);
+
+        Money remainder = this.totalAmount.subtract(
+                baseAmount.multiply(numberOfInstallments)
+        );
+
+        for (Installment installment : this.installments) {
+
+            LocalDate dueDate = this.expenseDate;
+
+            if (this.paymentType == PaymentType.CREDIT) {
+
+                dueDate = CreditCardDueDateCalculator.calculateDueDate(
+                        this.expenseDate,
+                        this.creditCard.getClosingDay(),
+                        this.creditCard.getDueDay(),
+                        installment.getInstallmentNumber()
+                );
+
+            } else if (this.paymentType == PaymentType.BILL) {
+
+                long dueInDays = ChronoUnit.DAYS.between(
+                        oldExpenseDate,
+                        installment.getDueDate()
+                );
+
+                dueDate = this.expenseDate.plusDays(dueInDays);
+            }
+
+            Money amount = baseAmount;
+
+            if (installment.getInstallmentNumber() == numberOfInstallments) {
+                amount = amount.add(remainder);
+            }
+
+            installment.updateInstallment(
+                    amount.value(),
+                    dueDate,
+                    null
+            );
+        }
+
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deactivate() {
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public boolean isPaidOff() {

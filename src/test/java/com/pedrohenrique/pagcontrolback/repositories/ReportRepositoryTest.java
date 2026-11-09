@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -345,6 +346,55 @@ class ReportRepositoryTest {
             assertEquals(
                     new BigDecimal("1000").floatValue(),
                     result.get(0).income().floatValue()
+            );
+        }
+
+        @Test
+        void shouldIgnoreInactiveExpenses() {
+
+            User user = createUser("inactive-expense@test.com");
+
+            Supplier supplier = createSupplier(user, "Supplier A");
+
+            createIncome(
+                    BigDecimal.valueOf(1000),
+                    "income",
+                    LocalDate.of(2026, 2, 10),
+                    user
+            );
+
+            Expense expense = createExpense(
+                    "deleted expense",
+                    PaymentType.CASH,
+                    LocalDate.of(2026, 2, 15),
+                    user,
+                    supplier,
+                    BigDecimal.valueOf(500),
+                    null
+            );
+
+            expense.deactivate();
+            expenseRepository.save(expense);
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertEquals(1, result.size());
+
+            MonthSummaryDto summary = result.get(0);
+
+            assertEquals(
+                    BigDecimal.valueOf(1000).setScale(1, RoundingMode.HALF_UP),
+                    summary.income()
+            );
+
+            assertEquals(
+                    BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP),
+                    summary.expense().setScale(1, RoundingMode.HALF_UP)
             );
         }
     }

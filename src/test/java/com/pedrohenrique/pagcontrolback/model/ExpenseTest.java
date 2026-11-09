@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -763,5 +764,360 @@ class ExpenseTest {
             assertFalse(expense.isPaidOff());
         }
     }
+
+    @Nested
+    class UpdateDetailsTests {
+
+        @Test
+        void shouldUpdateExpenseDetailsSuccessfully() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Supplier supplier = new Supplier();
+
+            Category category = new Category(
+                    "Alimentação",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            expense.updateDetails(
+                    "Compra atualizada",
+                    "INV456",
+                    supplier,
+                    category
+            );
+
+            assertEquals("Compra atualizada", expense.getDescription());
+            assertEquals("INV456", expense.getInvoiceNumber());
+            assertEquals(supplier, expense.getSupplier());
+            assertEquals(category, expense.getCategory());
+            assertNotNull(expense.getUpdatedAt());
+        }
+
+        @Test
+        void shouldNotUpdateFieldsWhenValuesAreNull() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Supplier supplier = new Supplier();
+
+            Category category = new Category(
+                    "Alimentação",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            expense.setSupplier(supplier);
+            expense.assignCategory(category);
+
+            expense.updateDetails(
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals("Compra mercado", expense.getDescription());
+            assertEquals("INV123", expense.getInvoiceNumber());
+            assertEquals(supplier, expense.getSupplier());
+            assertEquals(category, expense.getCategory());
+            assertNotNull(expense.getUpdatedAt());
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithBlankDescription() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> expense.updateDetails(
+                            "   ",
+                            "INV456",
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithIncomeCategory() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            Category category = new Category(
+                    "Salário",
+                    TransactionType.INCOME,
+                    new User()
+            );
+
+            assertThrows(
+                    CategoryTypeInvalidException.class,
+                    () -> expense.updateDetails(
+                            "Compra atualizada",
+                            "INV456",
+                            null,
+                            category
+                    )
+            );
+        }
+    }
+
+    @Nested
+    class UpdateFinancialDataTests {
+
+        @Test
+        void shouldUpdateTotalAmountAndRecalculateInstallments() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.generateCreditCardInstallments(3);
+
+            expense.updateFinancialData(
+                    null,
+                    Money.of(BigDecimal.valueOf(120))
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(40)),
+                    expense.getInstallments().get(0).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(40)),
+                    expense.getInstallments().get(1).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(40)),
+                    expense.getInstallments().get(2).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(120)),
+                    expense.getTotalAmount()
+            );
+
+            assertNotNull(expense.getUpdatedAt());
+        }
+
+        @Test
+        void shouldDistributeRemainderWhenUpdatingTotalAmount() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.generateCreditCardInstallments(3);
+
+            expense.updateFinancialData(
+                    null,
+                    Money.of(BigDecimal.valueOf(100))
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(0).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.33)),
+                    expense.getInstallments().get(1).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(33.34)),
+                    expense.getInstallments().get(2).getAmount()
+            );
+        }
+
+        @Test
+        void shouldUpdateExpenseDateAndRecalculateCreditInstallmentDueDates() {
+            CreditCard creditCard = createCreditCard();
+
+            Expense expense = new Expense(
+                    "INV123",
+                    "Compra mercado",
+                    PaymentType.CREDIT,
+                    LocalDate.of(2026, 9, 5),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(100)),
+                    creditCard
+            );
+
+            expense.generateCreditCardInstallments(2);
+
+            expense.updateFinancialData(
+                    LocalDate.of(2026, 9, 12),
+                    null
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 10, 15),
+                    expense.getInstallments().get(0).getDueDate()
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 11, 15),
+                    expense.getInstallments().get(1).getDueDate()
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 9, 12),
+                    expense.getExpenseDate()
+            );
+        }
+
+        @Test
+        void shouldUpdateBillInstallmentDueDatesPreservingOriginalIntervals() {
+            Expense expense = new Expense(
+                    "INV123",
+                    "Conta de água",
+                    PaymentType.BILL,
+                    LocalDate.of(2026, 10, 25),
+                    new User(),
+                    Money.of(BigDecimal.valueOf(100))
+            );
+
+            Map<Integer, String> installments = new HashMap<>();
+            installments.put(30, "BARCODE1");
+            installments.put(60, "BARCODE2");
+
+            expense.generateBillInstallments(installments);
+
+            expense.updateFinancialData(
+                    LocalDate.of(2026, 11, 1),
+                    Money.of(BigDecimal.valueOf(200))
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 12, 1),
+                    expense.getInstallments().get(0).getDueDate()
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 12, 31),
+                    expense.getInstallments().get(1).getDueDate()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(100)),
+                    expense.getInstallments().get(0).getAmount()
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(100)),
+                    expense.getInstallments().get(1).getAmount()
+            );
+        }
+
+        @Test
+        void shouldThrowWhenAnyInstallmentIsAlreadyPaid() {
+            Expense expense = createExpense(PaymentType.CASH);
+
+            expense.generateSingleInstallment();
+
+            assertThrows(
+                    UpdateInstallmentException.class,
+                    () -> expense.updateFinancialData(
+                            LocalDate.now().minusDays(1),
+                            Money.of(BigDecimal.valueOf(200))
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithFutureExpenseDate() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.generateCreditCardInstallments(2);
+
+            assertThrows(
+                    ExpenseDateInTheFutureException.class,
+                    () -> expense.updateFinancialData(
+                            LocalDate.now().plusDays(1),
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldUpdateTotalAmountWhenExpenseHasNoInstallments() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.updateFinancialData(
+                    null,
+                    Money.of(BigDecimal.valueOf(200))
+            );
+
+            assertEquals(
+                    Money.of(BigDecimal.valueOf(200)),
+                    expense.getTotalAmount()
+            );
+
+            assertTrue(expense.getInstallments().isEmpty());
+
+            assertNotNull(expense.getUpdatedAt());
+        }
+
+        @Test
+        void shouldUpdateOnlyExpenseDateWhenTotalAmountIsNull() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.generateCreditCardInstallments(2);
+
+            Money originalAmount = expense.getTotalAmount();
+
+            LocalDate newDate = LocalDate.now().minusDays(5);
+
+            expense.updateFinancialData(newDate, null);
+
+            assertEquals(newDate, expense.getExpenseDate());
+
+            assertEquals(originalAmount, expense.getTotalAmount());
+
+            assertNotNull(expense.getUpdatedAt());
+        }
+    }
+
+
+    @Nested
+    class DeactivateTests {
+
+        @Test
+        void shouldDeactivateExpenseSuccessfully() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            assertTrue(expense.getActive());
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenExpenseIsDeactivated() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            LocalDateTime beforeDeactivation = LocalDateTime.now();
+
+            expense.deactivate();
+
+            LocalDateTime afterDeactivation = LocalDateTime.now();
+
+            assertNotNull(expense.getUpdatedAt());
+
+            assertFalse(expense.getUpdatedAt().isBefore(beforeDeactivation));
+            assertFalse(expense.getUpdatedAt().isAfter(afterDeactivation));
+        }
+
+        @Test
+        void shouldKeepExpenseInactiveWhenDeactivatedMoreThanOnce() {
+            Expense expense = createExpense(PaymentType.CREDIT);
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+
+            expense.deactivate();
+
+            assertFalse(expense.getActive());
+            assertNotNull(expense.getUpdatedAt());
+        }
+    }
+
 
 }

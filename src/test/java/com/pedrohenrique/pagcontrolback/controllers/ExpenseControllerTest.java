@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -509,5 +510,301 @@ class ExpenseControllerTest {
                 assertTrue(errors.contains("Month cannot be in the future."));
             }
         }
+    }
+
+    @Nested
+    class GetExpenseById {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldReturnExpenseById() {
+                expenseFactory.createExpense(
+                        supplierId,
+                        "INV-GET-1",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                String expenseId = getFirstExpenseId().toString();
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{expenseId}", expenseId)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+                assertEquals(expenseId, response.path("id"));
+                assertEquals("INV-GET-1", response.path("invoice_number"));
+                assertEquals("Teste", response.path("description"));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenExpenseDoesNotExist() {
+                String randomExpenseId = UUID.randomUUID().toString();
+
+                var response = RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{expenseId}", randomExpenseId)
+                        .then()
+                        .statusCode(404)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Expense not found"));
+            }
+        }
+    }
+
+    @Nested
+    class UpdateExpenseDetails {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldUpdateExpenseDetails() {
+                expenseFactory.createExpense(
+                        supplierId,
+                        "INV-OLD",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                String expenseId = getFirstExpenseId().toString();
+
+                Map<String, Object> request = Map.of(
+                        "description", "Despesa atualizada",
+                        "invoice_number", "INV-UPDATED",
+                        "supplier_id", supplierId.toString()
+                );
+
+                var response = RestAssured.given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(request)
+                        .when()
+                        .put("/{expenseId}/details", expenseId)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+                assertEquals("Despesa atualizada", response.path("description"));
+                assertEquals("INV-UPDATED", response.path("invoice_number"));
+                assertEquals(
+                        supplierId.toString(),
+                        response.path("supplier_id")
+                );
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenExpenseDoesNotExist() {
+                String randomExpenseId = UUID.randomUUID().toString();
+
+                Map<String, Object> request = Map.of(
+                        "description", "Despesa atualizada"
+                );
+
+                var response = RestAssured.given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(request)
+                        .when()
+                        .put("/{expenseId}/details", randomExpenseId)
+                        .then()
+                        .statusCode(404)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Expense not found"));
+            }
+        }
+    }
+
+    @Nested
+    class UpdateExpenseFinancialData {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldUpdateExpenseFinancialData() {
+                expenseFactory.createExpense(
+                        supplierId,
+                        "INV-FINANCIAL",
+                        BigDecimal.valueOf(2000.00),
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                String expenseId = getFirstExpenseId().toString();
+
+                LocalDate updatedDate = LocalDate.now().minusDays(2);
+
+                Map<String, Object> request = Map.of(
+                        "expense_date", updatedDate.toString(),
+                        "total_amount", BigDecimal.valueOf(250.00)
+                );
+
+                var response = RestAssured.given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(request)
+                        .when()
+                        .put("/{expenseId}/financial", expenseId)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .response();
+
+                assertEquals(updatedDate.toString(), response.path("date"));
+                assertEquals(
+                        250.00,
+                        ((Number) response.path("total_amount")).doubleValue(),
+                        0.01
+                );
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenExpenseDoesNotExist() {
+                String randomExpenseId = UUID.randomUUID().toString();
+
+                Map<String, Object> request = Map.of(
+                        "total_amount", BigDecimal.valueOf(250.00)
+                );
+
+                var response = RestAssured.given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(request)
+                        .when()
+                        .put("/{expenseId}/financial", randomExpenseId)
+                        .then()
+                        .statusCode(404)
+                        .extract()
+                        .response();
+
+                List<String> errors = response.path("errors");
+
+                assertTrue(errors.contains("Expense not found"));
+            }
+        }
+    }
+
+    @Nested
+    class DeleteExpense {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldDeactivateExpense() {
+                expenseFactory.createExpense(
+                        supplierId,
+                        "INV-DELETE",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                String expenseId = getFirstExpenseId().toString();
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{expenseId}", expenseId)
+                        .then()
+                        .statusCode(204);
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{expenseId}", expenseId)
+                        .then()
+                        .statusCode(404);
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenExpenseDoesNotExist() {
+                String randomExpenseId = UUID.randomUUID().toString();
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{expenseId}", randomExpenseId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn404WhenExpenseIsAlreadyDeactivated() {
+                expenseFactory.createExpense(
+                        supplierId,
+                        "INV-DELETE-2",
+                        LocalDate.now(),
+                        port,
+                        token
+                );
+
+                String expenseId = getFirstExpenseId().toString();
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{expenseId}", expenseId)
+                        .then()
+                        .statusCode(204);
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{expenseId}", expenseId)
+                        .then()
+                        .statusCode(404);
+            }
+        }
+    }
+
+    private UUID getFirstExpenseId() {
+        return UUID.fromString(
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get()
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .jsonPath()
+                        .getString("[0].id")
+        );
     }
 }
