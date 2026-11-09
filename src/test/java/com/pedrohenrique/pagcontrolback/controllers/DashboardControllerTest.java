@@ -120,7 +120,7 @@ class DashboardControllerTest {
                     token
             );
 
-            List<UUID> installmentIds = installmentHelper.getInstallments(token, port);;
+            List<UUID> installmentIds = installmentHelper.getInstallments(token, port);
             payInstallments(installmentIds);
 
             RestAssured.given()
