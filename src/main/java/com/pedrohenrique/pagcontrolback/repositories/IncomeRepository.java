@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IncomeRepository extends JpaRepository<Income, UUID> {
@@ -36,6 +37,14 @@ public interface IncomeRepository extends JpaRepository<Income, UUID> {
                                 WHERE i.user.id = :userId
                 """
     )
-
     List<Income> findAllIncomeByUserId(UUID userId);
+
+    @Query(
+            """
+                SELECT i from Income i
+                            WHERE i.id = :incomeId
+                                        AND i.user.id = :userId
+            """
+    )
+    Optional<Income> findIncomeByIdAndUserId(UUID incomeId, UUID userId);
 }

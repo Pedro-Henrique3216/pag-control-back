@@ -7,6 +7,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.IncomeResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.IncomeMapper;
 import com.pedrohenrique.pagcontrolback.model.Income;
 import com.pedrohenrique.pagcontrolback.usecases.CreateIncomeUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.GetIncomeByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListIncomesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/incomes")
@@ -24,13 +26,16 @@ public class IncomeController {
 
     private final CreateIncomeUseCase createIncomeUseCase;
     private final ListIncomesUseCase listIncomesUseCase;
+    private final GetIncomeByIdUseCase getIncomeByIdUseCase;
 
     public IncomeController(
             CreateIncomeUseCase createIncomeUseCase,
-            ListIncomesUseCase listIncomesUseCase
+            ListIncomesUseCase listIncomesUseCase,
+            GetIncomeByIdUseCase getIncomeByIdUseCase
     ) {
         this.createIncomeUseCase = createIncomeUseCase;
         this.listIncomesUseCase = listIncomesUseCase;
+        this.getIncomeByIdUseCase = getIncomeByIdUseCase;
     }
 
     @PostMapping
@@ -62,5 +67,15 @@ public class IncomeController {
                 .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{incomeId}")
+    public ResponseEntity<IncomeResponseDto> getIncomeById(
+            @PathVariable UUID incomeId,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        Income income = getIncomeByIdUseCase.getIncomeById(incomeId, user.getId());
+
+        return ResponseEntity.ok(IncomeMapper.toDto(income));
     }
 }
