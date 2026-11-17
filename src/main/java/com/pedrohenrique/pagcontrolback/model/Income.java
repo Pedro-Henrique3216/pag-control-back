@@ -1,8 +1,7 @@
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
-import com.pedrohenrique.pagcontrolback.exceptions.CategoryTypeInvalidException;
-import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
+import com.pedrohenrique.pagcontrolback.exceptions.*;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -40,11 +39,32 @@ public class Income {
     public Income() {}
 
     public Income(Money amount, String description, LocalDate date, User user) {
+        validateIncome(amount, description, date);
         this.amount = amount;
         this.description = description;
         this.date = date;
+
         setUser(user);
+
         this.createdAt = LocalDateTime.now();
+    }
+
+    private void validateIncome(Money amount, String description, LocalDate date){
+        if (amount == null){
+            throw new InvalidAmountException("amount cannot be null");
+        }
+
+        if (description == null || description.isBlank()){
+            throw new DescriptionRequiredException("description cannot be blank or null");
+        }
+
+        if (description.length() > 100){
+            throw new DescriptionInvalidException("Description cannot exceed 100 characters");
+        }
+
+        if (date == null){
+            throw new DateRequiredException("date cannot be null");
+        }
     }
 
     public UUID getId() {
@@ -80,19 +100,44 @@ public class Income {
     }
 
     public void setUser(User user) {
-        try {
-            this.user = Objects.requireNonNull(user);
-        } catch (NullPointerException e) {
+        if (user == null) {
             throw new UserRequiredException("User cannot be null");
         }
+
+        this.user = user;
     }
 
     public void assignCategory(Category category) {
-        if(category.getCategoryType() != TransactionType.INCOME){
-            throw new CategoryTypeInvalidException("Category type must be INCOME");
+        if (category == null) {
+            throw new CategoryRequiredException("Category cannot be null");
         }
+
+        if (category.getCategoryType() != TransactionType.INCOME) {
+            throw new CategoryTypeInvalidException(
+                    "Category type must be INCOME"
+            );
+        }
+
         this.category = category;
     }
+
+
+    public void update(
+            Money amount,
+            String description,
+            LocalDate date,
+            Category category
+    ) {
+        validateIncome(amount, description, date);
+        this.amount = amount;
+        this.description = description;
+        this.date = date;
+
+        assignCategory(category);
+
+        this.updatedAt = LocalDateTime.now();
+    }
+
 
     @Override
     public boolean equals(Object o) {

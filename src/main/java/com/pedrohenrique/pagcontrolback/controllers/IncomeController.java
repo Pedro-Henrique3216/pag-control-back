@@ -2,13 +2,16 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateIncomeCommand;
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateIncomeCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.IncomeRequestDto;
+import com.pedrohenrique.pagcontrolback.dtos.request.IncomeUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.IncomeResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.IncomeMapper;
 import com.pedrohenrique.pagcontrolback.model.Income;
 import com.pedrohenrique.pagcontrolback.usecases.CreateIncomeUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.GetIncomeByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListIncomesUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.UpdateIncomeUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,15 +30,18 @@ public class IncomeController {
     private final CreateIncomeUseCase createIncomeUseCase;
     private final ListIncomesUseCase listIncomesUseCase;
     private final GetIncomeByIdUseCase getIncomeByIdUseCase;
+    private final UpdateIncomeUseCase updateIncomeUseCase;
 
     public IncomeController(
             CreateIncomeUseCase createIncomeUseCase,
             ListIncomesUseCase listIncomesUseCase,
-            GetIncomeByIdUseCase getIncomeByIdUseCase
+            GetIncomeByIdUseCase getIncomeByIdUseCase,
+            UpdateIncomeUseCase updateIncomeUseCase
     ) {
         this.createIncomeUseCase = createIncomeUseCase;
         this.listIncomesUseCase = listIncomesUseCase;
         this.getIncomeByIdUseCase = getIncomeByIdUseCase;
+        this.updateIncomeUseCase = updateIncomeUseCase;
     }
 
     @PostMapping
@@ -75,6 +81,25 @@ public class IncomeController {
             @AuthenticationPrincipal UserPrincipal user
     ) {
         Income income = getIncomeByIdUseCase.getIncomeById(incomeId, user.getId());
+
+        return ResponseEntity.ok(IncomeMapper.toDto(income));
+    }
+
+    @PutMapping("/{incomeId}")
+    public ResponseEntity<IncomeResponseDto> updateIncome(
+            @PathVariable UUID incomeId,
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestBody @Valid IncomeUpdateDto updateDto
+    ){
+
+        UpdateIncomeCommand command = new UpdateIncomeCommand(
+                updateDto.amount(),
+                updateDto.description(),
+                updateDto.date(),
+                updateDto.categoryId()
+        );
+
+        Income income = updateIncomeUseCase.updateIncome(command, incomeId, user.getId());
 
         return ResponseEntity.ok(IncomeMapper.toDto(income));
     }

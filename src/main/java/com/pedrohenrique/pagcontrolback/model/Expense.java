@@ -104,7 +104,7 @@ public class Expense {
 
     private void validateExpenseDate(LocalDate expenseDate) {
         if (expenseDate == null) {
-            throw new ExpenseDateRequiredException("Expense date is required.");
+            throw new DateRequiredException("Expense date is required.");
         }
 
         if (expenseDate.isAfter(LocalDate.now())) {

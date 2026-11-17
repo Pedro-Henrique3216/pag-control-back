@@ -106,7 +106,7 @@ class ExpenseTest {
         @Test
         void shouldThrowWhenExpenseDateIsNull() {
             assertThrows(
-                    ExpenseDateRequiredException.class,
+                    DateRequiredException.class,
                     () -> new Expense(
                             "INV123",
                             "Compra",
