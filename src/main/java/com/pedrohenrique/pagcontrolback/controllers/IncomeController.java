@@ -8,10 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.IncomeUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.IncomeResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.IncomeMapper;
 import com.pedrohenrique.pagcontrolback.model.Income;
-import com.pedrohenrique.pagcontrolback.usecases.CreateIncomeUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.GetIncomeByIdUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListIncomesUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.UpdateIncomeUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,17 +28,20 @@ public class IncomeController {
     private final ListIncomesUseCase listIncomesUseCase;
     private final GetIncomeByIdUseCase getIncomeByIdUseCase;
     private final UpdateIncomeUseCase updateIncomeUseCase;
+    private final DeactivateIncomeUseCase deactivateIncomeUseCase;
 
     public IncomeController(
             CreateIncomeUseCase createIncomeUseCase,
             ListIncomesUseCase listIncomesUseCase,
             GetIncomeByIdUseCase getIncomeByIdUseCase,
-            UpdateIncomeUseCase updateIncomeUseCase
+            UpdateIncomeUseCase updateIncomeUseCase,
+            DeactivateIncomeUseCase deactivateIncomeUseCase
     ) {
         this.createIncomeUseCase = createIncomeUseCase;
         this.listIncomesUseCase = listIncomesUseCase;
         this.getIncomeByIdUseCase = getIncomeByIdUseCase;
         this.updateIncomeUseCase = updateIncomeUseCase;
+        this.deactivateIncomeUseCase = deactivateIncomeUseCase;
     }
 
     @PostMapping
@@ -102,5 +102,14 @@ public class IncomeController {
         Income income = updateIncomeUseCase.updateIncome(command, incomeId, user.getId());
 
         return ResponseEntity.ok(IncomeMapper.toDto(income));
+    }
+
+    @DeleteMapping("/{incomeId}")
+    public ResponseEntity<Void> deleteIncome(
+            @PathVariable UUID incomeId,
+            @AuthenticationPrincipal UserPrincipal user
+    ){
+        deactivateIncomeUseCase.deactivateIncome(incomeId, user.getId());
+        return ResponseEntity.noContent().build();
     }
 }

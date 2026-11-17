@@ -35,6 +35,7 @@ public class Income {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    private boolean active;
 
     public Income() {}
 
@@ -47,6 +48,7 @@ public class Income {
         setUser(user);
 
         this.createdAt = LocalDateTime.now();
+        this.active = true;
     }
 
     private void validateIncome(Money amount, String description, LocalDate date){
@@ -97,6 +99,15 @@ public class Income {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public boolean isActive(){
+        return active;
+    }
+
+    public void deactivate(){
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void setUser(User user) {
