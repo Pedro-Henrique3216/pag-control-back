@@ -18,4 +18,12 @@ public interface RecurringExpenseRepository extends JpaRepository<RecurringExpen
             """
     )
     List<RecurringExpense> findActiveRecurringExpensesDueOnOrBefore(LocalDate today);
+
+    @Query(
+            """
+                SELECT re FROM RecurringExpense re
+                            WHERE re.user.id = :userId
+            """
+    )
+    List<RecurringExpense> findAllRecurringExpensesByUserId(UUID userId);
 }
