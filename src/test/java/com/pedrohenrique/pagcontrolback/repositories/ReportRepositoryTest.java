@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.repositories;
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.dtos.response.MonthSummaryDto;
 import com.pedrohenrique.pagcontrolback.model.*;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +11,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,11 +54,7 @@ class ReportRepositoryTest {
 
     private Supplier createSupplier(User user, String name) {
         return supplierRepository.save(
-                new Supplier(
-                        name,
-                        null,
-                        user
-                )
+                new Supplier(name, null, user)
         );
     }
 
@@ -74,7 +69,7 @@ class ReportRepositoryTest {
     ) {
 
         Expense expense = new Expense(
-                "INV-dsadasd",
+                "INV-" + UUID.randomUUID(),
                 description,
                 paymentType,
                 date,
@@ -84,9 +79,9 @@ class ReportRepositoryTest {
 
         expense.setSupplier(supplier);
 
-        if(paymentType.equals(PaymentType.CREDIT)) {
+        if (paymentType.equals(PaymentType.CREDIT)) {
             expense.generateCreditCardInstallments(1);
-        } else if(paymentType.equals(PaymentType.BILL)) {
+        } else if (paymentType.equals(PaymentType.BILL)) {
             expense.generateBillInstallments(installments);
         } else {
             expense.generateSingleInstallment();
@@ -112,29 +107,35 @@ class ReportRepositoryTest {
         return incomeRepository.save(income);
     }
 
+    private void assertAmount(
+            BigDecimal expected,
+            BigDecimal actual
+    ) {
+        assertEquals(
+                0,
+                expected.compareTo(actual),
+                "Expected: " + expected + ", actual: " + actual
+        );
+    }
+
     @Nested
     class MonthlySummaryTests {
 
         @Test
-        @DisplayName("Should return monthly summary with income and expenses")
         void shouldReturnMonthlySummary() {
-
             User user = createUser("summary@test.com");
 
-            Supplier supplier = createSupplier(
-                    user,
-                    "Supplier A"
-            );
+            Supplier supplier = createSupplier(user, "Supplier A");
 
             createIncome(
                     BigDecimal.valueOf(3000),
-                    "income",
+                    "Salary",
                     LocalDate.of(2026, 2, 10),
                     user
             );
 
             createExpense(
-                    "expense",
+                    "Expense",
                     PaymentType.CASH,
                     LocalDate.of(2026, 2, 15),
                     user,
@@ -154,55 +155,21 @@ class ReportRepositoryTest {
 
             MonthSummaryDto summary = result.get(0);
 
-            assertEquals(
-                    YearMonth.of(2026, 2),
-                    summary.month()
+            assertEquals(YearMonth.of(2026, 2), summary.month());
+
+            assertAmount(
+                    BigDecimal.valueOf(3000),
+                    summary.income()
             );
 
-            assertEquals(
-                    new BigDecimal("3000").floatValue(),
-                    summary.income().floatValue()
+            assertAmount(
+                    BigDecimal.valueOf(1500),
+                    summary.expense()
             );
-
-            assertEquals(
-                    new BigDecimal("1500").floatValue(),
-                    summary.expense().floatValue()
-            );
-        }
-
-        @Test
-        void shouldIgnoreUnpaidInstallments() {
-
-            User user = createUser("unpaid@test.com");
-
-            Supplier supplier = createSupplier(
-                    user,
-                    "Supplier A"
-            );
-
-            createExpense(
-                    "expense",
-                    PaymentType.BILL,
-                    LocalDate.of(2026, 2, 10),
-                    user,
-                    supplier,
-                    BigDecimal.valueOf(2000),
-                    Map.of(1, "")
-            );
-
-            List<MonthSummaryDto> result =
-                    reportRepository.findMonthlySummaryByUserId(
-                            user.getId(),
-                            LocalDate.of(2026, 2, 1),
-                            LocalDate.of(2026, 2, 28)
-                    );
-
-            assertEquals(0, result.size());
         }
 
         @Test
         void shouldReturnEmptyWhenNoData() {
-
             User user = createUser("empty@test.com");
 
             List<MonthSummaryDto> result =
@@ -217,19 +184,18 @@ class ReportRepositoryTest {
 
         @Test
         void shouldGroupByMultipleMonths() {
-
             User user = createUser("months@test.com");
 
             createIncome(
                     BigDecimal.valueOf(1000),
-                    "jan",
+                    "January",
                     LocalDate.of(2026, 1, 10),
                     user
             );
 
             createIncome(
                     BigDecimal.valueOf(2000),
-                    "fev",
+                    "February",
                     LocalDate.of(2026, 2, 10),
                     user
             );
@@ -244,47 +210,68 @@ class ReportRepositoryTest {
             assertEquals(2, result.size());
 
             assertEquals(
-                    BigDecimal.ZERO.intValue(),
-                    result.get(0).expense().intValue()
+                    YearMonth.of(2026, 1),
+                    result.get(0).month()
+            );
+
+            assertEquals(
+                    YearMonth.of(2026, 2),
+                    result.get(1).month()
+            );
+
+            assertAmount(
+                    BigDecimal.valueOf(1000),
+                    result.get(0).income()
+            );
+
+            assertAmount(
+                    BigDecimal.valueOf(2000),
+                    result.get(1).income()
+            );
+
+            assertAmount(
+                    BigDecimal.ZERO,
+                    result.get(0).expense()
+            );
+
+            assertAmount(
+                    BigDecimal.ZERO,
+                    result.get(1).expense()
             );
         }
 
         @Test
         void shouldSumMultipleValuesInSameMonth() {
-
             User user = createUser("sum@test.com");
 
-            Supplier supplier = createSupplier(
-                    user,
-                    "Supplier A"
-            );
+            Supplier supplier = createSupplier(user, "Supplier A");
 
             createIncome(
                     BigDecimal.valueOf(1000),
-                    "i1",
+                    "Income 1",
                     LocalDate.of(2026, 2, 10),
                     user
             );
 
             createIncome(
                     BigDecimal.valueOf(500),
-                    "i2",
+                    "Income 2",
                     LocalDate.of(2026, 2, 15),
                     user
             );
 
             createExpense(
-                    "e1",
-                    PaymentType.BILL,
+                    "Expense 1",
+                    PaymentType.CASH,
                     LocalDate.of(2026, 2, 10),
                     user,
                     supplier,
                     BigDecimal.valueOf(300),
-                    Map.of(1, "")
+                    null
             );
 
             createExpense(
-                    "e2",
+                    "Expense 2",
                     PaymentType.CASH,
                     LocalDate.of(2026, 2, 15),
                     user,
@@ -300,36 +287,70 @@ class ReportRepositoryTest {
                             LocalDate.of(2026, 2, 28)
                     );
 
+            assertEquals(1, result.size());
+
             MonthSummaryDto summary = result.get(0);
 
-            assertEquals(
-                    new BigDecimal("1500").floatValue(),
-                    summary.income().floatValue()
+            assertAmount(
+                    BigDecimal.valueOf(1500),
+                    summary.income()
             );
 
-            assertEquals(
-                    new BigDecimal("500").floatValue(),
-                    summary.expense().floatValue()
+            assertAmount(
+                    BigDecimal.valueOf(800),
+                    summary.expense()
             );
         }
+    }
+
+    @Nested
+    class InstallmentTests {
+
+        @Test
+        void shouldIgnoreUnpaidInstallments() {
+            User user = createUser("unpaid@test.com");
+
+            Supplier supplier = createSupplier(user, "Supplier A");
+
+            createExpense(
+                    "Unpaid expense",
+                    PaymentType.BILL,
+                    LocalDate.of(2026, 2, 10),
+                    user,
+                    supplier,
+                    BigDecimal.valueOf(2000),
+                    Map.of(1, "")
+            );
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Nested
+    class UserIsolationTests {
 
         @Test
         void shouldReturnOnlyDataFromRequestedUser() {
-
             User user1 = createUser("user1@test.com");
-
             User user2 = createUser("user2@test.com");
 
             createIncome(
                     BigDecimal.valueOf(1000),
-                    "income-user1",
+                    "Income user 1",
                     LocalDate.of(2026, 2, 10),
                     user1
             );
 
             createIncome(
                     BigDecimal.valueOf(5000),
-                    "income-user2",
+                    "Income user 2",
                     LocalDate.of(2026, 2, 10),
                     user2
             );
@@ -343,28 +364,60 @@ class ReportRepositoryTest {
 
             assertEquals(1, result.size());
 
-            assertEquals(
-                    new BigDecimal("1000").floatValue(),
-                    result.get(0).income().floatValue()
+            assertAmount(
+                    BigDecimal.valueOf(1000),
+                    result.get(0).income()
             );
+
+            assertAmount(
+                    BigDecimal.ZERO,
+                    result.get(0).expense()
+            );
+        }
+    }
+
+    @Nested
+    class InactiveTransactionTests {
+
+        @Test
+        void shouldIgnoreInactiveIncomes() {
+            User user = createUser("inactive-income@test.com");
+
+            Income income = createIncome(
+                    BigDecimal.valueOf(3000),
+                    "Deleted income",
+                    LocalDate.of(2026, 2, 10),
+                    user
+            );
+
+            income.deactivate();
+            incomeRepository.saveAndFlush(income);
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertTrue(result.isEmpty());
         }
 
         @Test
         void shouldIgnoreInactiveExpenses() {
-
             User user = createUser("inactive-expense@test.com");
 
             Supplier supplier = createSupplier(user, "Supplier A");
 
             createIncome(
                     BigDecimal.valueOf(1000),
-                    "income",
+                    "Active income",
                     LocalDate.of(2026, 2, 10),
                     user
             );
 
             Expense expense = createExpense(
-                    "deleted expense",
+                    "Deleted expense",
                     PaymentType.CASH,
                     LocalDate.of(2026, 2, 15),
                     user,
@@ -374,7 +427,7 @@ class ReportRepositoryTest {
             );
 
             expense.deactivate();
-            expenseRepository.save(expense);
+            expenseRepository.saveAndFlush(expense);
 
             List<MonthSummaryDto> result =
                     reportRepository.findMonthlySummaryByUserId(
@@ -387,15 +440,209 @@ class ReportRepositoryTest {
 
             MonthSummaryDto summary = result.get(0);
 
-            assertEquals(
-                    BigDecimal.valueOf(1000).setScale(1, RoundingMode.HALF_UP),
+            assertAmount(
+                    BigDecimal.valueOf(1000),
                     summary.income()
             );
 
-            assertEquals(
-                    BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP),
-                    summary.expense().setScale(1, RoundingMode.HALF_UP)
+            assertAmount(
+                    BigDecimal.ZERO,
+                    summary.expense()
             );
+        }
+
+        @Test
+        void shouldIgnoreBothInactiveIncomesAndExpenses() {
+            User user = createUser("inactive-both@test.com");
+
+            Supplier supplier = createSupplier(user, "Supplier A");
+
+            Income income = createIncome(
+                    BigDecimal.valueOf(3000),
+                    "Deleted income",
+                    LocalDate.of(2026, 2, 10),
+                    user
+            );
+
+            Expense expense = createExpense(
+                    "Deleted expense",
+                    PaymentType.CASH,
+                    LocalDate.of(2026, 2, 15),
+                    user,
+                    supplier,
+                    BigDecimal.valueOf(1000),
+                    null
+            );
+
+            income.deactivate();
+            expense.deactivate();
+
+            incomeRepository.saveAndFlush(income);
+            expenseRepository.saveAndFlush(expense);
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Nested
+    class TransactionTypeTests {
+
+        @Test
+        void shouldReturnZeroExpensesWhenThereAreOnlyIncomes() {
+            User user = createUser("only-income@test.com");
+
+            createIncome(
+                    BigDecimal.valueOf(2500),
+                    "Salary",
+                    LocalDate.of(2026, 2, 10),
+                    user
+            );
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertEquals(1, result.size());
+
+            assertAmount(
+                    BigDecimal.valueOf(2500),
+                    result.get(0).income()
+            );
+
+            assertAmount(
+                    BigDecimal.ZERO,
+                    result.get(0).expense()
+            );
+        }
+
+        @Test
+        void shouldReturnZeroIncomesWhenThereAreOnlyExpenses() {
+            User user = createUser("only-expense@test.com");
+
+            Supplier supplier = createSupplier(user, "Supplier A");
+
+            createExpense(
+                    "Purchase",
+                    PaymentType.CASH,
+                    LocalDate.of(2026, 2, 10),
+                    user,
+                    supplier,
+                    BigDecimal.valueOf(800),
+                    null
+            );
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertEquals(1, result.size());
+
+            assertAmount(
+                    BigDecimal.ZERO,
+                    result.get(0).income()
+            );
+
+            assertAmount(
+                    BigDecimal.valueOf(800),
+                    result.get(0).expense()
+            );
+        }
+    }
+
+    @Nested
+    class DateRangeTests {
+
+        @Test
+        void shouldConsiderEntireMonthsEvenWhenPartialDatesAreProvided() {
+            User user = createUser("partial-date@test.com");
+
+            createIncome(
+                    BigDecimal.valueOf(100),
+                    "First day",
+                    LocalDate.of(2026, 2, 1),
+                    user
+            );
+
+            createIncome(
+                    BigDecimal.valueOf(200),
+                    "Last day",
+                    LocalDate.of(2026, 2, 28),
+                    user
+            );
+
+            createIncome(
+                    BigDecimal.valueOf(500),
+                    "Previous month",
+                    LocalDate.of(2026, 1, 31),
+                    user
+            );
+
+            createIncome(
+                    BigDecimal.valueOf(700),
+                    "Next month",
+                    LocalDate.of(2026, 3, 1),
+                    user
+            );
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 15),
+                            LocalDate.of(2026, 2, 16)
+                    );
+
+            assertEquals(1, result.size());
+
+            assertEquals(
+                    YearMonth.of(2026, 2),
+                    result.get(0).month()
+            );
+
+            assertAmount(
+                    BigDecimal.valueOf(300),
+                    result.get(0).income()
+            );
+        }
+
+        @Test
+        void shouldNotReturnTransactionsOutsideRequestedPeriod() {
+            User user = createUser("outside-period@test.com");
+
+            createIncome(
+                    BigDecimal.valueOf(1000),
+                    "January",
+                    LocalDate.of(2026, 1, 15),
+                    user
+            );
+
+            createIncome(
+                    BigDecimal.valueOf(2000),
+                    "March",
+                    LocalDate.of(2026, 3, 15),
+                    user
+            );
+
+            List<MonthSummaryDto> result =
+                    reportRepository.findMonthlySummaryByUserId(
+                            user.getId(),
+                            LocalDate.of(2026, 2, 1),
+                            LocalDate.of(2026, 2, 28)
+                    );
+
+            assertTrue(result.isEmpty());
         }
     }
 }
