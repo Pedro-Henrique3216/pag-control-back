@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface RecurringExpenseRepository extends JpaRepository<RecurringExpense, UUID> {
@@ -26,4 +27,13 @@ public interface RecurringExpenseRepository extends JpaRepository<RecurringExpen
             """
     )
     List<RecurringExpense> findAllRecurringExpensesByUserId(UUID userId);
+
+    @Query(
+            """
+                 SELECT re FROM RecurringExpense re
+                            WHERE re.id = :recurringExpenseId
+                                        AND re.user.id = :userId
+            """
+    )
+    Optional<RecurringExpense> findRecurringExpenseByIdAndUserId(UUID recurringExpenseId, UUID userId);
 }

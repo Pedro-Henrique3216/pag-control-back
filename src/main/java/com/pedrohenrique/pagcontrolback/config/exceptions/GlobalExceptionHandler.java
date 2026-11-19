@@ -100,6 +100,7 @@ public class GlobalExceptionHandler {
             CategoryNotFoundException.class,
             CreditCardNotFoundException.class,
             ExpenseNotFoundException.class,
+            RecurringExpenseNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
