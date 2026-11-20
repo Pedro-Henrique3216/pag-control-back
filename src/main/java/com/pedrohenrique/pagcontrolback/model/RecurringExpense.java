@@ -104,7 +104,9 @@ public class RecurringExpense {
         this.user = user;
         this.supplier = supplier;
         this.category = category;
-        this.creditCard = creditCard;
+        this.creditCard = paymentType == PaymentType.CREDIT
+                ? creditCard
+                : null;
 
         this.nextOccurrence = calculateFirstOccurrence();
     }
@@ -120,6 +122,7 @@ public class RecurringExpense {
             LocalDate recurrenceEndDate,
             CreditCard creditCard
     ) {
+        validateAmount(amount);
         validateDescription(description);
         validatePaymentType(paymentType);
         validateRecurrenceData(recurrenceType, recurrenceInterval, recurrenceDay, startDate, recurrenceEndDate);
@@ -168,6 +171,12 @@ public class RecurringExpense {
         }
     }
 
+    private void validateAmount(Money amount) {
+        if (amount == null) {
+            throw new InvalidAmountException("amount cannot be null");
+        }
+    }
+
     private void validateDescription(String description) {
         if (description == null || description.isBlank()) {
             throw new DescriptionRequiredException("Description is required.");
@@ -185,8 +194,7 @@ public class RecurringExpense {
             if(creditCard == null){
                 throw new CreditCardRequiredException("Credit Card Required");
             }
-            this.creditCard = creditCard;
-            this.creditCard.hasLimit(amount);
+            creditCard.hasLimit(amount);
         }
     }
 
@@ -249,6 +257,31 @@ public class RecurringExpense {
     public LocalDate getStartDate() {
         return startDate;
     }
+
+
+    public void update(
+            String description,
+            Money amount,
+            PaymentType paymentType,
+            Supplier supplier,
+            Category category,
+            CreditCard creditCard
+    ) {
+        validateAmount(amount);
+        validateDescription(description);
+        validatePaymentType(paymentType);
+        validateCreditCard(paymentType, creditCard, amount);
+
+        this.description = description;
+        this.amount = amount;
+        this.paymentType = paymentType;
+        this.supplier = supplier;
+        this.category = category;
+        this.creditCard = paymentType == PaymentType.CREDIT
+                ? creditCard
+                : null;
+    }
+
 
     private LocalDate calculateFirstOccurrence() {
         if (recurrenceType != RecurrenceType.MONTHLY) {

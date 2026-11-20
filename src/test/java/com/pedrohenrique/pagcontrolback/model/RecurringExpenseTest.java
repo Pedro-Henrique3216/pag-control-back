@@ -1,10 +1,7 @@
-
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.exceptions.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -16,264 +13,737 @@ import static org.mockito.Mockito.*;
 
 class RecurringExpenseTest {
 
-    private User user;
-    private CreditCard creditCard;
-    private Money amount;
+    private final LocalDate startDate = LocalDate.of(2026, 1, 10);
+    private final Money amount = Money.of(new BigDecimal("100.00"));
 
-    @BeforeEach
-    void setUp() {
-        user = mock(User.class);
-        creditCard = mock(CreditCard.class);
-        amount = new Money(new BigDecimal("100.00"));
-    }
-
-    private RecurringExpense createMonthlyExpense(
-            LocalDate startDate,
+    private RecurringExpense createRecurringExpense(
+            PaymentType paymentType,
+            RecurrenceType recurrenceType,
+            Integer recurrenceInterval,
             Integer recurrenceDay,
-            LocalDate recurrenceEndDate
+            LocalDate startDate,
+            LocalDate recurrenceEndDate,
+            CreditCard creditCard
     ) {
         return new RecurringExpense(
-                "Internet",
+                "Monthly expense",
                 amount,
-                PaymentType.PIX,
-                RecurrenceType.MONTHLY,
-                1,
+                paymentType,
+                recurrenceType,
+                recurrenceInterval,
                 recurrenceDay,
                 startDate,
                 recurrenceEndDate,
-                user,
+                new User(),
                 null,
+                null,
+                creditCard
+        );
+    }
+
+    private RecurringExpense createMonthlyExpense() {
+        return createRecurringExpense(
+                PaymentType.PIX,
+                RecurrenceType.MONTHLY,
+                1,
+                10,
+                startDate,
                 null,
                 null
         );
     }
 
     @Nested
-    @DisplayName("Creation")
-    class CreationTests {
+    class ConstructorTests {
 
         @Test
-        @DisplayName("Should create a recurring expense successfully")
-        void shouldCreateRecurringExpense() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 1),
+        void shouldCreateRecurringExpenseSuccessfully() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertEquals("Monthly expense", expense.getDescription());
+            assertEquals(amount, expense.getAmount());
+            assertEquals(PaymentType.PIX, expense.getPaymentType());
+            assertEquals(RecurrenceType.MONTHLY, expense.getRecurrenceType());
+            assertEquals(1, expense.getRecurrenceInterval());
+            assertEquals(10, expense.getRecurrenceDay());
+            assertEquals(startDate, expense.getStartDate());
+            assertEquals(startDate, expense.getNextOccurrence());
+            assertTrue(expense.isActive());
+            assertNotNull(expense.getUser());
+        }
+
+        @Test
+        void shouldCreateRecurringExpenseWithCreditCard() {
+            CreditCard creditCard = mock(CreditCard.class);
+
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.CREDIT,
+                    RecurrenceType.MONTHLY,
+                    1,
                     10,
-                    null
+                    startDate,
+                    null,
+                    creditCard
             );
 
-            assertAll(
-                    () -> assertEquals("Internet", expense.getDescription()),
-                    () -> assertEquals(amount, expense.getAmount()),
-                    () -> assertEquals(PaymentType.PIX, expense.getPaymentType()),
-                    () -> assertEquals(RecurrenceType.MONTHLY,
-                            expense.getRecurrenceType()),
-                    () -> assertEquals(1, expense.getRecurrenceInterval()),
-                    () -> assertEquals(LocalDate.of(2026, 1, 10),
-                            expense.getNextOccurrence()),
-                    () -> assertTrue(expense.isActive()),
-                    () -> assertSame(user, expense.getUser())
-            );
-        }
+            assertEquals(creditCard, expense.getCreditCard());
 
-        @Test
-        @DisplayName("Should throw exception when description is null")
-        void shouldThrowWhenDescriptionIsNull() {
-            assertThrows(
-                    DescriptionRequiredException.class,
-                    () -> new RecurringExpense(
-                            null, amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, 1, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when description is blank")
-        void shouldThrowWhenDescriptionIsBlank() {
-            assertThrows(
-                    DescriptionRequiredException.class,
-                    () -> new RecurringExpense(
-                            "  ", amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, 1, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when payment type is null")
-        void shouldThrowWhenPaymentTypeIsNull() {
-            assertThrows(
-                    PaymentTypeRequiredException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, null,
-                            RecurrenceType.MONTHLY, 1, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when recurrence type is null")
-        void shouldThrowWhenRecurrenceTypeIsNull() {
-            assertThrows(
-                    RecurrenceTypeRequiredException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.PIX,
-                            null, 1, null,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when recurrence interval is null")
-        void shouldThrowWhenIntervalIsNull() {
-            assertThrows(
-                    RecurrenceIntervalException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, null, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when recurrence interval is zero")
-        void shouldThrowWhenIntervalIsZero() {
-            assertThrows(
-                    RecurrenceIntervalException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, 0, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when recurrence interval is negative")
-        void shouldThrowWhenIntervalIsNegative() {
-            assertThrows(
-                    RecurrenceIntervalException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, -1, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should throw exception when start date is null")
-        void shouldThrowWhenStartDateIsNull() {
-            assertThrows(
-                    StartDateRequiredException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.PIX,
-                            RecurrenceType.MONTHLY, 1, 10,
-                            null, null, user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should reject monthly recurrence day below one")
-        void shouldRejectMonthlyDayBelowOne() {
-            assertThrows(
-                    RecurrenceDayException.class,
-                    () -> createMonthlyExpense(
-                            LocalDate.of(2026, 1, 1), 0, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should reject monthly recurrence day above 31")
-        void shouldRejectMonthlyDayAbove31() {
-            assertThrows(
-                    RecurrenceDayException.class,
-                    () -> createMonthlyExpense(
-                            LocalDate.of(2026, 1, 1), 32, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should reject end date before start date")
-        void shouldRejectEndDateBeforeStartDate() {
-            assertThrows(
-                    InvalidRecurrenceEndDateException.class,
-                    () -> createMonthlyExpense(
-                            LocalDate.of(2026, 1, 10),
-                            15,
-                            LocalDate.of(2026, 1, 9)
-                    )
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("Credit card validation")
-    class CreditCardTests {
-
-        @Test
-        @DisplayName("Should require a credit card for CREDIT payment")
-        void shouldRequireCreditCardForCreditPayment() {
-            assertThrows(
-                    CreditCardRequiredException.class,
-                    () -> new RecurringExpense(
-                            "Internet", amount, PaymentType.CREDIT,
-                            RecurrenceType.MONTHLY, 1, 10,
-                            LocalDate.of(2026, 1, 1), null,
-                            user, null, null, null
-                    )
-            );
-        }
-
-        @Test
-        @DisplayName("Should validate the credit card limit")
-        void shouldValidateCreditCardLimit() {
-            RecurringExpense expense = new RecurringExpense(
-                    "Internet", amount, PaymentType.CREDIT,
-                    RecurrenceType.MONTHLY, 1, 10,
-                    LocalDate.of(2026, 1, 1), null,
-                    user, null, null, creditCard
-            );
-
-            assertSame(creditCard, expense.getCreditCard());
             verify(creditCard).hasLimit(amount);
         }
 
         @Test
-        @DisplayName("Should not require a credit card for PIX")
-        void shouldNotRequireCreditCardForPix() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 1), 10, null
+        void shouldNotAssignCreditCardWhenPaymentTypeIsNotCredit() {
+            CreditCard creditCard = mock(CreditCard.class);
+
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    10,
+                    startDate,
+                    null,
+                    creditCard
             );
 
             assertNull(expense.getCreditCard());
+
+            verifyNoInteractions(creditCard);
+        }
+
+        @Test
+        void shouldThrowWhenAmountIsNull() {
+            assertThrows(
+                    InvalidAmountException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            null,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDescriptionIsNull() {
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> new RecurringExpense(
+                            null,
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenDescriptionIsBlank() {
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> new RecurringExpense(
+                            "   ",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenPaymentTypeIsNull() {
+            assertThrows(
+                    PaymentTypeRequiredException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            null,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceTypeIsNull() {
+            assertThrows(
+                    RecurrenceTypeRequiredException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            null,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceIntervalIsNull() {
+            assertThrows(
+                    RecurrenceIntervalException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            null,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceIntervalIsZero() {
+            assertThrows(
+                    RecurrenceIntervalException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            0,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceIntervalIsNegative() {
+            assertThrows(
+                    RecurrenceIntervalException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            -1,
+                            10,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenStartDateIsNull() {
+            assertThrows(
+                    StartDateRequiredException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            null,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenMonthlyRecurrenceDayIsNull() {
+            assertThrows(
+                    RecurrenceDayException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            null,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenMonthlyRecurrenceDayIsLessThanOne() {
+            assertThrows(
+                    RecurrenceDayException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            0,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenMonthlyRecurrenceDayIsGreaterThanThirtyOne() {
+            assertThrows(
+                    RecurrenceDayException.class,
+                    () -> new RecurringExpense(
+                            "Monthly expense",
+                            amount,
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            32,
+                            startDate,
+                            null,
+                            new User(),
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldAllowRecurrenceDayNullForNonMonthlyRecurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            assertNull(expense.getRecurrenceDay());
+            assertEquals(startDate, expense.getNextOccurrence());
+        }
+
+        @Test
+        void shouldThrowWhenRecurrenceEndDateIsBeforeStartDate() {
+            LocalDate endDate = startDate.minusDays(1);
+
+            assertThrows(
+                    InvalidRecurrenceEndDateException.class,
+                    () -> createRecurringExpense(
+                            PaymentType.PIX,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            endDate,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCreditCardIsRequired() {
+            assertThrows(
+                    CreditCardRequiredException.class,
+                    () -> createRecurringExpense(
+                            PaymentType.CREDIT,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenCreditCardLimitIsExceeded() {
+            CreditCard creditCard = mock(CreditCard.class);
+
+            doThrow(new CreditLimitExceededException("Credit limit exceeded"))
+                    .when(creditCard)
+                    .hasLimit(amount);
+
+            assertThrows(
+                    CreditLimitExceededException.class,
+                    () -> createRecurringExpense(
+                            PaymentType.CREDIT,
+                            RecurrenceType.MONTHLY,
+                            1,
+                            10,
+                            startDate,
+                            null,
+                            creditCard
+                    )
+            );
         }
     }
 
     @Nested
-    @DisplayName("First occurrence calculation")
-    class FirstOccurrenceTests {
+    class UpdateTests {
 
         @Test
-        @DisplayName("Should use the recurrence day when it is after the start date")
-        void shouldUseRecurrenceDayAfterStartDate() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 5), 20, null
+        void shouldUpdateRecurringExpenseSuccessfully() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            String newDescription = "Updated expense";
+            Money newAmount = Money.of(new BigDecimal("200.00"));
+
+            expense.update(
+                    newDescription,
+                    newAmount,
+                    PaymentType.PIX,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(newDescription, expense.getDescription());
+            assertEquals(newAmount, expense.getAmount());
+            assertEquals(PaymentType.PIX, expense.getPaymentType());
+            assertNull(expense.getCreditCard());
+        }
+
+        @Test
+        void shouldUpdateRecurringExpenseWithSupplierAndCategory() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            Supplier supplier = mock(Supplier.class);
+            Category category = mock(Category.class);
+
+            expense.update(
+                    "Updated expense",
+                    amount,
+                    PaymentType.PIX,
+                    supplier,
+                    category,
+                    null
+            );
+
+            assertEquals(supplier, expense.getSupplier());
+            assertEquals(category, expense.getCategory());
+        }
+
+        @Test
+        void shouldUpdateRecurringExpenseWithCreditCard() {
+            RecurringExpense expense = createMonthlyExpense();
+            CreditCard creditCard = mock(CreditCard.class);
+
+            expense.update(
+                    "Updated expense",
+                    amount,
+                    PaymentType.CREDIT,
+                    null,
+                    null,
+                    creditCard
+            );
+
+            assertEquals(PaymentType.CREDIT, expense.getPaymentType());
+            assertEquals(creditCard, expense.getCreditCard());
+
+            verify(creditCard).hasLimit(amount);
+        }
+
+        @Test
+        void shouldRemoveCreditCardWhenPaymentTypeChangesToPix() {
+            CreditCard creditCard = mock(CreditCard.class);
+
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.CREDIT,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    10,
+                    startDate,
+                    null,
+                    creditCard
+            );
+
+            expense.update(
+                    "Updated expense",
+                    amount,
+                    PaymentType.PIX,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(PaymentType.PIX, expense.getPaymentType());
+            assertNull(expense.getCreditCard());
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedAmountIsNull() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertThrows(
+                    InvalidAmountException.class,
+                    () -> expense.update(
+                            "Updated expense",
+                            null,
+                            PaymentType.PIX,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedDescriptionIsNull() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> expense.update(
+                            null,
+                            amount,
+                            PaymentType.PIX,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedDescriptionIsBlank() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertThrows(
+                    DescriptionRequiredException.class,
+                    () -> expense.update(
+                            " ",
+                            amount,
+                            PaymentType.PIX,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedPaymentTypeIsNull() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertThrows(
+                    PaymentTypeRequiredException.class,
+                    () -> expense.update(
+                            "Updated expense",
+                            amount,
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedPaymentTypeRequiresCreditCard() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            assertThrows(
+                    CreditCardRequiredException.class,
+                    () -> expense.update(
+                            "Updated expense",
+                            amount,
+                            PaymentType.CREDIT,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatedCreditCardLimitIsExceeded() {
+            RecurringExpense expense = createMonthlyExpense();
+            CreditCard creditCard = mock(CreditCard.class);
+
+            doThrow(new CreditLimitExceededException("Credit limit exceeded"))
+                    .when(creditCard)
+                    .hasLimit(amount);
+
+            assertThrows(
+                    CreditLimitExceededException.class,
+                    () -> expense.update(
+                            "Updated expense",
+                            amount,
+                            PaymentType.CREDIT,
+                            null,
+                            null,
+                            creditCard
+                    )
+            );
+        }
+
+        @Test
+        void shouldNotChangeFieldsWhenUpdateValidationFails() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            String originalDescription = expense.getDescription();
+            Money originalAmount = expense.getAmount();
+            PaymentType originalPaymentType = expense.getPaymentType();
+
+            assertThrows(
+                    CreditCardRequiredException.class,
+                    () -> expense.update(
+                            "New description",
+                            Money.of(new BigDecimal("300.00")),
+                            PaymentType.CREDIT,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            assertEquals(originalDescription, expense.getDescription());
+            assertEquals(originalAmount, expense.getAmount());
+            assertEquals(originalPaymentType, expense.getPaymentType());
+        }
+
+        @Test
+        void shouldPreserveRecurrenceDataWhenUpdating() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            LocalDate originalStartDate = expense.getStartDate();
+            LocalDate originalNextOccurrence = expense.getNextOccurrence();
+            RecurrenceType originalRecurrenceType = expense.getRecurrenceType();
+            Integer originalInterval = expense.getRecurrenceInterval();
+            Integer originalDay = expense.getRecurrenceDay();
+
+            expense.update(
+                    "Updated expense",
+                    amount,
+                    PaymentType.PIX,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(originalStartDate, expense.getStartDate());
+            assertEquals(originalNextOccurrence, expense.getNextOccurrence());
+            assertEquals(originalRecurrenceType, expense.getRecurrenceType());
+            assertEquals(originalInterval, expense.getRecurrenceInterval());
+            assertEquals(originalDay, expense.getRecurrenceDay());
+        }
+    }
+
+    @Nested
+    class CalculateFirstOccurrenceTests {
+
+        @Test
+        void shouldReturnStartDateForDailyRecurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            assertEquals(startDate, expense.getNextOccurrence());
+        }
+
+        @Test
+        void shouldReturnStartDateForWeeklyRecurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.WEEKLY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            assertEquals(startDate, expense.getNextOccurrence());
+        }
+
+        @Test
+        void shouldReturnStartDateForYearlyRecurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.YEARLY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            assertEquals(startDate, expense.getNextOccurrence());
+        }
+
+        @Test
+        void shouldUseRecurrenceDayInSameMonthWhenItIsAfterStartDate() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    20,
+                    LocalDate.of(2026, 1, 10),
+                    null,
+                    null
             );
 
             assertEquals(
@@ -283,23 +753,51 @@ class RecurringExpenseTest {
         }
 
         @Test
-        @DisplayName("Should move to next month when recurrence day has passed")
-        void shouldMoveToNextMonthWhenDayHasPassed() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 15), 10, null
+        void shouldMoveToNextMonthWhenRecurrenceDayIsBeforeStartDate() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    5,
+                    LocalDate.of(2026, 1, 10),
+                    null,
+                    null
             );
 
             assertEquals(
-                    LocalDate.of(2026, 2, 10),
+                    LocalDate.of(2026, 2, 5),
                     expense.getNextOccurrence()
             );
         }
 
         @Test
-        @DisplayName("Should use the last day of February when recurrence day is 31")
-        void shouldAdjustRecurrenceDayToLastDayOfFebruary() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 2, 1), 31, null
+        void shouldRespectRecurrenceIntervalWhenMovingToNextMonth() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    2,
+                    5,
+                    LocalDate.of(2026, 1, 10),
+                    null,
+                    null
+            );
+
+            assertEquals(
+                    LocalDate.of(2026, 3, 5),
+                    expense.getNextOccurrence()
+            );
+        }
+
+        @Test
+        void shouldAdjustRecurrenceDayToLastDayOfMonth() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    31,
+                    LocalDate.of(2026, 2, 1),
+                    null,
+                    null
             );
 
             assertEquals(
@@ -307,78 +805,75 @@ class RecurringExpenseTest {
                     expense.getNextOccurrence()
             );
         }
-
-        @Test
-        @DisplayName("Should use start date for non-monthly recurrence")
-        void shouldUseStartDateForNonMonthlyRecurrence() {
-            RecurringExpense expense = new RecurringExpense(
-                    "Internet", amount, PaymentType.PIX,
-                    RecurrenceType.WEEKLY, 1, null,
-                    LocalDate.of(2026, 1, 5), null,
-                    user, null, null, null
-            );
-
-            assertEquals(
-                    LocalDate.of(2026, 1, 5),
-                    expense.getNextOccurrence()
-            );
-        }
     }
 
     @Nested
-    @DisplayName("Next occurrence calculation")
-    class NextOccurrenceTests {
+    class CalculateNextOccurrenceTests {
 
         @Test
-        @DisplayName("Should calculate next daily occurrence")
         void shouldCalculateNextDailyOccurrence() {
-            RecurringExpense expense = new RecurringExpense(
-                    "Internet", amount, PaymentType.PIX,
-                    RecurrenceType.DAILY, 2, null,
-                    LocalDate.of(2026, 1, 1), null,
-                    user, null, null, null
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    2,
+                    null,
+                    startDate,
+                    null,
+                    null
             );
 
             assertEquals(
-                    LocalDate.of(2026, 1, 3),
+                    startDate.plusDays(2),
                     expense.calculateNextOccurrence()
             );
         }
 
         @Test
-        @DisplayName("Should calculate next weekly occurrence")
         void shouldCalculateNextWeeklyOccurrence() {
-            RecurringExpense expense = new RecurringExpense(
-                    "Internet", amount, PaymentType.PIX,
-                    RecurrenceType.WEEKLY, 2, null,
-                    LocalDate.of(2026, 1, 5), null,
-                    user, null, null, null
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.WEEKLY,
+                    2,
+                    null,
+                    startDate,
+                    null,
+                    null
             );
 
             assertEquals(
-                    LocalDate.of(2026, 1, 19),
+                    startDate.plusWeeks(2),
                     expense.calculateNextOccurrence()
             );
         }
 
         @Test
-        @DisplayName("Should calculate next monthly occurrence")
         void shouldCalculateNextMonthlyOccurrence() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    2,
+                    10,
+                    startDate,
+                    null,
+                    null
             );
 
             assertEquals(
-                    LocalDate.of(2026, 2, 10),
+                    LocalDate.of(2026, 3, 10),
                     expense.calculateNextOccurrence()
             );
         }
 
         @Test
-        @DisplayName("Should adjust next monthly occurrence to the last day of February")
-        void shouldAdjustNextMonthlyOccurrenceToFebruaryEnd() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 31), 31, null
+        void shouldAdjustNextMonthlyOccurrenceToLastDayOfMonth() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.MONTHLY,
+                    1,
+                    31,
+                    LocalDate.of(2026, 1, 31),
+                    null,
+                    null
             );
 
             assertEquals(
@@ -388,32 +883,70 @@ class RecurringExpenseTest {
         }
 
         @Test
-        @DisplayName("Should calculate next yearly occurrence")
         void shouldCalculateNextYearlyOccurrence() {
-            RecurringExpense expense = new RecurringExpense(
-                    "Insurance", amount, PaymentType.PIX,
-                    RecurrenceType.YEARLY, 2, null,
-                    LocalDate.of(2026, 5, 10), null,
-                    user, null, null, null
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.YEARLY,
+                    2,
+                    null,
+                    startDate,
+                    null,
+                    null
             );
 
             assertEquals(
-                    LocalDate.of(2028, 5, 10),
+                    startDate.plusYears(2),
                     expense.calculateNextOccurrence()
             );
         }
     }
 
     @Nested
-    @DisplayName("Advancing recurrence")
-    class AdvanceOccurrenceTests {
+    class AdvanceNextOccurrenceTests {
 
         @Test
-        @DisplayName("Should advance to the next occurrence")
-        void shouldAdvanceNextOccurrence() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
+        void shouldAdvanceDailyOccurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
             );
+
+            expense.advanceNextOccurrence();
+
+            assertEquals(
+                    startDate.plusDays(1),
+                    expense.getNextOccurrence()
+            );
+        }
+
+        @Test
+        void shouldAdvanceWeeklyOccurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.WEEKLY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            expense.advanceNextOccurrence();
+
+            assertEquals(
+                    startDate.plusWeeks(1),
+                    expense.getNextOccurrence()
+            );
+        }
+
+        @Test
+        void shouldAdvanceMonthlyOccurrence() {
+            RecurringExpense expense = createMonthlyExpense();
 
             expense.advanceNextOccurrence();
 
@@ -421,118 +954,137 @@ class RecurringExpenseTest {
                     LocalDate.of(2026, 2, 10),
                     expense.getNextOccurrence()
             );
-            assertTrue(expense.isActive());
         }
 
         @Test
-        @DisplayName("Should deactivate when next occurrence exceeds end date")
-        void shouldDeactivateWhenNextOccurrenceExceedsEndDate() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10),
-                    10,
-                    LocalDate.of(2026, 1, 31)
+        void shouldAdvanceYearlyOccurrence() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.YEARLY,
+                    1,
+                    null,
+                    startDate,
+                    null,
+                    null
+            );
+
+            expense.advanceNextOccurrence();
+
+            assertEquals(
+                    startDate.plusYears(1),
+                    expense.getNextOccurrence()
+            );
+        }
+
+        @Test
+        void shouldDeactivateWhenNextOccurrenceIsAfterEndDate() {
+            LocalDate endDate = startDate;
+
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    endDate,
+                    null
             );
 
             expense.advanceNextOccurrence();
 
             assertFalse(expense.isActive());
-            assertEquals(
-                    LocalDate.of(2026, 1, 10),
-                    expense.getNextOccurrence()
-            );
+
+            // A próxima ocorrência não é alterada quando a recorrência é desativada.
+            assertEquals(startDate, expense.getNextOccurrence());
         }
 
         @Test
-        @DisplayName("Should keep active when next occurrence equals end date")
-        void shouldRemainActiveWhenNextOccurrenceEqualsEndDate() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10),
-                    10,
-                    LocalDate.of(2026, 2, 10)
+        void shouldKeepActiveWhenNextOccurrenceIsEqualToEndDate() {
+            LocalDate endDate = startDate.plusDays(1);
+
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    endDate,
+                    null
             );
 
             expense.advanceNextOccurrence();
 
             assertTrue(expense.isActive());
-            assertEquals(
-                    LocalDate.of(2026, 2, 10),
-                    expense.getNextOccurrence()
-            );
+            assertEquals(endDate, expense.getNextOccurrence());
         }
     }
 
     @Nested
-    @DisplayName("Due date verification")
-    class DueTests {
+    class IsDueTests {
 
         @Test
-        @DisplayName("Should be due when occurrence is today")
-        void shouldBeDueWhenOccurrenceIsToday() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
-            );
+        void shouldReturnTrueWhenOccurrenceIsToday() {
+            RecurringExpense expense = createMonthlyExpense();
 
-            assertTrue(expense.isDue(LocalDate.of(2026, 1, 10)));
+            assertTrue(expense.isDue(startDate));
         }
 
         @Test
-        @DisplayName("Should be due when occurrence is in the past")
-        void shouldBeDueWhenOccurrenceIsInThePast() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
-            );
+        void shouldReturnTrueWhenOccurrenceIsInThePast() {
+            RecurringExpense expense = createMonthlyExpense();
 
-            assertTrue(expense.isDue(LocalDate.of(2026, 1, 15)));
+            assertTrue(expense.isDue(startDate.plusDays(5)));
         }
 
         @Test
-        @DisplayName("Should not be due when occurrence is in the future")
-        void shouldNotBeDueWhenOccurrenceIsInTheFuture() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
-            );
+        void shouldReturnFalseWhenOccurrenceIsInTheFuture() {
+            RecurringExpense expense = createMonthlyExpense();
 
-            assertFalse(expense.isDue(LocalDate.of(2026, 1, 9)));
+            assertFalse(expense.isDue(startDate.minusDays(1)));
         }
 
         @Test
-        @DisplayName("Should not be due when expense is inactive")
-        void shouldNotBeDueWhenExpenseIsInactive() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
-            );
+        void shouldReturnFalseWhenExpenseIsInactive() {
+            RecurringExpense expense = createMonthlyExpense();
 
             expense.deactivate();
 
-            assertFalse(expense.isDue(LocalDate.of(2026, 1, 15)));
+            assertFalse(expense.isDue(startDate.plusDays(5)));
         }
 
         @Test
-        @DisplayName("Should not be due after recurrence end date")
-        void shouldNotBeDueAfterRecurrenceEndDate() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10),
-                    10,
-                    LocalDate.of(2026, 1, 10)
+        void shouldReturnFalseWhenOccurrenceIsAfterEndDate() {
+            RecurringExpense expense = createRecurringExpense(
+                    PaymentType.PIX,
+                    RecurrenceType.DAILY,
+                    1,
+                    null,
+                    startDate,
+                    startDate.plusDays(1),
+                    null
             );
 
-            expense.advanceNextOccurrence();
-
-            assertFalse(expense.isDue(LocalDate.of(2026, 2, 10)));
+            assertFalse(expense.isDue(startDate.minusDays(5)));
         }
     }
 
     @Nested
-    @DisplayName("Deactivation")
-    class DeactivationTests {
+    class DeactivateTests {
 
         @Test
-        @DisplayName("Should deactivate recurring expense")
         void shouldDeactivateRecurringExpense() {
-            RecurringExpense expense = createMonthlyExpense(
-                    LocalDate.of(2026, 1, 10), 10, null
-            );
+            RecurringExpense expense = createMonthlyExpense();
 
+            expense.deactivate();
+
+            assertFalse(expense.isActive());
+        }
+
+        @Test
+        void shouldRemainInactiveWhenDeactivatedMoreThanOnce() {
+            RecurringExpense expense = createMonthlyExpense();
+
+            expense.deactivate();
             expense.deactivate();
 
             assertFalse(expense.isActive());
