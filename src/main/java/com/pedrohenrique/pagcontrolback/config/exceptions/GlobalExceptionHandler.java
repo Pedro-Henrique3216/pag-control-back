@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             EmailAlreadyInUseException.class,
             ExpenseDateInTheFutureException.class,
-            ExpenseDateRequiredException.class,
+            DateRequiredException.class,
             InstallmentDueDateBeforeExpenseDateException.class,
             InstallmentDueDateRequiredException.class,
             InstallmentRequiredException.class,
@@ -100,6 +100,7 @@ public class GlobalExceptionHandler {
             CategoryNotFoundException.class,
             CreditCardNotFoundException.class,
             ExpenseNotFoundException.class,
+            IncomeNotFoundException.class,
             RecurringExpenseNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)

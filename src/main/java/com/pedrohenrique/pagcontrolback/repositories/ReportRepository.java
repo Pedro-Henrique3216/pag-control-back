@@ -40,6 +40,7 @@ public class ReportRepository implements IReportRepository {
                        FROM incomes i
                        WHERE i.user_id = :userId
                        AND i.date BETWEEN :startDate AND :endDate
+                       AND i.active = true
                 
                        UNION ALL
                 

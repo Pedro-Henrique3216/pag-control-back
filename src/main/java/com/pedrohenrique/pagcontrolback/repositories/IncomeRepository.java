@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IncomeRepository extends JpaRepository<Income, UUID> {
@@ -15,8 +17,37 @@ public interface IncomeRepository extends JpaRepository<Income, UUID> {
             FROM Income i
                 WHERE i.user.id = :userId
                     AND i.date
-                        BETWEEN :startDate
-                            AND :endDate
+                        BETWEEN :startDate AND :endDate
+                                AND i.active = true
     """)
     BigDecimal sumByUserIdAndDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
+
+    @Query(
+            """
+                SELECT i from Income i
+                            WHERE i.user.id = :userId
+                                        AND i.date = :date
+                                                    AND i.active = true
+            """
+    )
+    List<Income> findAllIncomeByUserIdAndDate(UUID userId, LocalDate date);
+
+    @Query(
+            """
+                    SELECT i from Income i
+                                WHERE i.user.id = :userId
+                                                AND i.active = true
+                """
+    )
+    List<Income> findAllIncomeByUserId(UUID userId);
+
+    @Query(
+            """
+                SELECT i from Income i
+                            WHERE i.id = :incomeId
+                                        AND i.user.id = :userId
+                                                    AND i.active = true
+            """
+    )
+    Optional<Income> findIncomeByIdAndUserId(UUID incomeId, UUID userId);
 }
