@@ -8,10 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.CreditCardUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CreditCardResponseDto;
 import com.pedrohenrique.pagcontrolback.factories.CreditCardResponseFactory;
 import com.pedrohenrique.pagcontrolback.model.CreditCard;
-import com.pedrohenrique.pagcontrolback.usecases.CreateCreditCardUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.DeactivateCreditCardUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListCreditCardUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.UpdateCreditCardUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,19 +27,22 @@ public class CreditCardController {
     private final UpdateCreditCardUseCase updateCreditCardUseCase;
     private final DeactivateCreditCardUseCase deactivateCreditCardUseCase;
     private final CreditCardResponseFactory creditCardResponseFactory;
+    private final GetCreditCardByIdUseCase getCreditCardByIdUseCase;
 
     public CreditCardController(
             CreateCreditCardUseCase createCreditCardUseCase,
             ListCreditCardUseCase listCreditCardUseCase,
             UpdateCreditCardUseCase updateCreditCardUseCase,
             DeactivateCreditCardUseCase deactivateCreditCardUseCase,
-            CreditCardResponseFactory creditCardResponseFactory
+            CreditCardResponseFactory creditCardResponseFactory,
+            GetCreditCardByIdUseCase getCreditCardByIdUseCase
     ) {
         this.createCreditCardUseCase = createCreditCardUseCase;
         this.listCreditCardUseCase = listCreditCardUseCase;
         this.updateCreditCardUseCase = updateCreditCardUseCase;
         this.deactivateCreditCardUseCase = deactivateCreditCardUseCase;
         this.creditCardResponseFactory = creditCardResponseFactory;
+        this.getCreditCardByIdUseCase = getCreditCardByIdUseCase;
     }
 
     @PostMapping
@@ -80,8 +80,25 @@ public class CreditCardController {
         return ResponseEntity.ok(response);
     }
 
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CreditCardResponseDto> findCreditCardById(
+            @PathVariable("id") UUID creditCardId,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        CreditCard creditCard = getCreditCardByIdUseCase.findCreditCardById(creditCardId, user.getId());
+
+        CreditCardResponseDto response = creditCardResponseFactory.create(creditCard);
+
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<CreditCardResponseDto> updateCreditCard(@RequestBody CreditCardUpdateDto dto, @PathVariable UUID id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<CreditCardResponseDto> updateCreditCard(
+            @RequestBody CreditCardUpdateDto dto,
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
         UpdateCreditCardCommand command = new UpdateCreditCardCommand(
                 id,
                 dto.name(),
