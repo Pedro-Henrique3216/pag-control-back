@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             EmailAlreadyInUseException.class,
             ExpenseDateInTheFutureException.class,
-            ExpenseDateRequiredException.class,
+            DateRequiredException.class,
             InstallmentDueDateBeforeExpenseDateException.class,
             InstallmentDueDateRequiredException.class,
             InstallmentRequiredException.class,
@@ -72,7 +72,8 @@ public class GlobalExceptionHandler {
             RecurrenceDayException.class,
             StartDateRequiredException.class,
             IllegalArgumentException.class,
-            UpdateInstallmentException.class
+            UpdateInstallmentException.class,
+            DescriptionInvalidException.class,
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<HandleExceptionInternalDto> handleException(RuntimeException ex){
@@ -100,6 +101,7 @@ public class GlobalExceptionHandler {
             CategoryNotFoundException.class,
             CreditCardNotFoundException.class,
             ExpenseNotFoundException.class,
+            IncomeNotFoundException.class,
     })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<HandleExceptionInternalDto> handleNotFoundException(RuntimeException ex){
