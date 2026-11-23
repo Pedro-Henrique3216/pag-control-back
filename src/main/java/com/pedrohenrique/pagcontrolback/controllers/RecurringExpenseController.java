@@ -8,10 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.RecurringExpenseUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.RecurringExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.RecurringExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.RecurringExpense;
-import com.pedrohenrique.pagcontrolback.usecases.CreateRecurringExpenseUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.GetRecurringExpenseByIdUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListRecurringExpensesUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.UpdateRecurringExpenseUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,17 +27,20 @@ public class RecurringExpenseController {
     private final ListRecurringExpensesUseCase listRecurringExpensesUseCase;
     private final GetRecurringExpenseByIdUseCase getRecurringExpenseByIdUseCase;
     private final UpdateRecurringExpenseUseCase updateRecurringExpenseUseCase;
+    private final DeactivateRecurringExpenseUseCase deactivateRecurringExpenseUseCase;
 
     public RecurringExpenseController(
             CreateRecurringExpenseUseCase createRecurringExpenseUseCase,
             ListRecurringExpensesUseCase listRecurringExpensesUseCase,
             GetRecurringExpenseByIdUseCase getRecurringExpenseByIdUseCase,
-            UpdateRecurringExpenseUseCase updateRecurringExpenseUseCase
+            UpdateRecurringExpenseUseCase updateRecurringExpenseUseCase,
+            DeactivateRecurringExpenseUseCase deactivateRecurringExpenseUseCase
     ) {
         this.createRecurringExpenseUseCase = createRecurringExpenseUseCase;
         this.listRecurringExpensesUseCase = listRecurringExpensesUseCase;
         this.getRecurringExpenseByIdUseCase = getRecurringExpenseByIdUseCase;
         this.updateRecurringExpenseUseCase = updateRecurringExpenseUseCase;
+        this.deactivateRecurringExpenseUseCase = deactivateRecurringExpenseUseCase;
     }
 
 
@@ -106,6 +106,15 @@ public class RecurringExpenseController {
 
         RecurringExpense recurringExpense = updateRecurringExpenseUseCase.updateRecurringExpenseById(recurringExpenseId, user.getId(), command);
         return ResponseEntity.ok(RecurringExpenseMapper.fromDomain(recurringExpense));
+    }
+
+    @DeleteMapping("/{recurringExpenseId}")
+    public ResponseEntity<Void> deactivateRecurringExpense(
+            @PathVariable UUID recurringExpenseId,
+            @AuthenticationPrincipal UserPrincipal user
+    ){
+        deactivateRecurringExpenseUseCase.deactivateRecurringExpense(recurringExpenseId, user.getId());
+        return ResponseEntity.noContent().build();
     }
 
 }
