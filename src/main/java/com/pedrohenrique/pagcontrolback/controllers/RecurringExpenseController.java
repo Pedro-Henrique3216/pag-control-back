@@ -2,32 +2,45 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateRecurringExpenseCommand;
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateRecurringExpenseCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.RecurringExpenseRequestDto;
+import com.pedrohenrique.pagcontrolback.dtos.request.RecurringExpenseUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.RecurringExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.RecurringExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.RecurringExpense;
-import com.pedrohenrique.pagcontrolback.usecases.CreateRecurringExpenseUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/recurring-expenses")
 public class RecurringExpenseController {
 
     private final CreateRecurringExpenseUseCase createRecurringExpenseUseCase;
+    private final ListRecurringExpensesUseCase listRecurringExpensesUseCase;
+    private final GetRecurringExpenseByIdUseCase getRecurringExpenseByIdUseCase;
+    private final UpdateRecurringExpenseUseCase updateRecurringExpenseUseCase;
+    private final DeactivateRecurringExpenseUseCase deactivateRecurringExpenseUseCase;
 
     public RecurringExpenseController(
-            CreateRecurringExpenseUseCase createRecurringExpenseUseCase
+            CreateRecurringExpenseUseCase createRecurringExpenseUseCase,
+            ListRecurringExpensesUseCase listRecurringExpensesUseCase,
+            GetRecurringExpenseByIdUseCase getRecurringExpenseByIdUseCase,
+            UpdateRecurringExpenseUseCase updateRecurringExpenseUseCase,
+            DeactivateRecurringExpenseUseCase deactivateRecurringExpenseUseCase
     ) {
         this.createRecurringExpenseUseCase = createRecurringExpenseUseCase;
+        this.listRecurringExpensesUseCase = listRecurringExpensesUseCase;
+        this.getRecurringExpenseByIdUseCase = getRecurringExpenseByIdUseCase;
+        this.updateRecurringExpenseUseCase = updateRecurringExpenseUseCase;
+        this.deactivateRecurringExpenseUseCase = deactivateRecurringExpenseUseCase;
     }
 
 
@@ -55,6 +68,55 @@ public class RecurringExpenseController {
         URI uri = uriComponentsBuilder.path("/recurring-expenses/{id}").buildAndExpand(recurringExpense.getId()).toUri();
         return ResponseEntity.created(uri).body(RecurringExpenseMapper.fromDomain(recurringExpense));
     }
+
+    @GetMapping
+    public ResponseEntity<List<RecurringExpenseResponseDto>> findAllRecurringExpense(
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        List<RecurringExpenseResponseDto> response = listRecurringExpensesUseCase.findRecurringExpensesByUserId(user.getId()).stream()
+                .map(RecurringExpenseMapper::fromDomain)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{recurringExpenseId}")
+    public ResponseEntity<RecurringExpenseResponseDto> findRecurringExpenseById(
+            @PathVariable UUID recurringExpenseId,
+            @AuthenticationPrincipal UserPrincipal user
+    ){
+        RecurringExpense recurringExpense = getRecurringExpenseByIdUseCase.findRecurringExpenseById(recurringExpenseId, user.getId());
+        return ResponseEntity.ok(RecurringExpenseMapper.fromDomain(recurringExpense));
+    }
+
+    @PutMapping("/{recurringExpenseId}")
+    public ResponseEntity<RecurringExpenseResponseDto> updateRecurringExpense(
+            @PathVariable UUID recurringExpenseId,
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestBody @Valid RecurringExpenseUpdateDto dto
+    ){
+        UpdateRecurringExpenseCommand command = new UpdateRecurringExpenseCommand(
+                dto.description(),
+                dto.totalAmount(),
+                dto.paymentType(),
+                dto.supplierId(),
+                dto.categoryId(),
+                dto.creditCardId()
+        );
+
+        RecurringExpense recurringExpense = updateRecurringExpenseUseCase.updateRecurringExpenseById(recurringExpenseId, user.getId(), command);
+        return ResponseEntity.ok(RecurringExpenseMapper.fromDomain(recurringExpense));
+    }
+
+    @DeleteMapping("/{recurringExpenseId}")
+    public ResponseEntity<Void> deactivateRecurringExpense(
+            @PathVariable UUID recurringExpenseId,
+            @AuthenticationPrincipal UserPrincipal user
+    ){
+        deactivateRecurringExpenseUseCase.deactivateRecurringExpense(recurringExpenseId, user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
 }
 
 
