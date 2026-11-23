@@ -4,6 +4,7 @@ import com.pedrohenrique.pagcontrolback.model.Expense;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,4 +30,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
             """
     )
     Optional<Expense> findActiveExpenseByIdAndUserId(UUID expenseId, UUID userId);
+
+    @Query(
+        """
+            SELECT COALESCE(SUM(e.totalAmount.value), 0)
+            FROM Expense e
+            WHERE e.creditCard.id = :creditCardId
+            AND e.user.id = :userId
+        """
+    )
+    BigDecimal findUsedLimitByCreditCardId(UUID creditCardId, UUID userId);
 }

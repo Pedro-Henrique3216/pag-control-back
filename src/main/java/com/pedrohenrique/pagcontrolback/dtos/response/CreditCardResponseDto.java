@@ -14,6 +14,10 @@ public record CreditCardResponseDto(
         int dueDay,
         @JsonProperty("credit_limit")
         BigDecimal creditLimit,
+        @JsonProperty("used_limit")
+        BigDecimal usedLimit,
+        @JsonProperty("available_limit")
+        BigDecimal availableLimit,
         boolean active
 ) {
 }

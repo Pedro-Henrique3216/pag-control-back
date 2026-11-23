@@ -6,7 +6,7 @@ import com.pedrohenrique.pagcontrolback.dtos.command.UpdateCreditCardCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.CreditCardRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.CreditCardUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CreditCardResponseDto;
-import com.pedrohenrique.pagcontrolback.mappers.CreditCardMapper;
+import com.pedrohenrique.pagcontrolback.factories.CreditCardResponseFactory;
 import com.pedrohenrique.pagcontrolback.model.CreditCard;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCreditCardUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.DeactivateCreditCardUseCase;
@@ -29,17 +29,20 @@ public class CreditCardController {
     private final ListCreditCardUseCase listCreditCardUseCase;
     private final UpdateCreditCardUseCase updateCreditCardUseCase;
     private final DeactivateCreditCardUseCase deactivateCreditCardUseCase;
+    private final CreditCardResponseFactory creditCardResponseFactory;
 
     public CreditCardController(
             CreateCreditCardUseCase createCreditCardUseCase,
             ListCreditCardUseCase listCreditCardUseCase,
             UpdateCreditCardUseCase updateCreditCardUseCase,
-            DeactivateCreditCardUseCase deactivateCreditCardUseCase
+            DeactivateCreditCardUseCase deactivateCreditCardUseCase,
+            CreditCardResponseFactory creditCardResponseFactory
     ) {
         this.createCreditCardUseCase = createCreditCardUseCase;
         this.listCreditCardUseCase = listCreditCardUseCase;
         this.updateCreditCardUseCase = updateCreditCardUseCase;
         this.deactivateCreditCardUseCase = deactivateCreditCardUseCase;
+        this.creditCardResponseFactory = creditCardResponseFactory;
     }
 
     @PostMapping
@@ -59,7 +62,9 @@ public class CreditCardController {
 
         URI uri = uriBuilder.path("/credit_cards/{id}").buildAndExpand(creditCard.getId()).toUri();
 
-        return ResponseEntity.created(uri).body(CreditCardMapper.toCreditCardResponseDto(creditCard));
+        CreditCardResponseDto response = creditCardResponseFactory.create(creditCard);
+
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping
@@ -69,7 +74,7 @@ public class CreditCardController {
         List<CreditCard> creditCards = listCreditCardUseCase.findCreditCardByUserId(userPrincipal.getId());
 
         List<CreditCardResponseDto> response = creditCards.stream()
-                .map(CreditCardMapper::toCreditCardResponseDto)
+                .map(creditCardResponseFactory::create)
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -87,7 +92,9 @@ public class CreditCardController {
 
         CreditCard creditCard = updateCreditCardUseCase.updateCreditCard(command, userPrincipal.getId());
 
-        return ResponseEntity.ok(CreditCardMapper.toCreditCardResponseDto(creditCard));
+        CreditCardResponseDto response = creditCardResponseFactory.create(creditCard);
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/deactivate")
