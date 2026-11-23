@@ -1,6 +1,8 @@
 package com.pedrohenrique.pagcontrolback.dtos.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.pedrohenrique.pagcontrolback.dtos.helper.CategoryDto;
+import com.pedrohenrique.pagcontrolback.dtos.helper.SupplierDto;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 
 import java.math.BigDecimal;
@@ -10,18 +12,17 @@ import java.util.UUID;
 
 public record ExpenseResponseDto(
         UUID id,
+        String description,
         @JsonProperty("invoice_number")
         String invoiceNumber,
-        String description,
         @JsonProperty("payment_type")
         PaymentType paymentType,
-        @JsonProperty("supplier_id")
-        UUID supplierId,
-        LocalDate date,
         @JsonProperty("total_amount")
         BigDecimal totalAmount,
-        @JsonProperty("category_id")
-        UUID categoryId,
-        List<InstallmentResponseDto> installments
+        LocalDate date,
+        SupplierDto suppler,
+        CategoryDto category,
+        @JsonProperty("number_of_installments")
+        int numberOfInstallments
 ) {
 }
