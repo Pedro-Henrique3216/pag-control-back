@@ -3,9 +3,11 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.exceptions.RecurringExpenseNotFoundException;
 import com.pedrohenrique.pagcontrolback.model.RecurringExpense;
 import com.pedrohenrique.pagcontrolback.repositories.RecurringExpenseRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class GetRecurringExpenseByIdUseCase {
 
     private final RecurringExpenseRepository recurringExpenseRepository;
