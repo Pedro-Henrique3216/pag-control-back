@@ -30,9 +30,6 @@ class CreditCardResponseFactoryTest {
 
     private CreditCard creditCard;
 
-    private UUID creditCardId;
-    private UUID userId;
-
     @BeforeEach
     void setUp() {
         creditCard = new CreditCard(
