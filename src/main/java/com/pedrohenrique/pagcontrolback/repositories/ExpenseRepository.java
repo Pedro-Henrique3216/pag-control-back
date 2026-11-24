@@ -1,7 +1,6 @@
 package com.pedrohenrique.pagcontrolback.repositories;
 
 import com.pedrohenrique.pagcontrolback.model.Expense;
-import com.pedrohenrique.pagcontrolback.usecases.ListCreditCardExpensesUseCase;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
