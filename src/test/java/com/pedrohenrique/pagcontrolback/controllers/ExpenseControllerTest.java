@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.helpers.*;
-import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
