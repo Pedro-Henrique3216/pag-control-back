@@ -8,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateFinancialDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
+import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseDetailsResponseDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
@@ -78,7 +79,7 @@ public class ExpenseController {
         );
 
         URI uri = uriBuilder.path("/expenses/{id}").buildAndExpand(expenseSaved.getId()).toUri();
-        return ResponseEntity.created(uri).body(ExpenseMapper.fromDomain(expenseSaved));
+        return ResponseEntity.created(uri).body(ExpenseMapper.transformExpenseToExpenseResponseDto(expenseSaved));
     }
 
     @GetMapping
@@ -108,18 +109,18 @@ public class ExpenseController {
         );
 
         return ResponseEntity.ok(expenses.stream()
-                .map(ExpenseMapper::fromDomain)
+                .map(ExpenseMapper::transformExpenseToExpenseResponseDto)
                 .toList());
     }
 
     @GetMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ExpenseResponseDto> getExpense(
+    public ResponseEntity<ExpenseDetailsResponseDto> getExpense(
             @PathVariable UUID expenseId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
         Expense expense = getExpenseByIdUseCase.getExpenseById(expenseId, user.getId());
-        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+        return ResponseEntity.ok(ExpenseMapper.transformExpenseToExpenseDetailsResponseDto(expense));
     }
 
     @PutMapping("/{expenseId}/details")
@@ -127,7 +128,7 @@ public class ExpenseController {
     public ResponseEntity<ExpenseResponseDto> updateExpense(
             @PathVariable UUID expenseId,
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody ExpenseUpdateDto dto
+            @Valid @RequestBody ExpenseUpdateDto dto
     ) {
         UpdateExpenseCommand command = new UpdateExpenseCommand(
                 dto.description(),
@@ -137,7 +138,7 @@ public class ExpenseController {
         );
 
         Expense expense = updateExpenseUseCase.updateExpense(expenseId, user.getId(), command);
-        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+        return ResponseEntity.ok(ExpenseMapper.transformExpenseToExpenseResponseDto(expense));
     }
 
     @PutMapping("/{expenseId}/financial")
@@ -155,7 +156,7 @@ public class ExpenseController {
         Expense expense = updateExpenseFinancialDataUseCase.updateFinancialData(
                 expenseId, user.getId(), command
         );
-        return ResponseEntity.ok(ExpenseMapper.fromDomain(expense));
+        return ResponseEntity.ok(ExpenseMapper.transformExpenseToExpenseResponseDto(expense));
     }
 
     @DeleteMapping("/{expenseId}")

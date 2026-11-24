@@ -3,7 +3,6 @@ package com.pedrohenrique.pagcontrolback.controllers;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.helpers.*;
-import com.pedrohenrique.pagcontrolback.model.InstallmentStatus;
 import com.pedrohenrique.pagcontrolback.model.PaymentType;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -122,21 +121,12 @@ class ExpenseControllerTest {
                         response.body().as(ExpenseResponseDto.class);
 
                 assertNotNull(body);
-                assertEquals(2, body.installments().size());
-                assertEquals(
-                        200,
-                        body.installments().get(0).amount().intValue()
-                );
+                assertEquals(2, body.numberOfInstallments());
+
                 assertEquals(LocalDate.of(2026, 2, 2), body.date());
-                assertEquals(
-                        "9876543210987654",
-                        body.installments().get(1).barcode()
-                );
-                assertEquals(
-                        InstallmentStatus.UNPAID,
-                        body.installments().get(0).status()
-                );
-                assertEquals(categoryId, body.categoryId());
+
+
+                assertEquals(categoryId, body.category().categoryId());
             }
 
             @Test
@@ -170,8 +160,8 @@ class ExpenseControllerTest {
                         response.body().as(ExpenseResponseDto.class);
 
                 assertNotNull(body);
-                assertEquals(1, body.installments().size());
-                assertNull(body.supplierId());
+                assertEquals(1, body.numberOfInstallments());
+                assertNull(body.supplier());
             }
         }
 
@@ -607,7 +597,7 @@ class ExpenseControllerTest {
                 assertEquals("INV-UPDATED", response.path("invoice_number"));
                 assertEquals(
                         supplierId.toString(),
-                        response.path("supplier_id")
+                        response.path("supplier.supplier_id")
                 );
             }
         }
