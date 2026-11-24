@@ -37,14 +37,14 @@ public class Installment {
     @JoinColumn(name = "expense_id")
     private Expense expense;
     @Column(name = "installment_number", nullable = false)
-    private Integer installmentNumber;
+    private int installmentNumber;
     @Column(name = "total_installments")
-    private Integer totalInstallments;
+    private int totalInstallments;
 
     public Installment() {
     }
 
-    public Installment(Money amount, LocalDate dueDate, String barcode, Expense expense, Integer installmentNumber, Integer totalInstallments) {
+    public Installment(Money amount, LocalDate dueDate, String barcode, Expense expense, int installmentNumber, int totalInstallments) {
         validateInstallment(amount, dueDate, installmentNumber, totalInstallments);
         this.amount = amount;
         this.dueDate = dueDate;
@@ -72,27 +72,20 @@ public class Installment {
             );
         }
 
-        if (installmentNumber == null) {
-            throw new InvalidInstallmentNumberException(
-                    "Installment number is required."
-            );
-        }
-
         if (installmentNumber <= 0) {
             throw new InvalidInstallmentNumberException(
                     "Installment number must be greater than zero."
             );
         }
 
-        if (totalInstallments != null) {
-            if (totalInstallments <= 0) {
-                throw new InvalidTotalInstallmentsException("Total installments must be greater than zero.");
-            }
-            if (installmentNumber > totalInstallments) {
-                throw new InvalidInstallmentNumberException(
+
+        if (totalInstallments <= 0) {
+            throw new InvalidTotalInstallmentsException("Total installments must be greater than zero.");
+        }
+        if (installmentNumber > totalInstallments) {
+            throw new InvalidInstallmentNumberException(
                         "Installment number cannot be greater than total installments."
-                );
-            }
+            );
         }
     }
 
