@@ -19,8 +19,10 @@ public record ExpenseResponseDto(
         @JsonProperty("total_amount")
         BigDecimal totalAmount,
         LocalDate date,
-        SupplierDto suppler,
+        SupplierDto supplier,
         CategoryDto category,
+        @JsonProperty("number_of_installments_paid")
+        int numberOfInstallmentsPaid,
         @JsonProperty("number_of_installments")
         int numberOfInstallments
 ) {
