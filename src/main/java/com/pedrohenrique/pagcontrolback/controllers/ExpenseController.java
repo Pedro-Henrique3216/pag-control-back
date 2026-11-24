@@ -8,6 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ExpenseUpdateFinancialDto;
 import com.pedrohenrique.pagcontrolback.dtos.request.ListExpensesQuery;
+import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseDetailsResponseDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.ExpenseResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.ExpenseMapper;
 import com.pedrohenrique.pagcontrolback.model.Expense;
@@ -114,12 +115,12 @@ public class ExpenseController {
 
     @GetMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ExpenseResponseDto> getExpense(
+    public ResponseEntity<ExpenseDetailsResponseDto> getExpense(
             @PathVariable UUID expenseId,
             @AuthenticationPrincipal UserPrincipal user
     ) {
         Expense expense = getExpenseByIdUseCase.getExpenseById(expenseId, user.getId());
-        return ResponseEntity.ok(ExpenseMapper.transformExpenseToExpenseResponseDto(expense));
+        return ResponseEntity.ok(ExpenseMapper.transformExpenseToExpenseDetailsResponseDto(expense));
     }
 
     @PutMapping("/{expenseId}/details")
