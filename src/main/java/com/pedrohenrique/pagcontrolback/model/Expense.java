@@ -371,7 +371,7 @@ public class Expense {
                 null,
                 this,
                 1,
-                null
+                1
         );
         this.addInstallment(installment);
     }
