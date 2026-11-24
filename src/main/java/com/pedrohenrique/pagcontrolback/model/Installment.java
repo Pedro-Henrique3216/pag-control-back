@@ -37,9 +37,9 @@ public class Installment {
     @JoinColumn(name = "expense_id")
     private Expense expense;
     @Column(name = "installment_number", nullable = false)
-    private Integer installmentNumber;
+    private int installmentNumber;
     @Column(name = "total_installments")
-    private Integer totalInstallments;
+    private int totalInstallments;
 
     public Installment() {
     }
