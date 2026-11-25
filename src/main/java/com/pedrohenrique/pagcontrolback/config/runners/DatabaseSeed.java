@@ -1,10 +1,9 @@
+
 package com.pedrohenrique.pagcontrolback.config.runners;
 
+import com.pedrohenrique.pagcontrolback.ValueObjects.Money;
 import com.pedrohenrique.pagcontrolback.model.*;
-import com.pedrohenrique.pagcontrolback.repositories.ExpenseRepository;
-import com.pedrohenrique.pagcontrolback.repositories.InstallmentRepository;
-import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
-import com.pedrohenrique.pagcontrolback.repositories.UserRepository;
+import com.pedrohenrique.pagcontrolback.repositories.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,9 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
 
 @Configuration
 @Profile("dev")
@@ -24,84 +22,134 @@ public class DatabaseSeed {
     CommandLineRunner seedDatabase(
             UserRepository userRepository,
             SupplierRepository supplierRepository,
+            CategoryRepository categoryRepository,
+            CreditCardRepository creditCardRepository,
             ExpenseRepository expenseRepository,
-            InstallmentRepository installmentRepository,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
-
             if (userRepository.count() > 0) {
                 return;
             }
 
-            for (int u = 1; u <= 5; u++) {
+            User user = new User(
+                    "Pedro Henrique",
+                    null,
+                    "pedro@mail.com",
+                    passwordEncoder.encode("Teste123"),
+                    "11999990001",
+                    PersonType.PF
+            );
 
-                User user = new User(
-                        "User " + u,
-                        null,
-                        "user" + u + "@mail.com",
-                        passwordEncoder.encode("123456"),
-                        "1199999000" + u,
-                        PersonType.PF
-                );
+            user.verifyEmail();
+            userRepository.save(user);
 
-                userRepository.save(user);
+            Supplier supplier = new Supplier(
+                    "Fornecedor de exemplo",
+                    null,
+                    user
+            );
+            supplierRepository.save(supplier);
 
-                Supplier supplier = new Supplier("Supplier User " + u, null, user);
-                supplierRepository.save(supplier);
+            Category expenseCategory = new Category(
+                    "Despesas gerais",
+                    TransactionType.EXPENSE,
+                    user
+            );
+            categoryRepository.save(expenseCategory);
 
-                for (int e = 1; e <= 5; e++) {
+            CreditCard creditCard = new CreditCard(
+                    "Cartão principal",
+                    10,
+                    20,
+                    Money.of(BigDecimal.valueOf(5000)),
+                    user
+            );
+            creditCardRepository.save(creditCard);
 
-                    boolean isDebitExpense = (e % 2 == 0);
+            LocalDate today = LocalDate.now();
 
-                    PaymentType paymentType = isDebitExpense
-                            ? PaymentType.DEBIT
-                            : PaymentType.CREDIT;
+            Expense creditExpense = new Expense(
+                    "INV-001",
+                    "Compra parcelada",
+                    PaymentType.CREDIT,
+                    today.minusDays(5),
+                    user,
+                    Money.of(BigDecimal.valueOf(600)),
+                    creditCard
+            );
 
-                    Expense expense = new Expense(
-                            "INV-" + u + "-" + e,
-                            paymentType,
-                            LocalDate.now().minusDays(e),
-                            user,
-                            supplier
-                    );
+            creditExpense.setSupplier(supplier);
+            creditExpense.assignCategory(expenseCategory);
+            creditExpense.generateCreditCardInstallments(3);
 
-                    expenseRepository.save(expense);
+            expenseRepository.save(creditExpense);
 
-                    if (paymentType == PaymentType.DEBIT) {
+            Expense debitExpense = new Expense(
+                    "INV-002",
+                    "Compra no débito",
+                    PaymentType.DEBIT,
+                    today.minusDays(3),
+                    user,
+                    Money.of(BigDecimal.valueOf(150))
+            );
 
-                        Installment installment = new Installment(
-                                BigDecimal.valueOf(100),
-                                LocalDate.now().plusDays(10),
-                                "BARCODE-" + u + "-" + e + "-1"
-                        );
+            debitExpense.setSupplier(supplier);
+            debitExpense.assignCategory(expenseCategory);
+            debitExpense.generateSingleInstallment();
 
-                        installment.setExpense(expense);
-                        installmentRepository.save(installment);
+            expenseRepository.save(debitExpense);
 
-                    } else {
+            Expense cashExpense = new Expense(
+                    "INV-003",
+                    "Compra em dinheiro",
+                    PaymentType.CASH,
+                    today.minusDays(2),
+                    user,
+                    Money.of(BigDecimal.valueOf(80))
+            );
 
-                        int numberOfInstallments = ThreadLocalRandom.current()
-                                .nextInt(1, 6);
+            cashExpense.setSupplier(supplier);
+            cashExpense.assignCategory(expenseCategory);
+            cashExpense.generateSingleInstallment();
 
-                        BigDecimal total = BigDecimal.valueOf(500);
-                        BigDecimal valuePerInstallment =
-                                total.divide(BigDecimal.valueOf(numberOfInstallments), 2, RoundingMode.HALF_UP);
+            expenseRepository.save(cashExpense);
 
-                        for (int i = 1; i <= numberOfInstallments; i++) {
+            Expense pixExpense = new Expense(
+                    "INV-004",
+                    "Pagamento via PIX",
+                    PaymentType.PIX,
+                    today.minusDays(1),
+                    user,
+                    Money.of(BigDecimal.valueOf(200))
+            );
 
-                            Installment installment = new Installment(
-                                    valuePerInstallment,
-                                    LocalDate.now().plusMonths(i),
-                                    "BARCODE-" + u + "-" + e + "-" + i
-                            );
+            pixExpense.setSupplier(supplier);
+            pixExpense.assignCategory(expenseCategory);
+            pixExpense.generateSingleInstallment();
 
-                            installment.setExpense(expense);
-                            installmentRepository.save(installment);
-                        }
-                    }
-                }
-            }
+            expenseRepository.save(pixExpense);
+
+            Expense billExpense = new Expense(
+                    "INV-005",
+                    "Pagamento de boleto",
+                    PaymentType.BILL,
+                    today.minusDays(1),
+                    user,
+                    Money.of(BigDecimal.valueOf(400))
+            );
+
+            billExpense.setSupplier(supplier);
+            billExpense.assignCategory(expenseCategory);
+
+            billExpense.generateBillInstallments(
+                    Map.of(
+                            15, "BARCODE-005-1",
+                            30, "BARCODE-005-2"
+                    )
+            );
+
+            expenseRepository.save(billExpense);
         };
     }
 }
