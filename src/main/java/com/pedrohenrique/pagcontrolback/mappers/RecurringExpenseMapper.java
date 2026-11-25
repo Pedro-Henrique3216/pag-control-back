@@ -10,7 +10,7 @@ public class RecurringExpenseMapper {
                 recurringExpense.getId(),
                 recurringExpense.getDescription(),
                 recurringExpense.getPaymentType(),
-                recurringExpense.getSupplier() != null ? SupplierMapper.fromDomain(recurringExpense.getSupplier()) : null,
+                recurringExpense.getSupplier() != null ? SupplierMapper.transformSupplierToSupplierResponseDto(recurringExpense.getSupplier()) : null,
                 recurringExpense.getStartDate(),
                 recurringExpense.getAmount().value(),
                 recurringExpense.getCategory() != null ? CategoryMapper.transformCategoryToCategoryResponseDto(recurringExpense.getCategory()) : null,
