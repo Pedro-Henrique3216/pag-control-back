@@ -15,7 +15,10 @@ import java.util.UUID;
 @Table(
         name = "categories",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"name", "user_id"})
+                @UniqueConstraint(
+                        name = "uk_category_name_user",
+                        columnNames = {"name", "user_id"}
+                )
         }
 )
 public class Category {
@@ -28,7 +31,7 @@ public class Category {
     @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
     private TransactionType categoryType;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     @OneToMany(mappedBy = "category")
@@ -39,7 +42,7 @@ public class Category {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    private Boolean active;
+    private boolean active;
 
     public Category() {}
 
@@ -101,11 +104,25 @@ public class Category {
     }
 
     public void setUser(User user) {
-        try {
-            this.user = Objects.requireNonNull(user);
-        } catch (NullPointerException e) {
+        if (user == null) {
             throw new UserRequiredException("User cannot be null");
         }
+
+        this.user = user;
+    }
+
+    public void update(String name, TransactionType categoryType) {
+        validateName(name);
+        validateCategoryType(categoryType);
+
+        this.name = name.toLowerCase().trim();
+        this.categoryType = categoryType;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deactivate() {
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

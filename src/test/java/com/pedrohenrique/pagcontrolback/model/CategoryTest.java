@@ -124,4 +124,138 @@ class CategoryTest {
             assertNotEquals(null, category);
         }
     }
+
+    @Nested
+    class UpdateTests {
+
+        @Test
+        void shouldUpdateCategorySuccessfully() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.update("Salary", TransactionType.INCOME);
+
+            assertEquals("salary", category.getName());
+            assertEquals(TransactionType.INCOME, category.getCategoryType());
+            assertNotNull(category.getUpdatedAt());
+        }
+
+        @Test
+        void shouldNormalizeCategoryNameWhenUpdating() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.update("  TRANSPORT  ", TransactionType.EXPENSE);
+
+            assertEquals("transport", category.getName());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenUpdatingWithNullName() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            assertThrows(
+                    CategoryNameInvalidException.class,
+                    () -> category.update(null, TransactionType.EXPENSE)
+            );
+        }
+
+        @Test
+        void shouldThrowExceptionWhenUpdatingWithBlankName() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            assertThrows(
+                    CategoryNameInvalidException.class,
+                    () -> category.update("   ", TransactionType.EXPENSE)
+            );
+        }
+
+        @Test
+        void shouldThrowExceptionWhenUpdatingWithNullCategoryType() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            assertThrows(
+                    CategoryTypeInvalidException.class,
+                    () -> category.update("Transport", null)
+            );
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenUpdatingCategory() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.update("Transport", TransactionType.EXPENSE);
+
+            assertNotNull(category.getUpdatedAt());
+            assertFalse(category.getUpdatedAt().isBefore(category.getCreatedAt()));
+        }
+    }
+
+    @Nested
+    class DeactivationTests {
+
+        @Test
+        void shouldDeactivateCategorySuccessfully() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+
+            assertFalse(category.getActive());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenDeactivatingCategory() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+
+            assertNotNull(category.getUpdatedAt());
+            assertFalse(category.getUpdatedAt().isBefore(category.getCreatedAt()));
+        }
+
+        @Test
+        void shouldKeepCategoryInactiveWhenDeactivatingAgain() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+            category.deactivate();
+
+            assertFalse(category.getActive());
+            assertNotNull(category.getUpdatedAt());
+        }
+    }
 }

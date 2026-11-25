@@ -15,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.UUID;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -58,6 +60,23 @@ class CategoryControllerTest {
         );
     }
 
+    private String createCategoryAndGetId() {
+        CategoryRequestDto body = new CategoryRequestDto(
+                "food",
+                TransactionType.EXPENSE
+        );
+
+        return given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .body(body)
+                .when()
+                .post()
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("id");
+    }
 
     @Nested
     class CreateCategory {
@@ -172,7 +191,6 @@ class CategoryControllerTest {
         }
     }
 
-
     @Nested
     class GetCategories {
 
@@ -195,6 +213,251 @@ class CategoryControllerTest {
                         .body("[0].id", notNullValue())
                         .body("[0].name", equalToIgnoringCase("teste"))
                         .body("[0].category_type", equalTo("EXPENSE"));
+            }
+        }
+    }
+
+    @Nested
+    class GetCategoryById {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldReturn200WhenCategoryExists() {
+
+                String categoryId = createCategoryAndGetId();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(200)
+                        .body("id", equalTo(categoryId))
+                        .body("name", equalTo("food"))
+                        .body("category_type", equalTo("EXPENSE"));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenCategoryDoesNotExist() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .get("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn401WhenUserNotAuthenticated() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .when()
+                        .get("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(401);
+            }
+        }
+    }
+
+    @Nested
+    class UpdateCategory {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldUpdateCategorySuccessfully() {
+
+                String categoryId = createCategoryAndGetId();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "transport",
+                        TransactionType.EXPENSE
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(200)
+                        .body("id", equalTo(categoryId))
+                        .body("name", equalTo("transport"))
+                        .body("category_type", equalTo("EXPENSE"));
+            }
+
+            @Test
+            void shouldUpdateCategoryTypeSuccessfully() {
+
+                String categoryId = createCategoryAndGetId();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "salary",
+                        TransactionType.INCOME
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(200)
+                        .body("name", equalTo("salary"))
+                        .body("category_type", equalTo("INCOME"));
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenCategoryDoesNotExist() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "transport",
+                        TransactionType.EXPENSE
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn400WhenNameIsEmpty() {
+
+                String categoryId = createCategoryAndGetId();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "",
+                        TransactionType.EXPENSE
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturn400WhenCategoryTypeIsMissing() {
+
+                String categoryId = createCategoryAndGetId();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "transport",
+                        null
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturn401WhenUserNotAuthenticated() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                CategoryRequestDto body = new CategoryRequestDto(
+                        "transport",
+                        TransactionType.EXPENSE
+                );
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .body(body)
+                        .when()
+                        .put("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(401);
+            }
+        }
+    }
+
+    @Nested
+    class DeactivateCategory {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldReturn204WhenCategoryIsDeactivated() {
+
+                String categoryId = createCategoryAndGetId();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(204);
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenCategoryDoesNotExist() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn401WhenUserNotAuthenticated() {
+
+                String categoryId = UUID.randomUUID().toString();
+
+                given()
+                        .contentType(ContentType.JSON)
+                        .when()
+                        .delete("/{categoryId}", categoryId)
+                        .then()
+                        .statusCode(401);
             }
         }
     }

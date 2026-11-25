@@ -5,7 +5,7 @@ import com.pedrohenrique.pagcontrolback.model.Category;
 
 public class CategoryMapper {
 
-    public static CategoryResponseDto fromDomain(Category category) {
+    public static CategoryResponseDto transformCategoryToCategoryResponseDto(Category category) {
         return new CategoryResponseDto(
             category.getId(),
             category.getName(),

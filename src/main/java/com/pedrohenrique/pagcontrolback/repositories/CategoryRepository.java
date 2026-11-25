@@ -17,4 +17,5 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findCategoriesByUserId(UUID userId);
 
     List<Category> findCategoryByUserIdAndCategoryType(UUID userId, TransactionType categoryType);
+
 }
