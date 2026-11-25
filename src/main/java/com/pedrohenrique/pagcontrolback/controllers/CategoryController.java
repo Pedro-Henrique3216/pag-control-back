@@ -2,6 +2,7 @@ package com.pedrohenrique.pagcontrolback.controllers;
 
 import com.pedrohenrique.pagcontrolback.config.security.UserPrincipal;
 import com.pedrohenrique.pagcontrolback.dtos.command.CreateCategoryCommand;
+import com.pedrohenrique.pagcontrolback.dtos.command.UpdateCategoryCommand;
 import com.pedrohenrique.pagcontrolback.dtos.request.CategoryRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
@@ -10,6 +11,7 @@ import com.pedrohenrique.pagcontrolback.model.TransactionType;
 import com.pedrohenrique.pagcontrolback.usecases.CreateCategoryUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.GetCategoryByIdUseCase;
 import com.pedrohenrique.pagcontrolback.usecases.ListCategoryUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.UpdateCategoryUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,15 +30,18 @@ public class CategoryController {
     private final CreateCategoryUseCase createCategoryUseCase;
     private final ListCategoryUseCase listCategoryUseCase;
     private final GetCategoryByIdUseCase getCategoryByIdUseCase;
+    private final UpdateCategoryUseCase updateCategoryUseCase;
 
     public CategoryController(
             CreateCategoryUseCase createCategoryUseCase,
             ListCategoryUseCase listCategoryUseCase,
-            GetCategoryByIdUseCase getCategoryByIdUseCase
+            GetCategoryByIdUseCase getCategoryByIdUseCase,
+            UpdateCategoryUseCase updateCategoryUseCase
     ) {
         this.createCategoryUseCase = createCategoryUseCase;
         this.listCategoryUseCase = listCategoryUseCase;
         this.getCategoryByIdUseCase = getCategoryByIdUseCase;
+        this.updateCategoryUseCase = updateCategoryUseCase;
     }
 
     @PostMapping
@@ -74,6 +79,21 @@ public class CategoryController {
             @AuthenticationPrincipal UserPrincipal user
     ) {
         Category category = getCategoryByIdUseCase.findCategoryById(categoryId, user.getId());
+        return ResponseEntity.ok(CategoryMapper.transformCategoryToCategoryResponseDto(category));
+    }
+
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<CategoryResponseDto> updateCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal UserPrincipal user,
+            @Valid @RequestBody CategoryRequestDto categoryRequest
+    ) {
+        UpdateCategoryCommand updateCategoryCommand = new UpdateCategoryCommand(
+                categoryRequest.name(),
+                categoryRequest.categoryType()
+        );
+
+        Category category = updateCategoryUseCase.updateCategory(categoryId, user.getId(), updateCategoryCommand);
         return ResponseEntity.ok(CategoryMapper.transformCategoryToCategoryResponseDto(category));
     }
 }
