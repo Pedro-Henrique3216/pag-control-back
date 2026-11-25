@@ -8,10 +8,7 @@ import com.pedrohenrique.pagcontrolback.dtos.response.CategoryResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.CategoryMapper;
 import com.pedrohenrique.pagcontrolback.model.Category;
 import com.pedrohenrique.pagcontrolback.model.TransactionType;
-import com.pedrohenrique.pagcontrolback.usecases.CreateCategoryUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.GetCategoryByIdUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListCategoryUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.UpdateCategoryUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,17 +28,20 @@ public class CategoryController {
     private final ListCategoryUseCase listCategoryUseCase;
     private final GetCategoryByIdUseCase getCategoryByIdUseCase;
     private final UpdateCategoryUseCase updateCategoryUseCase;
+    private final DeactivateCategoryUseCase deactivateCategoryUseCase;
 
     public CategoryController(
             CreateCategoryUseCase createCategoryUseCase,
             ListCategoryUseCase listCategoryUseCase,
             GetCategoryByIdUseCase getCategoryByIdUseCase,
-            UpdateCategoryUseCase updateCategoryUseCase
+            UpdateCategoryUseCase updateCategoryUseCase,
+            DeactivateCategoryUseCase deactivateCategoryUseCase
     ) {
         this.createCategoryUseCase = createCategoryUseCase;
         this.listCategoryUseCase = listCategoryUseCase;
         this.getCategoryByIdUseCase = getCategoryByIdUseCase;
         this.updateCategoryUseCase = updateCategoryUseCase;
+        this.deactivateCategoryUseCase = deactivateCategoryUseCase;
     }
 
     @PostMapping
@@ -95,5 +95,14 @@ public class CategoryController {
 
         Category category = updateCategoryUseCase.updateCategory(categoryId, user.getId(), updateCategoryCommand);
         return ResponseEntity.ok(CategoryMapper.transformCategoryToCategoryResponseDto(category));
+    }
+
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<Void> deactivateCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        deactivateCategoryUseCase.deactivateCategory(categoryId, user.getId());
+        return ResponseEntity.noContent().build();
     }
 }

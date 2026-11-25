@@ -120,6 +120,11 @@ public class Category {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void deactivate() {
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

@@ -212,4 +212,50 @@ class CategoryTest {
             assertFalse(category.getUpdatedAt().isBefore(category.getCreatedAt()));
         }
     }
+
+    @Nested
+    class DeactivationTests {
+
+        @Test
+        void shouldDeactivateCategorySuccessfully() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+
+            assertFalse(category.getActive());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenDeactivatingCategory() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+
+            assertNotNull(category.getUpdatedAt());
+            assertFalse(category.getUpdatedAt().isBefore(category.getCreatedAt()));
+        }
+
+        @Test
+        void shouldKeepCategoryInactiveWhenDeactivatingAgain() {
+            Category category = new Category(
+                    "Food",
+                    TransactionType.EXPENSE,
+                    new User()
+            );
+
+            category.deactivate();
+            category.deactivate();
+
+            assertFalse(category.getActive());
+            assertNotNull(category.getUpdatedAt());
+        }
+    }
 }
