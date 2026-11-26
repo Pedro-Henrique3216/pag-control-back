@@ -20,7 +20,7 @@ public class Supplier {
     @Embedded
     @AttributeOverride(
             name = "value",
-            column = @Column(name = "cnpj", unique = true, length = 14)
+            column = @Column(name = "cnpj", length = 14)
     )
     private Cnpj cnpj;
     @ManyToOne
