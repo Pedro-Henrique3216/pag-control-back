@@ -3,9 +3,11 @@ package com.pedrohenrique.pagcontrolback.usecases;
 import com.pedrohenrique.pagcontrolback.exceptions.SupplierNotFoundException;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
 import com.pedrohenrique.pagcontrolback.repositories.SupplierRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class DeactivateSupplierUseCase {
 
     private final SupplierRepository supplierRepository;
