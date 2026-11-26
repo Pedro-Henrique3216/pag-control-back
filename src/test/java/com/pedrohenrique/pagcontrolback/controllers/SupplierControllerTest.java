@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -174,7 +173,9 @@ class SupplierControllerTest {
 
                 List<String> errors = response.path("errors");
 
-                assertTrue(errors.contains("Supplier with this CNPJ already exists for this user."));
+                assertTrue(errors.contains(
+                        "Supplier with this CNPJ already exists for this user."
+                ));
             }
         }
     }
@@ -278,6 +279,270 @@ class SupplierControllerTest {
                         .header("Authorization", "Bearer " + token)
                         .when()
                         .get("/{id}", supplierId)
+                        .then()
+                        .statusCode(404);
+            }
+        }
+    }
+
+    @Nested
+    class UpdateSupplier {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldUpdateSupplier() {
+
+                factory.createSupplier(
+                        "Fornecedor antigo",
+                        null,
+                        port,
+                        token
+                );
+
+                Supplier supplier = supplierRepository.findAll().get(0);
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Fornecedor atualizado",
+                        "12.345.678/0001-95"
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .put("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(200)
+                        .body("name", is("Fornecedor atualizado"))
+                        .body("cnpj", is("12345678000195"));
+
+                Supplier updatedSupplier = supplierRepository
+                        .findById(supplier.getId())
+                        .orElseThrow();
+
+                assertEquals("Fornecedor atualizado", updatedSupplier.getName());
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenSupplierDoesNotExist() {
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Fornecedor atualizado",
+                        null
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .put("/{supplierId}", UUID.randomUUID())
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn404WhenSupplierDoesNotBelongToUser() {
+
+                authFactory.createUser(
+                        "Other User",
+                        "other@gmail.com",
+                        "Password123@",
+                        "11912345678"
+                );
+
+                String otherToken = authFactory.loginAndGetToken(
+                        port,
+                        "other@gmail.com",
+                        "Password123@"
+                );
+
+                UUID supplierId = factory.createSupplier(
+                        "Outro fornecedor",
+                        null,
+                        port,
+                        otherToken
+                );
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Fornecedor atualizado",
+                        null
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .put("/{supplierId}", supplierId)
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn400WhenNameIsInvalid() {
+
+                factory.createSupplier(
+                        "Fornecedor antigo",
+                        null,
+                        port,
+                        token
+                );
+
+                Supplier supplier = supplierRepository.findAll().get(0);
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "",
+                        null
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .put("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(400);
+            }
+
+            @Test
+            void shouldReturn400WhenCnpjIsInvalid() {
+
+                factory.createSupplier(
+                        "Fornecedor antigo",
+                        null,
+                        port,
+                        token
+                );
+
+                Supplier supplier = supplierRepository.findAll().get(0);
+
+                SupplierRequestDto dto = new SupplierRequestDto(
+                        "Fornecedor atualizado",
+                        "invalid-cnpj"
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(dto)
+                        .when()
+                        .put("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(400);
+            }
+        }
+    }
+
+    @Nested
+    class DeactivateSupplier {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldDeactivateSupplier() {
+
+                factory.createSupplier(
+                        "Fornecedor 1",
+                        null,
+                        port,
+                        token
+                );
+
+                Supplier supplier = supplierRepository.findAll().get(0);
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(204);
+
+                Supplier deactivatedSupplier = supplierRepository
+                        .findById(supplier.getId())
+                        .orElseThrow();
+
+                assertFalse(deactivatedSupplier.isActive());
+            }
+
+            @Test
+            void shouldReturn204WhenSupplierIsAlreadyDeactivated() {
+
+                factory.createSupplier(
+                        "Fornecedor 1",
+                        null,
+                        port,
+                        token
+                );
+
+                Supplier supplier = supplierRepository.findAll().get(0);
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(204);
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{supplierId}", supplier.getId())
+                        .then()
+                        .statusCode(204);
+            }
+        }
+
+        @Nested
+        class Errors {
+
+            @Test
+            void shouldReturn404WhenSupplierDoesNotExist() {
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{supplierId}", UUID.randomUUID())
+                        .then()
+                        .statusCode(404);
+            }
+
+            @Test
+            void shouldReturn404WhenSupplierDoesNotBelongToUser() {
+
+                authFactory.createUser(
+                        "Other User",
+                        "other@gmail.com",
+                        "Password123@",
+                        "11912345678"
+                );
+
+                String otherToken = authFactory.loginAndGetToken(
+                        port,
+                        "other@gmail.com",
+                        "Password123@"
+                );
+
+                UUID supplierId = factory.createSupplier(
+                        "Outro fornecedor",
+                        null,
+                        port,
+                        otherToken
+                );
+
+                RestAssured.given()
+                        .header("Authorization", "Bearer " + token)
+                        .when()
+                        .delete("/{supplierId}", supplierId)
                         .then()
                         .statusCode(404);
             }
