@@ -6,9 +6,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -22,11 +20,9 @@ public class Supplier {
     @Embedded
     @AttributeOverride(
             name = "value",
-            column = @Column(name = "cnpj", unique = true, length = 14)
+            column = @Column(name = "cnpj", length = 14)
     )
     private Cnpj cnpj;
-    @OneToMany(mappedBy = "supplier")
-    private Set<Expense> expenses = new HashSet<>();
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -34,7 +30,7 @@ public class Supplier {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    private Boolean active;
+    private boolean active;
 
     public Supplier() {}
 
@@ -66,10 +62,6 @@ public class Supplier {
         return cnpj;
     }
 
-    public Set<Expense> getExpenses() {
-        return expenses;
-    }
-
     public User getUser() {
         return user;
     }
@@ -82,24 +74,37 @@ public class Supplier {
         return updatedAt;
     }
 
-    public Boolean getActive() {
+    public boolean isActive() {
         return active;
     }
 
     public void setUser(User user) {
-        try {
-            this.user = Objects.requireNonNull(user);
-        } catch (NullPointerException e) {
+        if (user == null) {
             throw new UserRequiredException("User cannot be null");
         }
+
+        this.user = user;
     }
 
     public void setCnpj(String cnpj) {
         if (cnpj == null || cnpj.isBlank()) {
+            this.cnpj = null;
             return;
         }
 
         this.cnpj = new Cnpj(cnpj);
+    }
+
+    public void update(String name, String cnpj) {
+        validateName(name);
+        this.name = name;
+        setCnpj(cnpj);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deactivate(){
+        this.active = false;
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

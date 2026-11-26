@@ -1,3 +1,4 @@
+
 package com.pedrohenrique.pagcontrolback.model;
 
 import com.pedrohenrique.pagcontrolback.exceptions.InvalidSupplierCnpjException;
@@ -24,7 +25,7 @@ class SupplierTest {
             assertNotNull(supplier);
             assertEquals("Supplier A", supplier.getName());
             assertNull(supplier.getCnpj());
-            assertTrue(supplier.getActive());
+            assertTrue(supplier.isActive());
             assertNotNull(supplier.getCreatedAt());
         }
 
@@ -42,7 +43,7 @@ class SupplierTest {
                     "12345678000195",
                     supplier.getCnpj().value()
             );
-            assertTrue(supplier.getActive());
+            assertTrue(supplier.isActive());
         }
 
         @Test
@@ -238,6 +239,156 @@ class SupplierTest {
                     InvalidSupplierCnpjException.class,
                     () -> supplier.setCnpj("invalid")
             );
+        }
+    }
+
+    @Nested
+    class UpdateTests {
+
+        @Test
+        void shouldUpdateSupplierSuccessfully() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.update(
+                    "Supplier Updated",
+                    "12.345.678/0001-95"
+            );
+
+            assertEquals("Supplier Updated", supplier.getName());
+            assertEquals(
+                    "12345678000195",
+                    supplier.getCnpj().value()
+            );
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldUpdateSupplierWithoutCnpj() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    "12.345.678/0001-95",
+                    new User()
+            );
+
+            supplier.update(
+                    "Supplier Updated",
+                    null
+            );
+
+            assertEquals("Supplier Updated", supplier.getName());
+            assertNull(supplier.getCnpj());
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldUpdateSupplierWithBlankCnpj() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    "12.345.678/0001-95",
+                    new User()
+            );
+
+            supplier.update(
+                    "Supplier Updated",
+                    "   "
+            );
+
+            assertEquals("Supplier Updated", supplier.getName());
+            assertNull(supplier.getCnpj());
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithNullName() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            assertThrows(
+                    SupplierNameRequiredException.class,
+                    () -> supplier.update(null, null)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithBlankName() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            assertThrows(
+                    SupplierNameRequiredException.class,
+                    () -> supplier.update("   ", null)
+            );
+        }
+
+        @Test
+        void shouldThrowWhenUpdatingWithInvalidCnpj() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            assertThrows(
+                    InvalidSupplierCnpjException.class,
+                    () -> supplier.update(
+                            "Supplier Updated",
+                            "invalid"
+                    )
+            );
+        }
+    }
+
+    @Nested
+    class DeactivateTests {
+
+        @Test
+        void shouldDeactivateSupplierSuccessfully() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+
+            assertFalse(supplier.isActive());
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenDeactivatingSupplier() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldKeepSupplierInactiveWhenDeactivatedAgain() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+            supplier.deactivate();
+
+            assertFalse(supplier.isActive());
         }
     }
 }

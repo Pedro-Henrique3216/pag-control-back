@@ -5,7 +5,7 @@ import com.pedrohenrique.pagcontrolback.model.Supplier;
 
 public class SupplierMapper {
 
-    public static SupplierResponseDto fromDomain(Supplier supplier) {
+    public static SupplierResponseDto transformSupplierToSupplierResponseDto(Supplier supplier) {
         return new SupplierResponseDto(
                 supplier.getId(),
                 supplier.getName(),
