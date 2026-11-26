@@ -6,9 +6,7 @@ import com.pedrohenrique.pagcontrolback.exceptions.UserRequiredException;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -101,6 +99,11 @@ public class Supplier {
         validateName(name);
         this.name = name;
         setCnpj(cnpj);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void deactivate(){
+        this.active = false;
         this.updatedAt = LocalDateTime.now();
     }
 

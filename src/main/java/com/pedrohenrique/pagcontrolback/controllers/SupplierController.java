@@ -7,10 +7,7 @@ import com.pedrohenrique.pagcontrolback.dtos.request.SupplierRequestDto;
 import com.pedrohenrique.pagcontrolback.dtos.response.SupplierResponseDto;
 import com.pedrohenrique.pagcontrolback.mappers.SupplierMapper;
 import com.pedrohenrique.pagcontrolback.model.Supplier;
-import com.pedrohenrique.pagcontrolback.usecases.CreateSupplierUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.GetSupplierByIdUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.ListSuppliersUseCase;
-import com.pedrohenrique.pagcontrolback.usecases.UpdateSupplierUseCase;
+import com.pedrohenrique.pagcontrolback.usecases.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,18 +26,20 @@ public class SupplierController {
     private final ListSuppliersUseCase listSuppliersUseCase;
     private final GetSupplierByIdUseCase getSupplierByIdUseCase;
     private final UpdateSupplierUseCase updateSupplierUseCase;
+    private final DeactivateSupplierUseCase deactivateSupplierUseCase;
 
     public SupplierController(
             CreateSupplierUseCase createSupplierUseCase,
             ListSuppliersUseCase listSuppliersUseCase,
             GetSupplierByIdUseCase getSupplierByIdUseCase,
-            UpdateSupplierUseCase updateSupplierUseCase
+            UpdateSupplierUseCase updateSupplierUseCase,
+            DeactivateSupplierUseCase deactivateSupplierUseCase
     ) {
         this.createSupplierUseCase = createSupplierUseCase;
         this.listSuppliersUseCase = listSuppliersUseCase;
         this.getSupplierByIdUseCase = getSupplierByIdUseCase;
         this.updateSupplierUseCase = updateSupplierUseCase;
-
+        this.deactivateSupplierUseCase = deactivateSupplierUseCase;
     }
 
     @PostMapping
@@ -96,6 +95,15 @@ public class SupplierController {
         Supplier supplier = updateSupplierUseCase.updateSupplier(supplierId, user.getId(), command);
         SupplierResponseDto responseDto = SupplierMapper.transformSupplierToSupplierResponseDto(supplier);
         return ResponseEntity.ok(responseDto);
+    }
+
+    @DeleteMapping("/{supplierId}")
+    public ResponseEntity<Void> deactivateSupplier(
+            @PathVariable UUID supplierId,
+            @AuthenticationPrincipal UserPrincipal user
+    ) {
+        deactivateSupplierUseCase.deactivateSupplier(supplierId, user.getId());
+        return ResponseEntity.noContent().build();
     }
 
 }

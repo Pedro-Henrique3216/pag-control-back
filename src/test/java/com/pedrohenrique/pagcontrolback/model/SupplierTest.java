@@ -346,4 +346,49 @@ class SupplierTest {
             );
         }
     }
+
+    @Nested
+    class DeactivateTests {
+
+        @Test
+        void shouldDeactivateSupplierSuccessfully() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+
+            assertFalse(supplier.isActive());
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldUpdateUpdatedAtWhenDeactivatingSupplier() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+
+            assertNotNull(supplier.getUpdatedAt());
+        }
+
+        @Test
+        void shouldKeepSupplierInactiveWhenDeactivatedAgain() {
+            Supplier supplier = new Supplier(
+                    "Supplier A",
+                    null,
+                    new User()
+            );
+
+            supplier.deactivate();
+            supplier.deactivate();
+
+            assertFalse(supplier.isActive());
+        }
+    }
 }
